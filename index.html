@@ -1,0 +1,3353 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Akt I: Popielna Przystań — Izometryczne Action RPG 2.5D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #c8a258;
+      --gold-bright: #f0d082;
+      --stone-bg: rgba(12, 13, 16, 0.92);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050608;
+      font-family: 'Cinzel', serif;
+      color: #d8d0c1;
+    }
+
+    #game-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      cursor: crosshair;
+    }
+
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: radial-gradient(circle at center, #14171f 0%, #050608 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.5s ease;
+    }
+
+    #loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-title {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 5px;
+      color: var(--gold-bright);
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.9), 0 0 22px rgba(200, 162, 88, 0.35);
+      margin-bottom: 10px;
+    }
+
+    .loading-subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      color: #9a9284;
+      margin-bottom: 28px;
+      letter-spacing: 1px;
+    }
+
+    .loading-frame {
+      width: 440px;
+      height: 16px;
+      background: #0d0e11;
+      border: 2px solid var(--gold);
+      padding: 2px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
+    }
+
+    #loading-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #6e5223, #d6b168);
+      transition: width 0.12s ease;
+    }
+
+    #loading-status {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #b8b0a0;
+      letter-spacing: 1.5px;
+    }
+
+    /* WARSTWA ETYKIET NAD OBIEKTAMI (DOMYŚLNIE UKRYTE — TYLKO HOVER LUB ALT) */
+    #labels-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+      overflow: hidden;
+    }
+
+    .world-label {
+      display: none;
+      position: absolute;
+      transform: translate(-50%, -100%);
+      padding: 4px 12px;
+      background: rgba(8, 9, 12, 0.92);
+      border: 1px solid var(--gold);
+      color: #efe6d5;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.9);
+      pointer-events: none;
+    }
+
+    .world-label .sub {
+      display: block;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 12px;
+      color: var(--gold);
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    .world-label.enemy {
+      border-color: #9e2a2b;
+      color: #ffccd0;
+    }
+
+    .world-label.boss {
+      border-color: #d49b35;
+      color: #ffe299;
+      font-size: 13px;
+    }
+
+    .enemy-hp-mini {
+      width: 86px;
+      height: 5px;
+      background: #1b0909;
+      border: 1px solid #591c1c;
+      margin: 3px auto 0;
+      overflow: hidden;
+    }
+
+    .enemy-hp-mini-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #881111, #df2c2c);
+      width: 100%;
+    }
+
+    /* PRAWY GÓRNY RÓG: MINIMAPA I DZIENNIK ZADAŃ */
+    #top-right-hud {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .minimap-wrapper {
+      position: relative;
+      width: 184px;
+      height: 184px;
+      border-radius: 50%;
+      background: #090b0f;
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 0 3px #181a20, 0 8px 25px rgba(0, 0, 0, 0.9), inset 0 0 22px rgba(0, 0, 0, 0.9);
+      overflow: hidden;
+      pointer-events: auto;
+    }
+
+    #minimap-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .minimap-compass {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .minimap-compass span {
+      position: absolute;
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--gold-bright);
+      text-shadow: 0 1px 4px #000;
+    }
+
+    .minimap-compass .n { top: 4px; left: 50%; transform: translateX(-50%); }
+    .minimap-compass .s { bottom: 4px; left: 50%; transform: translateX(-50%); }
+    .minimap-compass .w { left: 6px; top: 50%; transform: translateY(-50%); }
+    .minimap-compass .e { right: 6px; top: 50%; transform: translateY(-50%); }
+
+    .zone-banner {
+      background: var(--stone-bg);
+      border: 1px solid var(--gold);
+      padding: 5px 14px;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      color: var(--gold-bright);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);
+    }
+
+    .quest-box {
+      width: 270px;
+      background: linear-gradient(180deg, rgba(16, 18, 23, 0.92), rgba(9, 10, 13, 0.92));
+      border: 1px solid #6b5735;
+      border-top: 2px solid var(--gold);
+      padding: 10px 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+      pointer-events: auto;
+    }
+
+    .quest-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      letter-spacing: 1.5px;
+      border-bottom: 1px solid rgba(200, 162, 88, 0.3);
+      padding-bottom: 5px;
+      margin-bottom: 7px;
+    }
+
+    .quest-item {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px;
+      color: #d6cfc2;
+      line-height: 1.35;
+      margin-bottom: 5px;
+    }
+
+    .quest-item.done {
+      color: #6b8e63;
+      text-decoration: line-through;
+    }
+
+    /* LEWY GÓRNY RÓG: PRZEŁĄCZNIK KLAS I SKRÓTY */
+    #top-left-hud {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .armory-panel {
+      background: var(--stone-bg);
+      border: 1px solid var(--gold);
+      padding: 8px 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .armory-title {
+      font-size: 11px;
+      color: var(--gold-bright);
+      letter-spacing: 1.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .class-buttons {
+      display: flex;
+      gap: 5px;
+    }
+
+    .class-btn {
+      background: #171920;
+      border: 1px solid #52452e;
+      color: #bfb6a4;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      padding: 5px 9px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .class-btn:hover {
+      border-color: var(--gold);
+      color: #fff;
+    }
+
+    .class-btn.active {
+      background: linear-gradient(180deg, #4b381a, #241b0c);
+      border-color: var(--gold-bright);
+      color: var(--gold-bright);
+      box-shadow: 0 0 10px rgba(200, 162, 88, 0.35);
+    }
+
+    .controls-hint {
+      background: rgba(10, 11, 14, 0.82);
+      border: 1px solid #383c47;
+      padding: 6px 10px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      color: #aaa294;
+      line-height: 1.4;
+    }
+
+    .controls-hint b {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      color: var(--gold);
+    }
+
+    #navmesh-badge {
+      display: none;
+      background: rgba(20, 85, 38, 0.9);
+      border: 1px solid #55d67b;
+      color: #e4ffec;
+      padding: 5px 10px;
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+
+    /* OKNO DIALOGOWE NPC */
+    #dialogue-modal {
+      position: fixed;
+      top: 22%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 480px;
+      background: linear-gradient(180deg, rgba(18, 20, 26, 0.96), rgba(10, 11, 14, 0.97));
+      border: 2px solid var(--gold);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.95);
+      padding: 18px 22px;
+      z-index: 45;
+      display: none;
+    }
+
+    #dialogue-speaker {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(200, 162, 88, 0.3);
+      padding-bottom: 6px;
+    }
+
+    #dialogue-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 17px;
+      line-height: 1.45;
+      color: #e2dacb;
+      margin-bottom: 14px;
+    }
+
+    #dialogue-close {
+      background: #241c10;
+      border: 1px solid var(--gold);
+      color: var(--gold-bright);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      padding: 6px 14px;
+      cursor: pointer;
+      float: right;
+    }
+
+    /* DOLNY GOTYCKI HUD */
+    #bottom-hud {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 35;
+      display: flex;
+      align-items: flex-end;
+      gap: 0;
+      pointer-events: none;
+    }
+
+    .orb-module {
+      position: relative;
+      width: 152px;
+      height: 152px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      pointer-events: auto;
+      margin-bottom: 6px;
+    }
+
+    .orb-shell {
+      position: relative;
+      width: 126px;
+      height: 126px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #1c1d22, #07080a);
+      border: 4px solid #6b5839;
+      box-shadow: 0 0 0 2px #141519, 0 8px 24px rgba(0, 0, 0, 0.95), inset 0 0 24px rgba(0, 0, 0, 0.95);
+      overflow: hidden;
+    }
+
+    .orb-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      transition: height 0.2s ease, background 0.25s ease;
+    }
+
+    #blood-fill {
+      background: radial-gradient(circle at 38% 35%, #e3292d 0%, #8f0d10 55%, #3d0305 100%);
+      box-shadow: inset 0 4px 12px rgba(255, 130, 130, 0.45);
+    }
+
+    #resource-fill {
+      background: radial-gradient(circle at 38% 35%, #ff8826 0%, #bd4206 58%, #4d1700 100%);
+      box-shadow: inset 0 4px 12px rgba(255, 200, 130, 0.45);
+    }
+
+    #cunning-segments {
+      position: absolute;
+      inset: 6px;
+      border-radius: 50%;
+      display: none;
+      flex-direction: column-reverse;
+      justify-content: space-between;
+      padding: 6px 14px;
+      z-index: 3;
+    }
+
+    .cunning-seg {
+      height: 7%;
+      width: 100%;
+      background: rgba(15, 35, 22, 0.75);
+      border: 1px solid #1b4d2b;
+      border-radius: 3px;
+      transition: all 0.15s ease;
+    }
+
+    .cunning-seg.lit {
+      background: linear-gradient(90deg, #169440, #3ef279, #169440);
+      border-color: #98ffba;
+      box-shadow: 0 0 8px rgba(62, 242, 121, 0.7);
+    }
+
+    .orb-glass {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.06) 24%, transparent 60%);
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .orb-readout {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 6;
+      text-shadow: 0 2px 5px #000, 0 0 8px #000;
+      pointer-events: none;
+    }
+
+    .orb-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #f0e6d2;
+    }
+
+    .orb-values {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      margin-top: 2px;
+    }
+
+    .center-console {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: auto;
+      margin: 0 -8px;
+      z-index: 2;
+    }
+
+    /* KUTY GOTYCKI ORNAMENT NAD PASKIEM SKILLI (ZERO CZERWONYCH PASKÓW!) */
+    .gothic-ornament-crest {
+      width: 540px;
+      height: 44px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      position: relative;
+      margin-bottom: -3px;
+      pointer-events: none;
+    }
+
+    .level-medallion {
+      position: absolute;
+      top: 4px;
+      padding: 3px 18px;
+      background: linear-gradient(180deg, #1f232b, #0e1014);
+      border: 1px solid var(--gold);
+      color: var(--gold-bright);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.95);
+    }
+
+    .console-body {
+      background: linear-gradient(180deg, #1a1d24 0%, #0d0f13 100%);
+      border-top: 2px solid var(--gold);
+      border-left: 2px solid #594a30;
+      border-right: 2px solid #594a30;
+      border-bottom: 3px solid #382e1e;
+      padding: 10px 18px 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 -6px 26px rgba(0, 0, 0, 0.95), inset 0 2px 12px rgba(0, 0, 0, 0.85);
+    }
+
+    .slots-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .hud-divider {
+      width: 2px;
+      height: 46px;
+      background: linear-gradient(180deg, transparent, var(--gold), transparent);
+      opacity: 0.6;
+    }
+
+    .skill-slot, .potion-slot {
+      position: relative;
+      width: 50px;
+      height: 50px;
+      background: radial-gradient(circle at center, #222630 0%, #101217 100%);
+      border: 1px solid #6b5839;
+      box-shadow: inset 0 0 10px #000, 0 2px 6px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .potion-slot {
+      width: 44px;
+      height: 44px;
+    }
+
+    .skill-slot:hover, .potion-slot:hover {
+      border-color: var(--gold-bright);
+    }
+
+    .skill-slot:active, .potion-slot:active {
+      transform: scale(0.95);
+    }
+
+    .slot-key {
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--gold-bright);
+      text-shadow: 0 1px 3px #000;
+      z-index: 3;
+    }
+
+    .slot-charges {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 1px 3px #000;
+      z-index: 3;
+    }
+
+    .slot-icon {
+      font-size: 18px;
+      color: #d8c396;
+      z-index: 2;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .slot-sub {
+      font-size: 8px;
+      color: #9e9482;
+      letter-spacing: 0.5px;
+      margin-top: 3px;
+      z-index: 2;
+    }
+
+    .cd-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0%;
+      background: rgba(5, 6, 8, 0.82);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--gold-bright);
+      z-index: 4;
+      pointer-events: none;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <!-- EKRAN ŁADOWANIA -->
+  <div id="loading-screen">
+    <div class="loading-title">AKT I: POPIELNA PRZYSTAŃ</div>
+    <div class="loading-subtitle">Wycinanie tła (Flood-Fill + Wewnętrzne Dziury + Obcinacz Podstawek) i budowa Rigu 2.5D...</div>
+    <div class="loading-frame">
+      <div id="loading-bar"></div>
+    </div>
+    <div id="loading-status">Pobieranie zasobów z repozytorium GitHub...</div>
+  </div>
+
+  <canvas id="game-canvas"></canvas>
+  <div id="labels-layer"></div>
+
+  <!-- LEWY GÓRNY PANEL -->
+  <div id="top-left-hud">
+    <div class="armory-panel">
+      <div class="armory-title">
+        <span>STOJAK ZBROJMISTRZA (KLASA)</span>
+        <span id="active-class-label" style="color:#fff;">WIKING</span>
+      </div>
+      <div class="class-buttons">
+        <button class="class-btn active" data-class="wiking">Wiking</button>
+        <button class="class-btn" data-class="zabojca">Zabójca</button>
+        <button class="class-btn" data-class="guslarz">Guślarz</button>
+        <button class="class-btn" data-class="wrozbita">Wróżbita</button>
+      </div>
+    </div>
+    <div class="controls-hint">
+      <b>LPM</b> Ruch (Rig 2.5D) / Interakcja &nbsp;|&nbsp; <b>PPM</b> lub <b>SHIFT+LPM</b> Atak<br>
+      <b>SPACJA</b> Przeskok Bojowy (CD 4.5s) &nbsp;|&nbsp; <b>[1]</b> Mikstura Krwi<br>
+      <b>[F2]</b> Siatka NavMesh &nbsp;|&nbsp; <b>[ALT]</b> Pokaż etykiety
+    </div>
+    <div id="navmesh-badge">PODGLĄD SIATKI NAVMESH [F2]: ZIELONY = RUCH, CZERWONY = BLOKADA</div>
+  </div>
+
+  <!-- PRAWY GÓRNY PANEL -->
+  <div id="top-right-hud">
+    <div class="zone-banner" id="zone-name-banner">POPIELNA PRZYSTAŃ</div>
+    <div class="minimap-wrapper">
+      <canvas id="minimap-canvas" width="184" height="184"></canvas>
+      <div class="minimap-compass">
+        <span class="n">N</span>
+        <span class="s">S</span>
+        <span class="w">W</span>
+        <span class="e">E</span>
+      </div>
+    </div>
+    <div class="quest-box">
+      <div class="quest-header">DZIENNIK ZADAŃ — AKT I</div>
+      <div class="quest-item" id="q-borgar">• Porozmawiaj z Kowalem Borgarem przy kuźni</div>
+      <div class="quest-item" id="q-stojak">• Przetestuj zbroje na Stojaku Zbrojmistrza</div>
+      <div class="quest-item" id="q-przedmurze">• Oczyść Przedmurze za północnym mostem (<span id="q-kills">0</span>/6)</div>
+      <div class="quest-item" id="q-bosses">• Pokonaj Bossów Przystani (<span id="q-boss-kills">0</span>/3)</div>
+    </div>
+  </div>
+
+  <!-- MODAL DIALOGOWY NPC -->
+  <div id="dialogue-modal">
+    <div id="dialogue-speaker">KOWAL BORGAR</div>
+    <div id="dialogue-text">...</div>
+    <button id="dialogue-close">ZAMKNIJ [ESC]</button>
+  </div>
+
+  <!-- DOLNY GOTYCKI HUD -->
+  <div id="bottom-hud">
+    <div class="orb-module">
+      <div class="orb-shell">
+        <div class="orb-fill" id="blood-fill"></div>
+        <div class="orb-glass"></div>
+        <div class="orb-readout">
+          <span class="orb-label">KREW</span>
+          <span class="orb-values" id="blood-text">485/485</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="center-console">
+      <div class="gothic-ornament-crest">
+        <svg width="540" height="44" viewBox="0 0 540 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 42 L65 24 L155 24 L195 8 L345 8 L385 24 L475 24 L530 42" stroke="#c8a258" stroke-width="2" fill="rgba(16,18,24,0.92)"/>
+          <path d="M40 42 L85 29 L170 29 L208 15 L332 15 L370 29 L455 29 L500 42" stroke="#6d5833" stroke-width="1.2" fill="none"/>
+          <circle cx="95" cy="29" r="3.5" fill="#c8a258"/>
+          <circle cx="150" cy="26" r="3" fill="#8b703f"/>
+          <circle cx="390" cy="26" r="3" fill="#8b703f"/>
+          <circle cx="445" cy="29" r="3.5" fill="#c8a258"/>
+          <path d="M120 35 L140 28 L160 35 M380 35 L400 28 L420 35" stroke="#c8a258" stroke-width="1.3"/>
+        </svg>
+        <div class="level-medallion" id="hud-level-badge">POZIOM 1 — WIKING</div>
+      </div>
+
+      <div class="console-body">
+        <div class="slots-group">
+          <div class="potion-slot" id="potion-1" title="Mikstura Krwi (Klawisz 1)">
+            <span class="slot-key">1</span>
+            <span class="slot-icon" style="color:#e33b3f;">♦</span>
+            <span class="slot-sub">KREW</span>
+            <span class="slot-charges" id="potion-1-charges">3</span>
+          </div>
+          <div class="potion-slot" id="potion-2" title="Eliksir Żelaza (Klawisz 2)">
+            <span class="slot-key">2</span>
+            <span class="slot-icon" style="color:#78a8c8;">◊</span>
+            <span class="slot-sub">STAL</span>
+            <span class="slot-charges">2</span>
+          </div>
+        </div>
+
+        <div class="hud-divider"></div>
+
+        <div class="slots-group">
+          <div class="skill-slot" data-skill="Q" title="Rozpłatanie [Q]">
+            <span class="slot-key">Q</span>
+            <span class="slot-icon">⚔</span>
+            <span class="slot-sub" id="skill-q-name">CIĘCIE</span>
+            <div class="cd-overlay" id="cd-Q"></div>
+          </div>
+          <div class="skill-slot" data-skill="W" title="Zew Popiołów [W]">
+            <span class="slot-key">W</span>
+            <span class="slot-icon">❖</span>
+            <span class="slot-sub" id="skill-w-name">ZEW</span>
+            <div class="cd-overlay" id="cd-W"></div>
+          </div>
+          <div class="skill-slot" data-skill="E" title="Gniew Runiczny [E]">
+            <span class="slot-key">E</span>
+            <span class="slot-icon">✹</span>
+            <span class="slot-sub" id="skill-e-name">GNIEW</span>
+            <div class="cd-overlay" id="cd-E"></div>
+          </div>
+          <div class="skill-slot" data-skill="R" title="Przebudzenie Krwi [R]">
+            <span class="slot-key">R</span>
+            <span class="slot-icon">♛</span>
+            <span class="slot-sub" id="skill-r-name">FURIA</span>
+            <div class="cd-overlay" id="cd-R"></div>
+          </div>
+        </div>
+
+        <div class="hud-divider"></div>
+
+        <div class="slots-group">
+          <div class="skill-slot" id="slot-lpm" title="LPM: Tylko Ruch i Interakcja">
+            <span class="slot-key">LPM</span>
+            <span class="slot-icon">👣</span>
+            <span class="slot-sub">RUCH</span>
+          </div>
+          <div class="skill-slot" id="slot-ppm" title="PPM / SHIFT+LPM: Autoatak w miejscu">
+            <span class="slot-key">PPM</span>
+            <span class="slot-icon">🗡</span>
+            <span class="slot-sub">ATAK</span>
+          </div>
+          <div class="skill-slot" id="slot-space" title="SPACJA: Ciężki przeskok bojowy (CD 4.5s)">
+            <span class="slot-key">SPC</span>
+            <span class="slot-icon">☄</span>
+            <span class="slot-sub">SKOK</span>
+            <div class="cd-overlay" id="cd-SPACE"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="orb-module">
+      <div class="orb-shell">
+        <div class="orb-fill" id="resource-fill"></div>
+        <div id="cunning-segments">
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+        </div>
+        <div class="orb-glass"></div>
+        <div class="orb-readout">
+          <span class="orb-label" id="resource-label">SZAŁ</span>
+          <span class="orb-values" id="resource-text">0/100</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================================
+    // BAZA ZASOBÓW GITHUB + BEZPIECZNE POBIERANIE Z FALLBACKIEM
+    // ============================================================================
+    const BASE_URL = "https://raw.githubusercontent.com/franekimono2026/DiabelZzz/main/";
+
+    const REPO_FILES = [
+      "wiking_przod.jpg", "wiking_tyl.jpg", "wiking_prawo.jpg", "wiking_lewo.jpg",
+      "zabojca_przod.jpg", "zabojca_tyl.jpg",
+      "guslarz_przod.jpg", "guslarz_tyl.jpg",
+      "wrozbita_przod.jpg", "wrozbita_tyl.jpg",
+      "bruk.jpg", "pomost.jpg", "krag_runiczny.jpg", "kamien_filozofow.jpg",
+      "kowal_borgar.jpg", "kuznia_piec.jpg", "stojak_broni.jpg", "straznik_vorn.jpg", "handlarz_kraal.jpg",
+      "wrog_tarczownik.jpg", "wrog_ogar.jpg", "boss1_latarnik.jpg", "boss2_bracia.jpg", "boss3_lalkarz.jpg"
+    ];
+
+    const ASSETS = {};
+    let loadedCount = 0;
+
+    function updateLoadingProgress(filename) {
+      loadedCount++;
+      const total = REPO_FILES.length;
+      const pct = Math.min(100, Math.round((loadedCount / total) * 100));
+      const bar = document.getElementById("loading-bar");
+      const status = document.getElementById("loading-status");
+      if (bar) bar.style.width = pct + "%";
+      if (status) status.textContent = `Przetworzono: ${filename} (${loadedCount} / ${total})`;
+    }
+
+    function loadRawImage(filename, timeoutMs = 6500) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        const timer = setTimeout(() => {
+          img.src = "";
+          reject(new Error("Timeout: " + filename));
+        }, timeoutMs);
+
+        img.onload = () => {
+          clearTimeout(timer);
+          resolve(img);
+        };
+        img.onerror = () => {
+          clearTimeout(timer);
+          reject(new Error("404: " + filename));
+        };
+        img.src = BASE_URL + filename;
+      });
+    }
+
+    // ============================================================================
+    // 1. WYCINANIE TŁA: FLOOD-FILL + WEWNĘTRZNE DZIURY + OBCINACZ CIENIA STUDYJNEGO U DOŁU
+    // ============================================================================
+    async function loadAndKeyOutSprite(filename, isGroundCircle = false) {
+      const img = await loadRawImage(filename);
+      const maxDim = 512;
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const W = Math.max(64, Math.round(img.width * scale));
+      const H = Math.max(64, Math.round(img.height * scale));
+
+      const workCanvas = document.createElement("canvas");
+      workCanvas.width = W;
+      workCanvas.height = H;
+      const ctx = workCanvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, W, H);
+
+      const imgData = ctx.getImageData(0, 0, W, H);
+      const data = imgData.data;
+      const totalPixels = W * H;
+
+      // Pobranie średniego koloru tła studyjnego wyłącznie z samych narożników 4x4 px
+      let bgR = 0, bgG = 0, bgB = 0, cornerSamples = 0;
+      const cornerOffsets = [
+        [0, 0],
+        [W - 4, 0],
+        [0, H - 4],
+        [W - 4, H - 4]
+      ];
+      for (const [ox, oy] of cornerOffsets) {
+        for (let dy = 0; dy < 4; dy++) {
+          for (let dx = 0; dx < 4; dx++) {
+            const idx = ((oy + dy) * W + (ox + dx)) * 4;
+            bgR += data[idx];
+            bgG += data[idx + 1];
+            bgB += data[idx + 2];
+            cornerSamples++;
+          }
+        }
+      }
+      bgR /= cornerSamples;
+      bgG /= cornerSamples;
+      bgB /= cornerSamples;
+      const bgLuma = 0.299 * bgR + 0.587 * bgG + 0.114 * bgB;
+
+      // Tablice luminancji, nasycenia i gradientu krawędzi Sobela
+      const luma = new Float32Array(totalPixels);
+      const sat = new Float32Array(totalPixels);
+      for (let i = 0; i < totalPixels; i++) {
+        const i4 = i * 4;
+        const r = data[i4], g = data[i4 + 1], b = data[i4 + 2];
+        luma[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+        sat[i] = Math.max(r, g, b) - Math.min(r, g, b);
+      }
+
+      const sobel = new Float32Array(totalPixels);
+      for (let y = 1; y < H - 1; y++) {
+        for (let x = 1; x < W - 1; x++) {
+          const idx = y * W + x;
+          const gx =
+            -luma[idx - W - 1] + luma[idx - W + 1] -
+            2 * luma[idx - 1] + 2 * luma[idx + 1] -
+            luma[idx + W - 1] + luma[idx + W + 1];
+          const gy =
+            -luma[idx - W - 1] - 2 * luma[idx - W] - luma[idx - W + 1] +
+            luma[idx + W - 1] + 2 * luma[idx + W] + luma[idx + W + 1];
+          sobel[idx] = Math.hypot(gx, gy) / 4.0;
+        }
+      }
+
+      const visited = new Uint8Array(totalPixels);
+      const queue = new Int32Array(totalPixels);
+      let qHead = 0;
+      let qTail = 0;
+
+      // Specjalny tryb dla krag_runiczny.jpg (isGroundCircle = true):
+      // usuwa ciemny wielokąt dookoła kręgu oraz ciemne tło, zostawiając sam rzeźbiony krąg i złote runy
+      if (isGroundCircle) {
+        const cx = W * 0.5;
+        const cy = H * 0.5;
+        const maxRadius = Math.min(W, H) * 0.465;
+
+        for (let y = 0; y < H; y++) {
+          for (let x = 0; x < W; x++) {
+            const idx = y * W + x;
+            const dist = Math.hypot(x - cx, y - cy);
+            const i4 = idx * 4;
+
+            if (dist > maxRadius) {
+              data[i4 + 3] = 0;
+              continue;
+            }
+
+            // Wycięcie ciemnego tła studyjnego wewnątrz i wokół pierścienia runicznego
+            const isDarkBg =
+              sat[idx] < 18 &&
+              Math.abs(luma[idx] - bgLuma) < 26 &&
+              sobel[idx] < 22;
+
+            if (isDarkBg) {
+              data[i4 + 3] = 0;
+            } else {
+              // Miękkie wtopienie zewnętrznego brzegu kręgu
+              const edgeFade = dist > maxRadius * 0.92
+                ? Math.max(0, (maxRadius - dist) / (maxRadius * 0.08))
+                : 1.0;
+              data[i4 + 3] = Math.round(255 * edgeFade);
+            }
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        const texture = new THREE.CanvasTexture(workCanvas);
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.needsUpdate = true;
+        updateLoadingProgress(filename);
+        return { texture, canvas: workCanvas, aspect: W / H };
+      }
+
+      // a) Zewnętrzny Flood-Fill od brzegów obrazu
+      function canFloodExterior(pIdx) {
+        if (sobel[pIdx] > 18) return false;
+        const i4 = pIdx * 4;
+        const colorDist = Math.hypot(data[i4] - bgR, data[i4 + 1] - bgG, data[i4 + 2] - bgB);
+        return colorDist < 16 || (sat[pIdx] < 10 && Math.abs(luma[pIdx] - bgLuma) < 16 && sobel[pIdx] < 14);
+      }
+
+      for (let x = 0; x < W; x++) {
+        const topIdx = x;
+        const botIdx = (H - 1) * W + x;
+        if (canFloodExterior(topIdx)) { visited[topIdx] = 1; queue[qTail++] = topIdx; }
+        if (canFloodExterior(botIdx)) { visited[botIdx] = 1; queue[qTail++] = botIdx; }
+      }
+      for (let y = 1; y < H - 1; y++) {
+        const leftIdx = y * W;
+        const rightIdx = y * W + (W - 1);
+        if (canFloodExterior(leftIdx)) { visited[leftIdx] = 1; queue[qTail++] = leftIdx; }
+        if (canFloodExterior(rightIdx)) { visited[rightIdx] = 1; queue[qTail++] = rightIdx; }
+      }
+
+      while (qHead < qTail) {
+        const curr = queue[qHead++];
+        const cx = curr % W;
+        const cy = (curr / W) | 0;
+
+        if (cx > 0) {
+          const n = curr - 1;
+          if (!visited[n] && canFloodExterior(n)) { visited[n] = 1; queue[qTail++] = n; }
+        }
+        if (cx < W - 1) {
+          const n = curr + 1;
+          if (!visited[n] && canFloodExterior(n)) { visited[n] = 1; queue[qTail++] = n; }
+        }
+        if (cy > 0) {
+          const n = curr - W;
+          if (!visited[n] && canFloodExterior(n)) { visited[n] = 1; queue[qTail++] = n; }
+        }
+        if (cy < H - 1) {
+          const n = curr + W;
+          if (!visited[n] && canFloodExterior(n)) { visited[n] = 1; queue[qTail++] = n; }
+        }
+      }
+
+      // b) SKAN WEWNĘTRZNYCH DZIUR TŁA (Interior Background Keying):
+      // Wykrywa zamknięte szare trójkąty tła między nogami (dolne 45% wysokości) oraz między toporem/ręką a tułowiem
+      const interiorChecked = new Uint8Array(totalPixels);
+      const pocketBuf = new Int32Array(totalPixels);
+
+      function isInteriorStudioGray(idx) {
+        return sat[idx] < 12 && Math.abs(luma[idx] - bgLuma) < 22 && sobel[idx] < 16;
+      }
+
+      for (let y = Math.floor(H * 0.22); y < H - 2; y++) {
+        for (let x = Math.floor(W * 0.15); x < Math.floor(W * 0.85); x++) {
+          const startIdx = y * W + x;
+          if (visited[startIdx] || interiorChecked[startIdx]) continue;
+          if (!isInteriorStudioGray(startIdx)) continue;
+
+          // Zbierz spójną kieszeń wewnętrznego szarego tła
+          let pHead = 0, pTail = 0;
+          interiorChecked[startIdx] = 1;
+          pocketBuf[pTail++] = startIdx;
+
+          let minY = y, maxY = y;
+          let sumSobel = 0;
+
+          while (pHead < pTail) {
+            const curr = pocketBuf[pHead++];
+            const cx = curr % W;
+            const cy = (curr / W) | 0;
+            if (cy < minY) minY = cy;
+            if (cy > maxY) maxY = cy;
+            sumSobel += sobel[curr];
+
+            const neighbors = [curr - 1, curr + 1, curr - W, curr + W];
+            for (let k = 0; k < 4; k++) {
+              const n = neighbors[k];
+              if (n >= 0 && n < totalPixels && !visited[n] && !interiorChecked[n]) {
+                if (isInteriorStudioGray(n)) {
+                  interiorChecked[n] = 1;
+                  pocketBuf[pTail++] = n;
+                }
+              }
+            }
+          }
+
+          const avgSobel = sumSobel / pTail;
+          const inLowerLegsZone = maxY > H * 0.55;
+          // Jeśli kieszeń jest gładką plamą tła studyjnego (np. trójkąt między nogami lub pod pachą/toporem), wytnij ją!
+          if ((inLowerLegsZone && pTail >= 14 && avgSobel < 9.5) || (pTail >= 28 && avgSobel < 8.5)) {
+            for (let i = 0; i < pTail; i++) {
+              visited[pocketBuf[i]] = 1;
+            }
+          }
+        }
+      }
+
+      // c) OBCINACZ CIENIA STUDYJNEGO U DOŁU (dolne 15% obrazu):
+      // Usuwa szare/półprzezroczyste plamy podłogi studyjnej pod stopami Kowala, Stojaka i Kamienia Filozofów
+      const bottomStartY = Math.floor(H * 0.85);
+      for (let y = bottomStartY; y < H; y++) {
+        for (let x = 1; x < W - 1; x++) {
+          const idx = y * W + x;
+          if (visited[idx]) continue;
+
+          const isGrayishShadow =
+            sat[idx] < 16 &&
+            Math.abs(luma[idx] - bgLuma) < 28 &&
+            sobel[idx] < 20;
+
+          if (isGrayishShadow) {
+            visited[idx] = 1;
+          }
+        }
+      }
+
+      // Zastosowanie maski przezroczystości (alpha = 0 dla tła, 255 dla sylwetki)
+      for (let i = 0; i < totalPixels; i++) {
+        data[i * 4 + 3] = visited[i] ? 0 : 255;
+      }
+
+      // Usunięcie pojedynczych wiszących szarych pikseli na obrzeżach wyciętych dziur (1px cleanup + feathering)
+      for (let y = 1; y < H - 1; y++) {
+        for (let x = 1; x < W - 1; x++) {
+          const idx = y * W + x;
+          if (visited[idx]) continue;
+          const emptyCount =
+            visited[idx - 1] + visited[idx + 1] + visited[idx - W] + visited[idx + W];
+          if (emptyCount >= 3) {
+            data[idx * 4 + 3] = 0;
+          } else if (emptyCount === 2) {
+            data[idx * 4 + 3] = 185;
+          }
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+
+      // Wykrycie najniższego twardego piksela butów/podstawy i przesunięcie do linii 0px dołu tekstury
+      let lowestY = H - 1;
+      for (let y = H - 1; y >= 0; y--) {
+        let solidBootPixels = 0;
+        for (let x = Math.floor(W * 0.15); x < Math.floor(W * 0.85); x++) {
+          const idx = y * W + x;
+          if (data[idx * 4 + 3] === 255 && (sobel[idx] > 14 || sat[idx] > 14 || Math.abs(luma[idx] - bgLuma) > 22)) {
+            solidBootPixels++;
+          }
+        }
+        if (solidBootPixels >= 4) {
+          lowestY = y;
+          break;
+        }
+      }
+
+      const outCanvas = document.createElement("canvas");
+      outCanvas.width = W;
+      outCanvas.height = H;
+      const outCtx = outCanvas.getContext("2d");
+      const shiftDown = (H - 1) - lowestY;
+      outCtx.drawImage(workCanvas, 0, shiftDown);
+
+      const texture = new THREE.CanvasTexture(outCanvas);
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.needsUpdate = true;
+
+      updateLoadingProgress(filename);
+      return { texture, canvas: outCanvas, aspect: W / H };
+    }
+
+    function createMirroredAsset(sourceAsset) {
+      const srcCanvas = sourceAsset.canvas;
+      const c = document.createElement("canvas");
+      c.width = srcCanvas.width;
+      c.height = srcCanvas.height;
+      const ctx = c.getContext("2d");
+      ctx.translate(c.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(srcCanvas, 0, 0);
+      const texture = new THREE.CanvasTexture(c);
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.needsUpdate = true;
+      return { texture, canvas: c, aspect: sourceAsset.aspect };
+    }
+
+    // ============================================================================
+    // 3. BEZSZFOWA POSADZKA PORTU (WIELKOFORMATOWE PŁYTY + BŁOTO + KAŁUŻE, ZERO SIATKI!)
+    // ============================================================================
+    async function createSeamlessHarborFloorTexture(filename) {
+      const brukImg = await loadRawImage(filename);
+      const size = 1024;
+
+      const diffCanvas = document.createElement("canvas");
+      diffCanvas.width = size;
+      diffCanvas.height = size;
+      const dCtx = diffCanvas.getContext("2d");
+
+      // a) Duże, masywne płyty kamienne zamiast drobnej kratki
+      dCtx.drawImage(brukImg, 0, 0, size, size);
+
+      const patchCanvas = document.createElement("canvas");
+      patchCanvas.width = 512;
+      patchCanvas.height = 512;
+      const pCtx = patchCanvas.getContext("2d");
+
+      const angles = [0.65, 1.57, 2.35, 3.14, 4.15, 5.2];
+      for (let i = 0; i < 18; i++) {
+        const px = (i * 233) % size;
+        const py = (i * 347) % size;
+        const angle = angles[i % angles.length];
+
+        pCtx.clearRect(0, 0, 512, 512);
+        pCtx.save();
+        pCtx.translate(256, 256);
+        pCtx.rotate(angle);
+        pCtx.drawImage(brukImg, -256, -256, 512, 512);
+        pCtx.restore();
+
+        pCtx.globalCompositeOperation = "destination-in";
+        const grad = pCtx.createRadialGradient(256, 256, 60, 256, 256, 240);
+        grad.addColorStop(0, "rgba(0,0,0,0.92)");
+        grad.addColorStop(0.65, "rgba(0,0,0,0.55)");
+        grad.addColorStop(1, "rgba(0,0,0,0)");
+        pCtx.fillStyle = grad;
+        pCtx.fillRect(0, 0, 512, 512);
+        pCtx.globalCompositeOperation = "source-over";
+
+        // Rysowanie z zawijaniem na krawędziach 1024x1024 dla 100% bezszwowości
+        for (const ox of [-size, 0, size]) {
+          for (const oy of [-size, 0, size]) {
+            dCtx.drawImage(patchCanvas, px - 256 + ox, py - 256 + oy);
+          }
+        }
+      }
+
+      // b) Procedura Multiply/Blend: nieregularne, wielkoformatowe plamy mokrego kamienia, błota i ciemnych spoin
+      dCtx.globalCompositeOperation = "multiply";
+      const mudZones = [
+        { x: 180, y: 220, r: 290, col: "rgba(38, 42, 48, 0.55)" },
+        { x: 740, y: 310, r: 340, col: "rgba(32, 30, 28, 0.52)" },
+        { x: 480, y: 680, r: 360, col: "rgba(30, 36, 44, 0.58)" },
+        { x: 880, y: 820, r: 280, col: "rgba(35, 33, 30, 0.50)" },
+        { x: 140, y: 840, r: 310, col: "rgba(28, 34, 42, 0.54)" }
+      ];
+      for (const m of mudZones) {
+        const g = dCtx.createRadialGradient(m.x, m.y, m.r * 0.15, m.x, m.y, m.r);
+        g.addColorStop(0, m.col);
+        g.addColorStop(1, "rgba(255, 255, 255, 0)");
+        dCtx.fillStyle = g;
+        dCtx.fillRect(0, 0, size, size);
+      }
+      dCtx.globalCompositeOperation = "source-over";
+
+      // Mapa Roughness (lustrzane kałuże odbijające pochodnie i obelisk)
+      const roughCanvas = document.createElement("canvas");
+      roughCanvas.width = size;
+      roughCanvas.height = size;
+      const rCtx = roughCanvas.getContext("2d");
+      rCtx.fillStyle = "rgb(212, 212, 212)";
+      rCtx.fillRect(0, 0, size, size);
+
+      const puddles = [
+        { x: 240, y: 280, r: 175 },
+        { x: 710, y: 230, r: 190 },
+        { x: 510, y: 560, r: 210 },
+        { x: 220, y: 780, r: 165 },
+        { x: 820, y: 740, r: 185 }
+      ];
+
+      for (const p of puddles) {
+        const dGrad = dCtx.createRadialGradient(p.x, p.y, p.r * 0.15, p.x, p.y, p.r);
+        dGrad.addColorStop(0, "rgba(10, 15, 22, 0.52)");
+        dGrad.addColorStop(0.7, "rgba(12, 18, 26, 0.25)");
+        dGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        dCtx.fillStyle = dGrad;
+        dCtx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+
+        const rGrad = rCtx.createRadialGradient(p.x, p.y, p.r * 0.2, p.x, p.y, p.r);
+        rGrad.addColorStop(0, "rgb(20, 20, 20)");
+        rGrad.addColorStop(0.65, "rgb(38, 38, 38)");
+        rGrad.addColorStop(1, "rgba(212, 212, 212, 0)");
+        rCtx.fillStyle = rGrad;
+        rCtx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+      }
+
+      // Niska powtarzalność (3.2 x 3.2) = masywne płyty portowe, zero efektu kafelków łazienkowych!
+      const diffuseTex = new THREE.CanvasTexture(diffCanvas);
+      diffuseTex.wrapS = THREE.RepeatWrapping;
+      diffuseTex.wrapT = THREE.RepeatWrapping;
+      diffuseTex.repeat.set(3.2, 3.2);
+
+      const roughTex = new THREE.CanvasTexture(roughCanvas);
+      roughTex.wrapS = THREE.RepeatWrapping;
+      roughTex.wrapT = THREE.RepeatWrapping;
+      roughTex.repeat.set(3.2, 3.2);
+
+      // Osobna tekstura kamiennego muru z bruk.jpg dla murów oporowych, filarów i schodów
+      const wallTex = new THREE.CanvasTexture(diffCanvas);
+      wallTex.wrapS = THREE.RepeatWrapping;
+      wallTex.wrapT = THREE.RepeatWrapping;
+      wallTex.repeat.set(2.5, 0.85);
+
+      updateLoadingProgress(filename);
+      return { diffuseTex, roughTex, wallTex };
+    }
+
+    async function loadWoodPierTexture(filename) {
+      const img = await loadRawImage(filename);
+      const tex = new THREE.Texture(img);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(3, 1);
+      tex.needsUpdate = true;
+      updateLoadingProgress(filename);
+      return tex;
+    }
+
+    async function loadAllAssets() {
+      const spriteFiles = [
+        "wiking_przod.jpg", "wiking_tyl.jpg", "wiking_prawo.jpg", "wiking_lewo.jpg",
+        "zabojca_przod.jpg", "zabojca_tyl.jpg",
+        "guslarz_przod.jpg", "guslarz_tyl.jpg",
+        "wrozbita_przod.jpg", "wrozbita_tyl.jpg",
+        "kamien_filozofow.jpg",
+        "kowal_borgar.jpg", "kuznia_piec.jpg", "stojak_broni.jpg", "straznik_vorn.jpg", "handlarz_kraal.jpg",
+        "wrog_tarczownik.jpg", "wrog_ogar.jpg", "boss1_latarnik.jpg", "boss2_bracia.jpg", "boss3_lalkarz.jpg"
+      ];
+
+      const tasks = spriteFiles.map(async (f) => {
+        try {
+          ASSETS[f] = await loadAndKeyOutSprite(f, false);
+        } catch (err) {
+          updateLoadingProgress(f);
+        }
+      });
+
+      tasks.push((async () => {
+        try {
+          ASSETS["krag_runiczny.jpg"] = await loadAndKeyOutSprite("krag_runiczny.jpg", true);
+        } catch (err) {
+          updateLoadingProgress("krag_runiczny.jpg");
+        }
+      })());
+
+      tasks.push((async () => {
+        try {
+          ASSETS["bruk.jpg"] = await createSeamlessHarborFloorTexture("bruk.jpg");
+        } catch (err) {
+          updateLoadingProgress("bruk.jpg");
+        }
+      })());
+
+      tasks.push((async () => {
+        try {
+          ASSETS["pomost.jpg"] = await loadWoodPierTexture("pomost.jpg");
+        } catch (err) {
+          updateLoadingProgress("pomost.jpg");
+        }
+      })());
+
+      await Promise.allSettled(tasks);
+
+      const baseViking = ASSETS["wiking_przod.jpg"];
+      if (baseViking) {
+        if (!ASSETS["wiking_prawo.jpg"]) {
+          ASSETS["wiking_prawo.jpg"] = baseViking;
+        }
+        if (!ASSETS["wiking_lewo.jpg"]) {
+          ASSETS["wiking_lewo.jpg"] = ASSETS["wiking_prawo.jpg"] !== baseViking
+            ? createMirroredAsset(ASSETS["wiking_prawo.jpg"])
+            : createMirroredAsset(baseViking);
+        }
+        if (!ASSETS["wiking_tyl.jpg"]) {
+          ASSETS["wiking_tyl.jpg"] = baseViking;
+        }
+      }
+
+      const anySprite = baseViking || Object.values(ASSETS).find((v) => v && v.texture);
+      for (const f of spriteFiles) {
+        if (!ASSETS[f] && anySprite) {
+          const frontKey = f.replace("_tyl.jpg", "_przod.jpg");
+          ASSETS[f] = ASSETS[frontKey] || anySprite;
+        }
+      }
+    }
+
+    // ============================================================================
+    // 2. SYSTEM MARIONETKI KOSTNEJ 2.5D — 4-CZĘŚCIOWY RIG ANATOMICZNY
+    // ============================================================================
+    function createSlicedUVPlane(width, height, uMin, uMax, vMin, vMax, pivotX, pivotY) {
+      const sliceW = width * (uMax - uMin);
+      const sliceH = height * (vMax - vMin);
+      const geo = new THREE.PlaneGeometry(sliceW, sliceH, 2, 2);
+
+      // Przesunięcie geometrii względem punktu obrotu (Pivotu stawu biodrowego / barkowego)
+      const centerX = ((uMin + uMax) * 0.5 - 0.5) * width;
+      const centerY = ((vMin + vMax) * 0.5) * height;
+      geo.translate(centerX - pivotX, centerY - pivotY, 0);
+
+      const uvs = geo.attributes.uv;
+      for (let i = 0; i < uvs.count; i++) {
+        const u = uvs.getX(i);
+        const v = uvs.getY(i);
+        uvs.setXY(i, uMin + u * (uMax - uMin), vMin + v * (vMax - vMin));
+      }
+      uvs.needsUpdate = true;
+      return geo;
+    }
+
+    function createArticulatedCharacterRig(initialTexture, width, height) {
+      const rootGroup = new THREE.Group();
+      // Nachylenie całego Rigu pod kamerę izometryczną 55°
+      rootGroup.rotation.x = -0.32;
+
+      function makePartMaterial(zBias = 0) {
+        return new THREE.MeshStandardMaterial({
+          map: initialTexture,
+          emissive: 0xffffff,
+          emissiveMap: initialTexture,
+          emissiveIntensity: 0.85,
+          roughness: 0.4,
+          metalness: 0.1,
+          transparent: true,
+          alphaTest: 0.15,
+          side: THREE.DoubleSide,
+          polygonOffset: zBias !== 0,
+          polygonOffsetFactor: zBias
+        });
+      }
+
+      const hipY = height * 0.42;
+      const leftHipX = -width * 0.09;
+      const rightHipX = width * 0.09;
+
+      // a) leftLegMesh (wycinek UV lewej nogi od biodra w dół: v: 0.0..0.44, u: 0.25..0.52)
+      const leftLegPivot = new THREE.Group();
+      leftLegPivot.position.set(leftHipX, hipY, 0.02);
+      const leftLegGeo = createSlicedUVPlane(width, height, 0.22, 0.52, 0.0, 0.44, leftHipX, hipY);
+      const leftLegMat = makePartMaterial(-1);
+      const leftLegMesh = new THREE.Mesh(leftLegGeo, leftLegMat);
+      leftLegPivot.add(leftLegMesh);
+      rootGroup.add(leftLegPivot);
+
+      // b) rightLegMesh (wycinek UV prawej nogi od biodra w dół: v: 0.0..0.44, u: 0.48..0.75)
+      const rightLegPivot = new THREE.Group();
+      rightLegPivot.position.set(rightHipX, hipY, -0.02);
+      const rightLegGeo = createSlicedUVPlane(width, height, 0.48, 0.78, 0.0, 0.44, rightHipX, hipY);
+      const rightLegMat = makePartMaterial(1);
+      const rightLegMesh = new THREE.Mesh(rightLegGeo, rightLegMat);
+      rightLegPivot.add(rightLegMesh);
+      rootGroup.add(rightLegPivot);
+
+      // c) torsoHeadMesh (górne 62% postaci: tułów, głowa, płaszcz v: 0.38..1.0)
+      const torsoPivot = new THREE.Group();
+      torsoPivot.position.set(0, hipY, 0.04);
+      const torsoGeo = createSlicedUVPlane(width, height, 0.0, 0.72, 0.38, 1.0, 0, hipY);
+      const torsoMat = makePartMaterial(-2);
+      const torsoHeadMesh = new THREE.Mesh(torsoGeo, torsoMat);
+      torsoPivot.add(torsoHeadMesh);
+
+      // d) weaponArmPivot (ramię z toporem / bronią osadzone na barku tułowia)
+      const shoulderX = width * 0.16;
+      const shoulderY = height * 0.66;
+      const weaponArmPivot = new THREE.Group();
+      weaponArmPivot.position.set(shoulderX, shoulderY - hipY, 0.05);
+      const weaponGeo = createSlicedUVPlane(width, height, 0.56, 1.0, 0.36, 0.98, shoulderX, shoulderY);
+      const weaponMat = makePartMaterial(-3);
+      const weaponArmMesh = new THREE.Mesh(weaponGeo, weaponMat);
+      weaponArmPivot.add(weaponArmMesh);
+      torsoPivot.add(weaponArmPivot);
+
+      rootGroup.add(torsoPivot);
+
+      return {
+        group: rootGroup,
+        leftLegPivot,
+        rightLegPivot,
+        torsoPivot,
+        weaponArmPivot,
+        leftLegMesh,
+        rightLegMesh,
+        torsoHeadMesh,
+        weaponArmMesh,
+        materials: [leftLegMat, rightLegMat, torsoMat, weaponMat],
+        hipY,
+        height,
+        width
+      };
+    }
+
+    function setRigTexture(rig, texture) {
+      if (!texture) return;
+      for (const m of rig.materials) {
+        if (m.map !== texture) {
+          m.map = texture;
+          m.emissiveMap = texture;
+          m.needsUpdate = true;
+        }
+      }
+    }
+
+    function setRigTint(rig, hexColor) {
+      for (const m of rig.materials) {
+        m.color.setHex(hexColor);
+      }
+    }
+
+    // Animacja 4-częściowego Rigu Anatomicznego (nożycowy wykrok nóg, unoszenie tułowia, zamach bronią)
+    function animateCharacterRig(rig, isMoving, walkPhase, attackProgress, elapsed, isSideView = false) {
+      if (isMoving) {
+        const s1 = Math.sin(walkPhase);
+        const s2 = Math.sin(walkPhase + Math.PI); // Przeciwfaza prawej nogi
+        const lift1 = Math.max(0, Math.cos(walkPhase));
+        const lift2 = Math.max(0, Math.cos(walkPhase + Math.PI));
+
+        // Nożycowy ruch kroczących nóg (wykrok przód/tył + zginanie w poziomie + unoszenie stopy)
+        rig.leftLegPivot.rotation.x = s1 * 0.58;
+        rig.rightLegPivot.rotation.x = s2 * 0.58;
+
+        rig.leftLegPivot.rotation.z = s1 * (isSideView ? 0.34 : 0.16);
+        rig.rightLegPivot.rotation.z = s2 * (isSideView ? 0.34 : 0.16);
+
+        rig.leftLegPivot.position.y = rig.hipY + lift1 * 0.24;
+        rig.rightLegPivot.position.y = rig.hipY + lift2 * 0.24;
+
+        rig.leftLegPivot.position.z = 0.02 + s1 * 0.26;
+        rig.rightLegPivot.position.z = -0.02 + s2 * 0.26;
+
+        // Rytmiczne unoszenie i opadanie tułowia przy każdym kroku + pochylenie w biegu
+        const bob = Math.abs(Math.sin(walkPhase)) * 0.14;
+        rig.torsoPivot.position.y = rig.hipY + bob;
+        rig.torsoPivot.rotation.z = Math.sin(walkPhase) * 0.045;
+        rig.torsoPivot.rotation.x = 0.08;
+
+        // Kołysanie ramienia z bronią podczas marszu
+        if (attackProgress <= 0) {
+          rig.weaponArmPivot.rotation.z = -Math.sin(walkPhase) * 0.22;
+          rig.weaponArmPivot.rotation.x = Math.cos(walkPhase) * 0.15;
+        }
+      } else {
+        // Pozycja spoczynkowa z oddechem
+        rig.leftLegPivot.rotation.set(0, 0, 0);
+        rig.rightLegPivot.rotation.set(0, 0, 0);
+        rig.leftLegPivot.position.set(-rig.width * 0.09, rig.hipY, 0.02);
+        rig.rightLegPivot.position.set(rig.width * 0.09, rig.hipY, -0.02);
+
+        const breath = Math.sin(elapsed * 2.7) * 0.04;
+        rig.torsoPivot.position.y = rig.hipY + breath;
+        rig.torsoPivot.rotation.set(0, 0, 0);
+
+        if (attackProgress <= 0) {
+          rig.weaponArmPivot.rotation.set(0, 0, Math.sin(elapsed * 2.7) * 0.04);
+        }
+      }
+
+      // Pełny, mięsisty zamach ramienia z bronią z góry na dół podczas ataku
+      if (attackProgress > 0) {
+        const swingArc = Math.sin(attackProgress * Math.PI);
+        rig.weaponArmPivot.rotation.z = -swingArc * 1.15;
+        rig.weaponArmPivot.rotation.x = swingArc * 0.65;
+        rig.torsoPivot.rotation.z = -swingArc * 0.14;
+      }
+    }
+
+    // ============================================================================
+    // KONFIGURACJA ŚWIATA 3D, KAMERY IZOMETRYCZNEJ 55° I NAVMESH
+    // ============================================================================
+    const canvas = document.getElementById("game-canvas");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x06080c);
+    scene.fog = new THREE.FogExp2(0x080b10, 0.009);
+
+    const CAMERA_FOV = 30;
+    const CAMERA_PITCH = (55 * Math.PI) / 180;
+    const CAMERA_DIST = 38;
+    const camera = new THREE.PerspectiveCamera(CAMERA_FOV, window.innerWidth / window.innerHeight, 0.5, 240);
+
+    const CAM_BOUNDS = {
+      minX: -24, maxX: 24,
+      minZ: -76, maxZ: 15
+    };
+
+    // 4. PRZYBLIŻONE ZACHODNIE NABRZEŻE (x = -11.5):
+    // Stojąc przy Kamieniu Filozofów (0,0,0), gracz od razu widzi po lewej falujące morze, pianę i 2 pomosty!
+    const OBSTACLES = [
+      { x: 0, z: 0, r: 1.85, name: "Kamień Filozofów" },
+      { x: 13.8, z: -3.2, r: 3.1, name: "Piec Kuźni" },
+      { x: 8.6, z: -1.2, r: 1.2, name: "Kowal Borgar" },
+      { x: 11.4, z: 3.8, r: 1.25, name: "Stojak Zbrojmistrza" },
+      { x: -3.4, z: -15.6, r: 1.2, name: "Strażnik Vorn" },
+      { x: -8.2, z: 2.2, r: 1.2, name: "Handlarz Kraal" },
+      // Kosze pochodni na pomostach i przy schodach
+      { x: -11.5, z: -8.6, r: 0.55 },
+      { x: -11.5, z: -4.4, r: 0.55 },
+      { x: -25.2, z: -8.6, r: 0.55 },
+      { x: -25.2, z: -4.4, r: 0.55 },
+      { x: -11.5, z: 4.4, r: 0.55 },
+      { x: -11.5, z: 8.6, r: 0.55 },
+      { x: -25.2, z: 4.4, r: 0.55 },
+      { x: -25.2, z: 8.6, r: 0.55 },
+      { x: -4.8, z: -18.2, r: 0.65 },
+      { x: 4.8, z: -18.2, r: 0.65 }
+    ];
+
+    function isInsideWalkableRegion(x, z) {
+      // 1. Główny plac Popielnej Przystani (zachodnie nabrzeże przy x = -11.2, wschodnie przy x = +19.0)
+      if (x >= -11.2 && x <= 19.0 && z >= -18.0 && z <= 18.0) return true;
+      // 2. Północno-zachodni drewniany pomost (do samego końca!)
+      if (x >= -25.8 && x <= -10.8 && z >= -8.1 && z <= -4.9) return true;
+      // 3. Południowo-zachodni drewniany pomost (do samego końca!)
+      if (x >= -25.8 && x <= -10.8 && z >= 4.9 && z <= 8.1) return true;
+      // 4. Północne kamienne schody i most na Przedmurze
+      if (x >= -4.1 && x <= 4.1 && z >= -34.5 && z <= -17.5) return true;
+      // 5. Przedmurze
+      if (x >= -17.5 && x <= 17.5 && z >= -55.5 && z <= -34.0) return true;
+      // 6. Arena Bossa 1 (Zachodnia - Latarnik)
+      if (x >= -35.5 && x <= -17.0 && z >= -51.5 && z <= -38.5) return true;
+      // 7. Arena Bossa 2 (Wschodnia - Bracia)
+      if (x >= 17.0 && x <= 35.5 && z >= -51.5 && z <= -38.5) return true;
+      // 8. Most północny i Arena Bossa 3 (Cytadela Lalkarza)
+      if (x >= -3.8 && x <= 3.8 && z >= -61.0 && z <= -55.0) return true;
+      if (x >= -13.5 && x <= 13.5 && z >= -81.5 && z <= -60.5) return true;
+      return false;
+    }
+
+    function isWalkable(x, z, radius = 0.48) {
+      if (!isInsideWalkableRegion(x, z)) return false;
+      if (
+        !isInsideWalkableRegion(x - radius * 0.6, z) ||
+        !isInsideWalkableRegion(x + radius * 0.6, z) ||
+        !isInsideWalkableRegion(x, z - radius * 0.6) ||
+        !isInsideWalkableRegion(x, z + radius * 0.6)
+      ) {
+        return false;
+      }
+      for (let i = 0; i < OBSTACLES.length; i++) {
+        const ob = OBSTACLES[i];
+        const dx = x - ob.x;
+        const dz = z - ob.z;
+        const minDist = ob.r + radius;
+        if (dx * dx + dz * dz < minDist * minDist) return false;
+      }
+      return true;
+    }
+
+    function moveWithWallSliding(x, z, vx, vz, dt) {
+      const targetX = x + vx * dt;
+      const targetZ = z + vz * dt;
+      if (isWalkable(targetX, targetZ)) {
+        return { x: targetX, z: targetZ, moved: true };
+      }
+      if (Math.abs(vx) > 0.001 && isWalkable(targetX, z)) {
+        return { x: targetX, z: z, moved: true };
+      }
+      if (Math.abs(vz) > 0.001 && isWalkable(x, targetZ)) {
+        return { x: x, z: targetZ, moved: true };
+      }
+      const baseAngle = Math.atan2(vz, vx);
+      const speed = Math.hypot(vx, vz) * 0.78;
+      const offsets = [0.45, -0.45, 0.85, -0.85, 1.2, -1.2];
+      for (let i = 0; i < offsets.length; i++) {
+        const ang = baseAngle + offsets[i];
+        const nx = x + Math.cos(ang) * speed * dt;
+        const nz = z + Math.sin(ang) * speed * dt;
+        if (isWalkable(nx, nz)) {
+          return { x: nx, z: nz, moved: true };
+        }
+      }
+      return { x, z, moved: false };
+    }
+
+    // ============================================================================
+    // 5. CIENIE KONTAKTOWE AO (rgba(0,0,0,0.85) W ŚRODKU -> rgba(0,0,0,0))
+    // ============================================================================
+    let seaGeo = null;
+    let foamRings = [];
+    let torchFlames = [];
+    let forgeSparks = null;
+    let navMeshDebugGroup = null;
+    let xrayTargets = [];
+
+    function createContactShadowTexture() {
+      const c = document.createElement("canvas");
+      c.width = 128;
+      c.height = 128;
+      const ctx = c.getContext("2d");
+      const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 62);
+      g.addColorStop(0, "rgba(0, 0, 0, 0.85)");
+      g.addColorStop(0.45, "rgba(0, 0, 0, 0.58)");
+      g.addColorStop(0.75, "rgba(0, 0, 0, 0.22)");
+      g.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 128, 128);
+      return new THREE.CanvasTexture(c);
+    }
+    const contactShadowTex = createContactShadowTexture();
+
+    function addContactShadow(parentOrScene, x, z, scaleX, scaleZ) {
+      const geo = new THREE.PlaneGeometry(scaleX, scaleZ);
+      geo.rotateX(-Math.PI / 2);
+      const mat = new THREE.MeshBasicMaterial({
+        map: contactShadowTex,
+        transparent: true,
+        depthWrite: false
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, 0.016, z);
+      parentOrScene.add(mesh);
+      return mesh;
+    }
+
+    // ============================================================================
+    // 4. BUDOWA ŚWIATA 3D (OTEKSTUROWANE MURY Z BRUK.JPG, WIDOCZNE MORZE I POMOSTY)
+    // ============================================================================
+    function buildWorldEnvironment() {
+      const ambientLight = new THREE.AmbientLight(0x70809c, 0.95);
+      scene.add(ambientLight);
+
+      const moonDirLight = new THREE.DirectionalLight(0xa4c0e8, 0.88);
+      moonDirLight.position.set(-25, 45, 25);
+      scene.add(moonDirLight);
+
+      const cobbleData = ASSETS["bruk.jpg"];
+      const cobbleMat = new THREE.MeshStandardMaterial({
+        map: cobbleData ? cobbleData.diffuseTex : null,
+        roughnessMap: cobbleData ? cobbleData.roughTex : null,
+        roughness: 0.78,
+        metalness: 0.16
+      });
+
+      // Mury oporowe, filary, schody i balustrady pokryte ciemną teksturą kamiennego muru z bruk.jpg
+      const stoneWallMat = new THREE.MeshStandardMaterial({
+        map: cobbleData ? cobbleData.wallTex : null,
+        roughnessMap: cobbleData ? cobbleData.roughTex : null,
+        color: 0x6c727e,
+        roughness: 0.84,
+        metalness: 0.18
+      });
+      const corniceMat = new THREE.MeshStandardMaterial({
+        map: cobbleData ? cobbleData.wallTex : null,
+        color: 0x868d9c,
+        roughness: 0.72,
+        metalness: 0.22
+      });
+
+      // 1. GŁÓWNY PLAC POPIELNEJ PRZYSTANI (X od -11.8 do +19.8 -> środek X = +4.0, szer. 31.6, głęb. 38.0)
+      // Dzięki temu zachodnie nabrzeże i morze leżą przy X = -11.8, tuż obok Kamienia Filozofów i Kraala!
+      const plazaGeo = new THREE.PlaneGeometry(31.6, 38.0);
+      plazaGeo.rotateX(-Math.PI / 2);
+      const plazaMesh = new THREE.Mesh(plazaGeo, cobbleMat);
+      plazaMesh.position.set(4.0, 0, 0);
+      scene.add(plazaMesh);
+
+      function addRetainingWall(x, y, z, w, h, d) {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), stoneWallMat);
+        wall.position.set(x, y, z);
+        scene.add(wall);
+
+        const cornice = new THREE.Mesh(new THREE.BoxGeometry(w + 0.38, 0.42, d + 0.38), corniceMat);
+        cornice.position.set(x, y + h / 2 + 0.08, z);
+        scene.add(cornice);
+      }
+
+      // Oteksturowane kamienne mury oporowe wokół placu
+      addRetainingWall(4.0, -1.6, 19.3, 32.8, 3.6, 1.3);     // Południowe nabrzeże
+      addRetainingWall(20.1, -1.6, 0, 1.3, 3.6, 39.4);       // Wschodni mur za kuźnią
+      addRetainingWall(-12.1, -1.6, 0, 1.3, 3.6, 39.4);      // Zachodnie nabrzeże portowe (widoczne z centrum!)
+      addRetainingWall(-8.2, -1.6, -19.3, 8.2, 3.6, 1.3);    // Północno-Zachodni mur przy schodach
+      addRetainingWall(12.2, -1.6, -19.3, 16.2, 3.6, 1.3);   // Północno-Wschodni mur przy schodach
+
+      // Oteksturowane narożne filary i filary przy pomostach/schodach
+      const pillarPositions = [
+        [-12.1, 19.2], [20.1, 19.2], [-12.1, -19.2], [20.1, -19.2],
+        [-4.5, -19.2], [4.5, -19.2],
+        [-12.1, -8.8], [-12.1, -4.2],
+        [-12.1, 4.2], [-12.1, 8.8]
+      ];
+      for (const [px, pz] of pillarPositions) {
+        const pillar = new THREE.Mesh(new THREE.BoxGeometry(1.75, 4.6, 1.75), corniceMat);
+        pillar.position.set(px, -1.05, pz);
+        scene.add(pillar);
+        const cap = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.38, 2.15), stoneWallMat);
+        cap.position.set(px, 1.32, pz);
+        scene.add(cap);
+      }
+
+      // Żeliwne pachołki cumownicze wzdłuż zachodniego nabrzeża
+      const bollardCoords = [
+        [-11.3, -14.0], [-11.3, -1.2], [-11.3, 1.5], [-11.3, 12.0], [-11.3, 16.5],
+        [-6.0, 18.5], [2.0, 18.5], [10.0, 18.5]
+      ];
+      const bollardMat = new THREE.MeshStandardMaterial({ color: 0x22262e, roughness: 0.45, metalness: 0.65 });
+      for (const [bx, bz] of bollardCoords) {
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.36, 0.78, 10), bollardMat);
+        base.position.set(bx, 0.38, bz);
+        scene.add(base);
+        const top = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.28, 0.24, 10), bollardMat);
+        top.position.set(bx, 0.82, bz);
+        scene.add(top);
+      }
+
+      // Oteksturowane skały nadbrzeżne schodzące do wzburzonego morza
+      const rockMat = new THREE.MeshStandardMaterial({
+        map: cobbleData ? cobbleData.wallTex : null,
+        color: 0x454c59,
+        roughness: 0.88
+      });
+      const rockGeo = new THREE.DodecahedronGeometry(1.75, 1);
+      const rockRingCoords = [
+        [-14.2, -16], [-14.6, -11.5], [-14.0, -1.5], [-14.4, 2.2], [-14.2, 11.5], [-14.5, 17],
+        [-19.5, -9.2], [-19.5, 9.2], [-27.2, -6.5], [-27.2, 6.5],
+        [-8, 21.5], [0, 21.8], [9, 21.5], [17, 21.2],
+        [-9, -21.5], [11, -21.5]
+      ];
+      for (let i = 0; i < rockRingCoords.length; i++) {
+        const [rx, rz] = rockRingCoords[i];
+        const rock = new THREE.Mesh(rockGeo, rockMat);
+        rock.position.set(rx, -1.35 - (i % 3) * 0.2, rz);
+        rock.scale.set(1.25 + (i % 3) * 0.35, 0.85, 1.15 + (i % 2) * 0.45);
+        rock.rotation.set(i * 0.7, i * 1.1, 0);
+        scene.add(rock);
+
+        const foamGeo = new THREE.RingGeometry(1.55, 2.55, 20);
+        foamGeo.rotateX(-Math.PI / 2);
+        const foamMat = new THREE.MeshBasicMaterial({
+          color: 0xd8ecfa,
+          transparent: true,
+          opacity: 0.42,
+          depthWrite: false
+        });
+        const foam = new THREE.Mesh(foamGeo, foamMat);
+        foam.position.set(rx, -1.42, rz);
+        scene.add(foam);
+        foamRings.push({ mesh: foam, phase: i * 0.65 });
+      }
+
+      // 3. WZBURZONE MORZE Z ANIMOWANYMI FALAMI 3D I BIAŁĄ PIANĄ PRZY NABRZEŻU
+      seaGeo = new THREE.PlaneGeometry(240, 240, 96, 96);
+      seaGeo.rotateX(-Math.PI / 2);
+      const seaMat = new THREE.MeshStandardMaterial({
+        color: 0x0c2233,
+        emissive: 0x05111c,
+        roughness: 0.14,
+        metalness: 0.72
+      });
+      const seaMesh = new THREE.Mesh(seaGeo, seaMat);
+      seaMesh.position.set(-10, -1.48, -20);
+      scene.add(seaMesh);
+
+      // Światło księżycowe odbijające się bezpośrednio w falach zachodniego morza
+      const seaMoonLight = new THREE.PointLight(0x6da8e5, 1.8, 45, 1.5);
+      seaMoonLight.position.set(-22, 10, 0);
+      scene.add(seaMoonLight);
+
+      // Pas białej piany morskiej rozbijającej się bezpośrednio o zachodnie kamienne nabrzeże (x = -12.8)
+      for (let i = 0; i < 3; i++) {
+        const waveLineGeo = new THREE.PlaneGeometry(1.35 - i * 0.25, 39.5);
+        waveLineGeo.rotateX(-Math.PI / 2);
+        const waveLineMat = new THREE.MeshBasicMaterial({
+          color: 0xe2f2ff,
+          transparent: true,
+          opacity: 0.48 - i * 0.12,
+          depthWrite: false
+        });
+        const waveLine = new THREE.Mesh(waveLineGeo, waveLineMat);
+        waveLine.position.set(-12.9 - i * 0.9, -1.41 + i * 0.01, 0);
+        scene.add(waveLine);
+        foamRings.push({
+          mesh: waveLine,
+          baseX: -12.9 - i * 0.9,
+          phase: i * 1.4,
+          isQuayBreaker: true
+        });
+      }
+
+      // 4. DWA DREWNIANE POMOSTY PO LEWEJ STRONIE (pokryte pomost.jpg + drewniane odbojnice i pale)
+      const pierMat = new THREE.MeshStandardMaterial({
+        map: ASSETS["pomost.jpg"],
+        roughness: 0.76,
+        metalness: 0.08
+      });
+      const pierFenderMat = new THREE.MeshStandardMaterial({
+        map: ASSETS["pomost.jpg"],
+        color: 0x8c7355,
+        roughness: 0.82
+      });
+
+      function buildWoodenPier(zCenter) {
+        // Pokład pomostu od X = -11.5 do X = -26.2
+        const deck = new THREE.Mesh(new THREE.BoxGeometry(15.0, 0.34, 3.8), pierMat);
+        deck.position.set(-18.8, -0.04, zCenter);
+        scene.add(deck);
+
+        // Drewniane odbojnice boczne (curbs) z teksturą pomost.jpg
+        const curbNorth = new THREE.Mesh(new THREE.BoxGeometry(15.0, 0.26, 0.28), pierFenderMat);
+        curbNorth.position.set(-18.8, 0.22, zCenter - 1.82);
+        scene.add(curbNorth);
+
+        const curbSouth = new THREE.Mesh(new THREE.BoxGeometry(15.0, 0.26, 0.28), pierFenderMat);
+        curbSouth.position.set(-18.8, 0.22, zCenter + 1.82);
+        scene.add(curbSouth);
+
+        // Drewniane pale wbite w dno morskie
+        const postXs = [-13.5, -17.0, -21.0, -25.2];
+        for (const px of postXs) {
+          for (const side of [-1.88, 1.88]) {
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 3.4, 10), pierFenderMat);
+            post.position.set(px, -0.85, zCenter + side);
+            scene.add(post);
+          }
+        }
+
+        // Kosze pochodni na wejściu i na końcu każdego pomostu
+        createTorchBrazier(-11.5, zCenter - 2.1);
+        createTorchBrazier(-11.5, zCenter + 2.1);
+        createTorchBrazier(-25.2, zCenter - 2.0);
+        createTorchBrazier(-25.2, zCenter + 2.0);
+      }
+
+      buildWoodenPier(-6.5); // Pomost Północno-Zachodni
+      buildWoodenPier(6.5);  // Pomost Południowo-Zachodni
+
+      // 5. OTEKSTUROWANE PÓŁNOCNE KAMIENNE SCHODY, MOST, PRZEDMURZE I 3 ARENY BOSSÓW
+      for (let i = 0; i < 6; i++) {
+        const step = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.28, 1.05), corniceMat);
+        step.position.set(0, 0.02 + (i % 2) * 0.02, -18.5 - i * 0.9);
+        scene.add(step);
+      }
+      const northBridge = new THREE.Mesh(new THREE.BoxGeometry(8.8, 1.6, 11.5), cobbleMat);
+      northBridge.position.set(0, -0.78, -28.8);
+      scene.add(northBridge);
+
+      // Oteksturowane kamienne balustrady mostu
+      addRetainingWall(-4.5, 0.35, -28.5, 0.65, 0.95, 11.5);
+      addRetainingWall(4.5, 0.35, -28.5, 0.65, 0.95, 11.5);
+      createTorchBrazier(-4.8, -18.2);
+      createTorchBrazier(4.8, -18.2);
+      createTorchBrazier(-4.5, -33.8);
+      createTorchBrazier(4.5, -33.8);
+
+      const forewallFloor = new THREE.Mesh(new THREE.BoxGeometry(36, 2.8, 22), cobbleMat);
+      forewallFloor.position.set(0, -1.4, -45);
+      scene.add(forewallFloor);
+      addRetainingWall(0, -1.2, -56.2, 36.6, 3.0, 0.9);
+
+      const arena1Floor = new THREE.Mesh(new THREE.BoxGeometry(19, 2.8, 14), cobbleMat);
+      arena1Floor.position.set(-27.0, -1.4, -45);
+      scene.add(arena1Floor);
+      createTorchBrazier(-20.0, -40.0);
+      createTorchBrazier(-20.0, -50.0);
+
+      const arena2Floor = new THREE.Mesh(new THREE.BoxGeometry(19, 2.8, 14), cobbleMat);
+      arena2Floor.position.set(27.0, -1.4, -45);
+      scene.add(arena2Floor);
+      createTorchBrazier(20.0, -40.0);
+      createTorchBrazier(20.0, -50.0);
+
+      const bossBridge = new THREE.Mesh(new THREE.BoxGeometry(8.0, 2.4, 7.0), cobbleMat);
+      bossBridge.position.set(0, -1.2, -58.0);
+      scene.add(bossBridge);
+
+      const arena3Floor = new THREE.Mesh(new THREE.BoxGeometry(28, 3.0, 22), cobbleMat);
+      arena3Floor.position.set(0, -1.5, -71.0);
+      scene.add(arena3Floor);
+      createTorchBrazier(-4.2, -60.5);
+      createTorchBrazier(4.2, -60.5);
+    }
+
+    function createTorchBrazier(x, z) {
+      const ironMat = new THREE.MeshStandardMaterial({ color: 0x1c1e24, roughness: 0.5, metalness: 0.7 });
+      const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.22, 1.55, 8), ironMat);
+      stand.position.set(x, 0.77, z);
+      scene.add(stand);
+
+      const basket = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.18, 0.42, 8), ironMat);
+      basket.position.set(x, 1.62, z);
+      scene.add(basket);
+
+      const light = new THREE.PointLight(0xff7b24, 1.75, 15, 2);
+      light.position.set(x, 2.2, z);
+      scene.add(light);
+
+      const particles = [];
+      const pGeo = new THREE.OctahedronGeometry(0.11, 0);
+      for (let i = 0; i < 9; i++) {
+        const pMat = new THREE.MeshBasicMaterial({
+          color: i % 2 === 0 ? 0xffae34 : 0xff4d12,
+          transparent: true,
+          opacity: 0.9
+        });
+        const p = new THREE.Mesh(pGeo, pMat);
+        p.position.set(x, 1.85 + Math.random() * 0.5, z);
+        scene.add(p);
+        particles.push({
+          mesh: p,
+          baseX: x,
+          baseZ: z,
+          phase: Math.random() * Math.PI * 2,
+          speed: 1.4 + Math.random() * 1.2
+        });
+      }
+
+      torchFlames.push({ light, particles, baseIntensity: 1.75, phase: Math.random() * 10 });
+    }
+
+    // ============================================================================
+    // ROZMIESZCZENIE OBIEKTÓW, NPC I WROGÓW (Z GŁĘBOKIMI CIENIAMI KONTAKTOWYMI AO)
+    // ============================================================================
+    const INTERACTABLES = [];
+    const ENEMIES = [];
+    const HOVER_MESHES = [];
+    let kowalMeshObj = null;
+
+    function createBillboardSprite25D(assetKey, width, height, x, z, opts = {}) {
+      const asset = ASSETS[assetKey];
+      const tex = asset ? asset.texture : null;
+      const segX = opts.segX || 1;
+      const segY = opts.segY || 1;
+      const geo = new THREE.PlaneGeometry(width, height, segX, segY);
+      geo.translate(0, height / 2, 0);
+
+      const mat = new THREE.MeshStandardMaterial({
+        map: tex,
+        emissive: 0xffffff,
+        emissiveMap: tex,
+        emissiveIntensity: 0.85,
+        roughness: 0.4,
+        metalness: 0.08,
+        transparent: true,
+        alphaTest: 0.15,
+        side: THREE.DoubleSide
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, opts.yOffset || 0, z);
+      mesh.rotation.x = -0.32;
+      scene.add(mesh);
+
+      if (!opts.noShadow) {
+        addContactShadow(scene, x, z + 0.08, opts.shadowW || width * 0.88, opts.shadowD || width * 0.52);
+      }
+
+      return { mesh, geo, mat };
+    }
+
+    function populateWorldObjects() {
+      // 1d) KRĄG RUNICZNY PŁASKO NA ZIEMI (y = 0.02, wycięty ciemny wielokąt)
+      const runeTex = ASSETS["krag_runiczny.jpg"] ? ASSETS["krag_runiczny.jpg"].texture : null;
+      const runeGeo = new THREE.PlaneGeometry(12.2, 12.2);
+      runeGeo.rotateX(-Math.PI / 2);
+      const runeMat = new THREE.MeshStandardMaterial({
+        map: runeTex,
+        emissive: 0xffd27a,
+        emissiveMap: runeTex,
+        emissiveIntensity: 0.92,
+        roughness: 0.35,
+        transparent: true,
+        alphaTest: 0.08,
+        depthWrite: false
+      });
+      const runeMesh = new THREE.Mesh(runeGeo, runeMat);
+      runeMesh.position.set(0, 0.02, 0);
+      scene.add(runeMesh);
+
+      // Posąg kamien_filozofow.jpg osadzony niżej (yOffset: -0.28) z mocnym cieniem kontaktowym AO,
+      // tak aby jego schodkowa podstawa wtapiała się bezpośrednio w środek kręgu runicznego!
+      const obelisk = createBillboardSprite25D("kamien_filozofow.jpg", 7.2, 9.5, 0, 0, {
+        yOffset: -0.28,
+        shadowW: 5.4,
+        shadowD: 3.4
+      });
+      const obeliskLight = new THREE.PointLight(0xf5c85c, 2.5, 18, 2);
+      obeliskLight.position.set(0, 5.2, 1.2);
+      scene.add(obeliskLight);
+
+      xrayTargets.push({
+        mesh: obelisk.mesh,
+        mat: obelisk.mat,
+        x: 0,
+        z: 0,
+        halfW: 3.4,
+        depth: 7.5,
+        currentOpacity: 1.0
+      });
+
+      const obeliskInter = {
+        type: "monument",
+        name: "KAMIEŃ FILOZOFÓW",
+        sub: "Pradawny Obelisk Runiczny",
+        x: 0,
+        z: 0,
+        labelY: 9.0,
+        radius: 2.8,
+        mesh: obelisk.mesh,
+        dialogue: "Złote runy Kamienia Filozofów pulsują ciepłem, odpychając morską mgłę znad Popielnej Przystani. Twoja Krew zostaje całkowicie odnowiona."
+      };
+      obelisk.mesh.userData.hoverRef = { kind: "interactable", ref: obeliskInter };
+      HOVER_MESHES.push(obelisk.mesh);
+      INTERACTABLES.push(obeliskInter);
+
+      // 2. WSCHODNIA KUŹNIA: PIEC, KOWAL BORGAR I STOJAK ZBROJMISTRZA (osadzone z mocnymi cieniami AO)
+      const forge = createBillboardSprite25D("kuznia_piec.jpg", 9.5, 8.9, 13.8, -3.2, {
+        yOffset: -0.18,
+        shadowW: 7.6,
+        shadowD: 4.5
+      });
+      const forgeLight = new THREE.PointLight(0xff5e14, 3.0, 20, 2);
+      forgeLight.position.set(12.8, 3.2, -1.5);
+      scene.add(forgeLight);
+      torchFlames.push({ light: forgeLight, particles: [], baseIntensity: 3.0, phase: 1.5 });
+
+      const sparkGeo = new THREE.BufferGeometry();
+      const sparkPositions = new Float32Array(40 * 3);
+      for (let i = 0; i < 40; i++) {
+        sparkPositions[i * 3] = 13.0 + (Math.random() - 0.5) * 3.2;
+        sparkPositions[i * 3 + 1] = 1.0 + Math.random() * 5.2;
+        sparkPositions[i * 3 + 2] = -2.2 + (Math.random() - 0.5) * 1.8;
+      }
+      sparkGeo.setAttribute("position", new THREE.BufferAttribute(sparkPositions, 3));
+      forgeSparks = new THREE.Points(
+        sparkGeo,
+        new THREE.PointsMaterial({ color: 0xffaa33, size: 0.16, transparent: true, opacity: 0.95 })
+      );
+      scene.add(forgeSparks);
+
+      xrayTargets.push({
+        mesh: forge.mesh,
+        mat: forge.mat,
+        x: 13.8,
+        z: -3.2,
+        halfW: 4.5,
+        depth: 7.2,
+        currentOpacity: 1.0
+      });
+
+      const kowal = createBillboardSprite25D("kowal_borgar.jpg", 4.1, 4.85, 8.6, -1.2, {
+        segX: 6,
+        segY: 10,
+        yOffset: -0.08,
+        shadowW: 3.2,
+        shadowD: 2.0
+      });
+      kowalMeshObj = {
+        geo: kowal.geo,
+        basePos: Float32Array.from(kowal.geo.attributes.position.array),
+        height: 4.85
+      };
+
+      const borgarInter = {
+        type: "npc",
+        id: "borgar",
+        name: "KOWAL BORGAR",
+        sub: "Mistrz Kuźni Popielnej Przystani",
+        x: 8.6,
+        z: -1.2,
+        labelY: 4.7,
+        radius: 2.3,
+        mesh: kowal.mesh,
+        dialogue: "Stal w Popielnej Przystani kruszeje od słonej mgły, wojowniku. Sprawdź uzbrojenie na Stojaku Zbrojmistrza obok mojego pieca, a potem ruszaj przez północny most na Przedmurze!"
+      };
+      kowal.mesh.userData.hoverRef = { kind: "interactable", ref: borgarInter };
+      HOVER_MESHES.push(kowal.mesh);
+      INTERACTABLES.push(borgarInter);
+
+      const rack = createBillboardSprite25D("stojak_broni.jpg", 3.85, 4.2, 11.4, 3.8, {
+        yOffset: -0.12,
+        shadowW: 3.3,
+        shadowD: 2.1
+      });
+      const rackInter = {
+        type: "rack",
+        id: "stojak",
+        name: "STOJAK ZBROJMISTRZA",
+        sub: "Kliknij, aby przełączyć klasę postaci",
+        x: 11.4,
+        z: 3.8,
+        labelY: 4.1,
+        radius: 2.3,
+        mesh: rack.mesh
+      };
+      rack.mesh.userData.hoverRef = { kind: "interactable", ref: rackInter };
+      HOVER_MESHES.push(rack.mesh);
+      INTERACTABLES.push(rackInter);
+
+      // 3. STRAŻNIK VORN PRZY PÓŁNOCNYCH SCHODACH
+      const vorn = createBillboardSprite25D("straznik_vorn.jpg", 4.0, 4.8, -3.4, -15.6, {
+        yOffset: -0.08,
+        shadowW: 3.1,
+        shadowD: 1.95
+      });
+      const vornInter = {
+        type: "npc",
+        id: "vorn",
+        name: "STRAŻNIK VORN",
+        sub: "Wartownik Północnego Mostu",
+        x: -3.4,
+        z: -15.6,
+        labelY: 4.7,
+        radius: 2.3,
+        mesh: vorn.mesh,
+        dialogue: "Za tym mostem rozciąga się Przedmurze opanowane przez Tarczowników i Ogary Popiołu. Na trzech skrzydłach twierdzy czają się Latarnik, Bracia Popiołu oraz Lalkarz. Miej się na baczności!"
+      };
+      vorn.mesh.userData.hoverRef = { kind: "interactable", ref: vornInter };
+      HOVER_MESHES.push(vorn.mesh);
+      INTERACTABLES.push(vornInter);
+
+      // 4. HANDLARZ KRAAL PRZY ZACHODNIM NABRZEŻU I POMOSTACH
+      const kraal = createBillboardSprite25D("handlarz_kraal.jpg", 4.0, 4.75, -8.2, 2.2, {
+        yOffset: -0.08,
+        shadowW: 3.1,
+        shadowD: 1.95
+      });
+      const kraalInter = {
+        type: "npc",
+        id: "kraal",
+        name: "HANDLARZ KRAAL",
+        sub: "Kupiec Zamorski",
+        x: -8.2,
+        z: 2.2,
+        labelY: 4.65,
+        radius: 2.3,
+        mesh: kraal.mesh,
+        dialogue: "Spójrz na zachód — moje statki utknęły na wzburzonym morzu tuż za tymi drewnianymi pomostami. Uzupełniłem twoje Mikstury Krwi (3/3)!"
+      };
+      kraal.mesh.userData.hoverRef = { kind: "interactable", ref: kraalInter };
+      HOVER_MESHES.push(kraal.mesh);
+      INTERACTABLES.push(kraalInter);
+
+      // 5. WROGOWIE I BOSSOWIE Z 4-CZĘŚCIOWYM RIGIEM ANATOMICZNYM 2.5D
+      const enemyConfigs = [
+        { file: "wrog_tarczownik.jpg", name: "Upadły Tarczownik", x: -6.5, z: -39.5, hp: 140, w: 3.9, h: 4.6, speed: 2.8, dmg: 14 },
+        { file: "wrog_ogar.jpg", name: "Ogar Popiołów", x: 5.5, z: -40.5, hp: 95, w: 3.7, h: 3.3, speed: 4.2, dmg: 11 },
+        { file: "wrog_tarczownik.jpg", name: "Upadły Tarczownik", x: -9.5, z: -47.5, hp: 140, w: 3.9, h: 4.6, speed: 2.8, dmg: 14 },
+        { file: "wrog_ogar.jpg", name: "Ogar Popiołów", x: 0.5, z: -46.0, hp: 95, w: 3.7, h: 3.3, speed: 4.2, dmg: 11 },
+        { file: "wrog_tarczownik.jpg", name: "Upadły Tarczownik", x: 9.2, z: -48.0, hp: 140, w: 3.9, h: 4.6, speed: 2.8, dmg: 14 },
+        { file: "wrog_ogar.jpg", name: "Ogar Popiołów", x: -2.5, z: -52.5, hp: 95, w: 3.7, h: 3.3, speed: 4.2, dmg: 11 },
+
+        { file: "boss1_latarnik.jpg", name: "BOSS: PRZEKLĘTY LATARNIK", sub: "Strażnik Zgasłych Dusz", x: -29.0, z: -45.0, hp: 460, w: 6.2, h: 7.2, speed: 2.3, dmg: 26, isBoss: true },
+        { file: "boss2_bracia.jpg", name: "BOSS: BRACIA POPIOŁU", sub: "Bliźniacy Rzezi", x: 29.0, z: -45.0, hp: 520, w: 6.4, h: 7.0, speed: 2.4, dmg: 28, isBoss: true },
+        { file: "boss3_lalkarz.jpg", name: "BOSS: LALKARZ", sub: "Władca Marionetek", x: 0.0, z: -72.5, hp: 640, w: 6.6, h: 7.5, speed: 2.4, dmg: 32, isBoss: true }
+      ];
+
+      for (const cfg of enemyConfigs) {
+        const tex = ASSETS[cfg.file] ? ASSETS[cfg.file].texture : null;
+        const rig = createArticulatedCharacterRig(tex, cfg.w, cfg.h);
+        rig.group.position.set(cfg.x, -0.05, cfg.z);
+        scene.add(rig.group);
+
+        const shadow = addContactShadow(scene, cfg.x, cfg.z + 0.08, cfg.w * 0.82, cfg.w * 0.50);
+        const enObj = {
+          ...cfg,
+          maxHp: cfg.hp,
+          homeX: cfg.x,
+          homeZ: cfg.z,
+          rig,
+          mesh: rig.group,
+          shadow,
+          alive: true,
+          walkPhase: Math.random() * 10,
+          attackCd: 0,
+          attackAnim: 0,
+          hitFlash: 0
+        };
+        const hoverRef = { kind: "enemy", ref: enObj };
+        rig.torsoHeadMesh.userData.hoverRef = hoverRef;
+        rig.leftLegMesh.userData.hoverRef = hoverRef;
+        rig.rightLegMesh.userData.hoverRef = hoverRef;
+        rig.weaponArmMesh.userData.hoverRef = hoverRef;
+        HOVER_MESHES.push(rig.torsoHeadMesh, rig.leftLegMesh, rig.rightLegMesh, rig.weaponArmMesh);
+        ENEMIES.push(enObj);
+      }
+    }
+
+    // ============================================================================
+    // BOHATER (POWIĘKSZONY O +20% -> 4.68 x 5.64, 4-CZĘŚCIOWY RIG ANATOMICZNY 2.5D)
+    // ============================================================================
+    const CLASSES = {
+      wiking: {
+        name: "WIKING",
+        front: "wiking_przod.jpg",
+        back: "wiking_tyl.jpg",
+        right: "wiking_prawo.jpg",
+        left: "wiking_lewo.jpg",
+        resName: "SZAŁ",
+        resMax: 100,
+        resInitial: 0,
+        orbStyle: "rage",
+        skills: ["CIĘCIE", "ZEW", "GNIEW", "FURIA"]
+      },
+      zabojca: {
+        name: "ZABÓJCA",
+        front: "zabojca_przod.jpg",
+        back: "zabojca_tyl.jpg",
+        right: "zabojca_przod.jpg",
+        left: "zabojca_przod.jpg",
+        resName: "SPRYT",
+        resMax: 10,
+        resInitial: 10,
+        orbStyle: "cunning",
+        skills: ["SZTYLET", "CIEŃ", "TRUCIZNA", "EGZEKUCJA"]
+      },
+      guslarz: {
+        name: "GUŚLARZ",
+        front: "guslarz_przod.jpg",
+        back: "guslarz_tyl.jpg",
+        right: "guslarz_przod.jpg",
+        left: "guslarz_przod.jpg",
+        resName: "ŚMIERĆ",
+        resMax: 100,
+        resInitial: 100,
+        orbStyle: "death",
+        skills: ["KLĄTWA", "KOŚCI", "ŻNIWA", "RYTUAŁ"]
+      },
+      wrozbita: {
+        name: "WRÓŻBITA",
+        front: "wrozbita_przod.jpg",
+        back: "wrozbita_tyl.jpg",
+        right: "wrozbita_przod.jpg",
+        left: "wrozbita_przod.jpg",
+        resName: "MANA",
+        resMax: 120,
+        resInitial: 120,
+        orbStyle: "mana",
+        skills: ["GWIAZDA", "PROROCTWO", "ASTRAL", "KOMETA"]
+      }
+    };
+
+    const hero = {
+      classKey: "wiking",
+      x: 0,
+      z: 8.5,
+      targetX: 0,
+      targetZ: 8.5,
+      isMoving: false,
+      speed: 8.0,
+      dir: "front", // "front" | "back" | "right" | "left"
+      walkCycle: 0,
+      attackTimer: 0,
+      attackDuration: 0.36,
+      attackAngle: 0,
+      leapTimer: 0,
+      leapDuration: 0.42,
+      leapStartX: 0,
+      leapStartZ: 0,
+      leapEndX: 0,
+      leapEndZ: 0,
+      leapCd: 0,
+      hp: 485,
+      maxHp: 485,
+      resource: 0,
+      maxResource: 100,
+      potions: 3,
+      // 5. Wiking powiększony o +20% (4.68 x 5.64), słusznej postury jak Kowal Borgar!
+      width: 4.68,
+      height: 5.64,
+      rig: null,
+      shadowMesh: null,
+      rimLight: null,
+      slashMesh: null,
+      targetRing: null,
+      shockwaveRing: null
+    };
+
+    function initHero() {
+      const startTex = ASSETS["wiking_przod.jpg"] ? ASSETS["wiking_przod.jpg"].texture : null;
+      hero.rig = createArticulatedCharacterRig(startTex, hero.width, hero.height);
+      hero.rig.group.position.set(hero.x, -0.06, hero.z);
+      scene.add(hero.rig.group);
+
+      // Głęboki cień kontaktowy AO pod butami Wikinga
+      hero.shadowMesh = addContactShadow(scene, hero.x, hero.z, 3.45, 2.15);
+
+      const rimLight = new THREE.PointLight(0xffdca8, 1.55, 9.5, 2);
+      rimLight.position.set(hero.x, 3.2, hero.z + 1.2);
+      scene.add(rimLight);
+      hero.rimLight = rimLight;
+
+      const slashGeo = new THREE.RingGeometry(1.8, 3.8, 24, 1, -Math.PI * 0.48, Math.PI * 0.96);
+      slashGeo.rotateX(-Math.PI / 2);
+      const slashMat = new THREE.MeshBasicMaterial({
+        color: 0xffd27d,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      hero.slashMesh = new THREE.Mesh(slashGeo, slashMat);
+      hero.slashMesh.position.set(hero.x, 1.8, hero.z);
+      scene.add(hero.slashMesh);
+
+      const ringGeo = new THREE.RingGeometry(0.45, 0.72, 24);
+      ringGeo.rotateX(-Math.PI / 2);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xf0c869,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      hero.targetRing = new THREE.Mesh(ringGeo, ringMat);
+      hero.targetRing.position.y = 0.04;
+      scene.add(hero.targetRing);
+
+      const shockGeo = new THREE.RingGeometry(0.55, 1.2, 32);
+      shockGeo.rotateX(-Math.PI / 2);
+      const shockMat = new THREE.MeshBasicMaterial({
+        color: 0xff9436,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      hero.shockwaveRing = new THREE.Mesh(shockGeo, shockMat);
+      hero.shockwaveRing.position.y = 0.06;
+      scene.add(hero.shockwaveRing);
+    }
+
+    function applyHeroDirectionalTexture() {
+      const cfg = CLASSES[hero.classKey];
+      const texKey = cfg[hero.dir] || cfg.front;
+      const asset = ASSETS[texKey] || ASSETS[cfg.front];
+      if (asset && hero.rig) {
+        setRigTexture(hero.rig, asset.texture);
+      }
+    }
+
+    function switchHeroClass(classKey) {
+      const cfg = CLASSES[classKey];
+      if (!cfg) return;
+      hero.classKey = classKey;
+      hero.maxResource = cfg.resMax;
+      hero.resource = cfg.resInitial;
+
+      applyHeroDirectionalTexture();
+
+      document.querySelectorAll(".class-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.class === classKey);
+      });
+      document.getElementById("active-class-label").textContent = cfg.name;
+      document.getElementById("hud-level-badge").textContent = `POZIOM 1 — ${cfg.name}`;
+      document.getElementById("resource-label").textContent = cfg.resName;
+
+      document.getElementById("skill-q-name").textContent = cfg.skills[0];
+      document.getElementById("skill-w-name").textContent = cfg.skills[1];
+      document.getElementById("skill-e-name").textContent = cfg.skills[2];
+      document.getElementById("skill-r-name").textContent = cfg.skills[3];
+
+      updateHudOrbs();
+    }
+
+    function updateHudOrbs() {
+      const bloodPct = Math.max(0, Math.min(100, (hero.hp / hero.maxHp) * 100));
+      document.getElementById("blood-fill").style.height = bloodPct + "%";
+      document.getElementById("blood-text").textContent = `${Math.ceil(hero.hp)}/${hero.maxHp}`;
+
+      const cfg = CLASSES[hero.classKey];
+      const resFill = document.getElementById("resource-fill");
+      const cunningSegs = document.getElementById("cunning-segments");
+
+      if (cfg.orbStyle === "cunning") {
+        resFill.style.height = "100%";
+        resFill.style.background = "radial-gradient(circle at 50% 50%, #092614, #041209)";
+        cunningSegs.style.display = "flex";
+        const segEls = cunningSegs.querySelectorAll(".cunning-seg");
+        segEls.forEach((el, idx) => {
+          el.classList.toggle("lit", idx < Math.floor(hero.resource));
+        });
+      } else {
+        cunningSegs.style.display = "none";
+        const resPct = Math.max(0, Math.min(100, (hero.resource / hero.maxResource) * 100));
+        resFill.style.height = resPct + "%";
+
+        if (cfg.orbStyle === "rage") {
+          resFill.style.background = "radial-gradient(circle at 38% 35%, #ff8826 0%, #bd4206 58%, #4d1700 100%)";
+        } else if (cfg.orbStyle === "death") {
+          resFill.style.background = "radial-gradient(circle at 38% 35%, #b84dff 0%, #63189e 58%, #260542 100%)";
+        } else if (cfg.orbStyle === "mana") {
+          resFill.style.background = "radial-gradient(circle at 38% 35%, #4da6ff 0%, #1452ad 58%, #051c42 100%)";
+        }
+      }
+
+      document.getElementById("resource-text").textContent = `${Math.floor(hero.resource)}/${hero.maxResource}`;
+      document.getElementById("potion-1-charges").textContent = String(hero.potions);
+    }
+
+    function updateHeroFacing(dx, dz) {
+      const absX = Math.abs(dx);
+      const absZ = Math.abs(dz);
+      if (absX < 0.05 && absZ < 0.05) return;
+
+      let newDir = hero.dir;
+      const isHorizontalNow = hero.dir === "left" || hero.dir === "right";
+      const horizThreshold = isHorizontalNow ? 0.72 : 1.08;
+
+      if (absX > absZ * horizThreshold) {
+        newDir = dx > 0 ? "right" : "left";
+      } else {
+        newDir = dz < 0 ? "back" : "front";
+      }
+
+      if (newDir !== hero.dir) {
+        hero.dir = newDir;
+        applyHeroDirectionalTexture();
+      }
+    }
+
+    // ============================================================================
+    // SIATKA KOLIZJI NAVMESH [F2] ORAZ DESZCZ 3D
+    // ============================================================================
+    let navMeshVisible = false;
+
+    function buildNavMeshVisualizer() {
+      navMeshDebugGroup = new THREE.Group();
+      const step = 1.0;
+      const cellGeo = new THREE.PlaneGeometry(step * 0.86, step * 0.86);
+      cellGeo.rotateX(-Math.PI / 2);
+
+      const greenMat = new THREE.MeshBasicMaterial({
+        color: 0x22cc55,
+        transparent: true,
+        opacity: 0.36,
+        depthWrite: false
+      });
+      const redMat = new THREE.MeshBasicMaterial({
+        color: 0xdd2233,
+        transparent: true,
+        opacity: 0.38,
+        depthWrite: false
+      });
+
+      const greenCells = [];
+      const redCells = [];
+
+      for (let x = -36; x <= 36; x += step) {
+        for (let z = -82; z <= 21; z += step) {
+          if (isWalkable(x, z, 0.42)) {
+            greenCells.push([x, z]);
+          } else {
+            const nearWalkable =
+              isInsideWalkableRegion(x, z) ||
+              isInsideWalkableRegion(x + 2, z) ||
+              isInsideWalkableRegion(x - 2, z) ||
+              isInsideWalkableRegion(x, z + 2) ||
+              isInsideWalkableRegion(x, z - 2);
+            if (nearWalkable) redCells.push([x, z]);
+          }
+        }
+      }
+
+      const dummy = new THREE.Object3D();
+      const greenInst = new THREE.InstancedMesh(cellGeo, greenMat, greenCells.length);
+      greenCells.forEach(([x, z], i) => {
+        dummy.position.set(x, 0.05, z);
+        dummy.updateMatrix();
+        greenInst.setMatrixAt(i, dummy.matrix);
+      });
+      navMeshDebugGroup.add(greenInst);
+
+      const redInst = new THREE.InstancedMesh(cellGeo, redMat, redCells.length);
+      redCells.forEach(([x, z], i) => {
+        dummy.position.set(x, 0.05, z);
+        dummy.updateMatrix();
+        redInst.setMatrixAt(i, dummy.matrix);
+      });
+      navMeshDebugGroup.add(redInst);
+
+      navMeshDebugGroup.visible = false;
+      scene.add(navMeshDebugGroup);
+    }
+
+    let rainLines = null;
+    const RAIN_COUNT = 1100;
+
+    function buildRainSystem() {
+      const geo = new THREE.BufferGeometry();
+      const positions = new Float32Array(RAIN_COUNT * 6);
+
+      for (let i = 0; i < RAIN_COUNT; i++) {
+        const rx = (Math.random() - 0.5) * 48;
+        const ry = Math.random() * 26;
+        const rz = (Math.random() - 0.5) * 44;
+        const idx = i * 6;
+        positions[idx] = rx;
+        positions[idx + 1] = ry;
+        positions[idx + 2] = rz;
+        positions[idx + 3] = rx - 0.45;
+        positions[idx + 4] = ry - 1.55;
+        positions[idx + 5] = rz + 0.15;
+      }
+
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const mat = new THREE.LineBasicMaterial({
+        color: 0x9bb8d4,
+        transparent: true,
+        opacity: 0.34
+      });
+      rainLines = new THREE.LineSegments(geo, mat);
+      scene.add(rainLines);
+    }
+
+    // ============================================================================
+    // STEROWANIE I INTERAKCJE
+    // ============================================================================
+    const raycaster = new THREE.Raycaster();
+    const mouseNDC = new THREE.Vector2(99, 99);
+    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const intersectPt = new THREE.Vector3(9999, 0, 9999);
+
+    let hasMouseMoved = false;
+    let isLeftMouseDown = false;
+    let isRightMouseDown = false;
+    let isShiftDown = false;
+    let isAltDown = false;
+    let hoveredEntity = null;
+    let pendingInteraction = null;
+    let screenShake = 0;
+
+    function updateMouseWorldPoint(clientX, clientY) {
+      hasMouseMoved = true;
+      mouseNDC.x = (clientX / window.innerWidth) * 2 - 1;
+      mouseNDC.y = -(clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouseNDC, camera);
+      raycaster.ray.intersectPlane(groundPlane, intersectPt);
+      return intersectPt;
+    }
+
+    function detectHoveredEntity() {
+      if (!hasMouseMoved) {
+        hoveredEntity = null;
+        return;
+      }
+      raycaster.setFromCamera(mouseNDC, camera);
+      const activeMeshes = HOVER_MESHES.filter((m) => m.visible && (!m.parent || m.parent.visible));
+      const hits = raycaster.intersectObjects(activeMeshes, false);
+      if (hits.length > 0 && hits[0].object.userData.hoverRef) {
+        hoveredEntity = hits[0].object.userData.hoverRef;
+      } else {
+        hoveredEntity = null;
+      }
+    }
+
+    function performAttackTowards(worldX, worldZ) {
+      if (hero.attackTimer > 0 || hero.leapTimer > 0) return;
+      hero.isMoving = false;
+
+      const dx = worldX - hero.x;
+      const dz = worldZ - hero.z;
+      updateHeroFacing(dx, dz);
+
+      hero.attackAngle = Math.atan2(dz, dx);
+      hero.attackTimer = hero.attackDuration;
+
+      hero.slashMesh.position.set(hero.x, 1.8, hero.z);
+      hero.slashMesh.rotation.y = -hero.attackAngle + Math.PI / 2;
+      hero.slashMesh.material.opacity = 0.92;
+
+      let hitAny = false;
+      for (const en of ENEMIES) {
+        if (!en.alive) continue;
+        const dist = Math.hypot(en.x - hero.x, en.z - hero.z);
+        if (dist <= 4.5) {
+          en.hp -= 38;
+          en.hitFlash = 0.18;
+          hitAny = true;
+          if (en.hp <= 0) {
+            en.alive = false;
+            en.mesh.visible = false;
+            en.shadow.visible = false;
+            if (hoveredEntity && hoveredEntity.ref === en) hoveredEntity = null;
+            updateQuestProgress();
+          }
+        }
+      }
+
+      if (hero.classKey === "wiking") {
+        hero.resource = Math.min(hero.maxResource, hero.resource + (hitAny ? 14 : 5));
+      } else if (hero.classKey === "zabojca" && hitAny) {
+        hero.resource = Math.min(hero.maxResource, hero.resource + 1);
+      }
+      updateHudOrbs();
+    }
+
+    function triggerCombatLeap() {
+      if (hero.leapCd > 0 || hero.leapTimer > 0) return;
+
+      const dx = intersectPt.x - hero.x;
+      const dz = intersectPt.z - hero.z;
+      const rawDist = Math.hypot(dx, dz);
+      if (rawDist < 0.5 || rawDist > 200) return;
+      const dist = Math.min(9.0, rawDist);
+
+      const dirX = dx / rawDist;
+      const dirZ = dz / rawDist;
+      updateHeroFacing(dirX, dirZ);
+
+      let landX = hero.x;
+      let landZ = hero.z;
+      for (let step = dist; step >= 0.5; step -= 0.4) {
+        const tx = hero.x + dirX * step;
+        const tz = hero.z + dirZ * step;
+        if (isWalkable(tx, tz)) {
+          landX = tx;
+          landZ = tz;
+          break;
+        }
+      }
+
+      hero.isMoving = false;
+      hero.leapStartX = hero.x;
+      hero.leapStartZ = hero.z;
+      hero.leapEndX = landX;
+      hero.leapEndZ = landZ;
+      hero.leapTimer = hero.leapDuration;
+      hero.leapCd = 4.5;
+    }
+
+    function useBloodPotion() {
+      if (hero.potions <= 0 || hero.hp >= hero.maxHp) return;
+      hero.potions--;
+      hero.hp = Math.min(hero.maxHp, hero.hp + 185);
+      updateHudOrbs();
+    }
+
+    window.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    canvas.addEventListener("mousedown", (e) => {
+      isAltDown = !!e.altKey;
+      isShiftDown = !!e.shiftKey;
+      updateMouseWorldPoint(e.clientX, e.clientY);
+      detectHoveredEntity();
+
+      if (e.button === 2 || (e.button === 0 && e.shiftKey)) {
+        isRightMouseDown = true;
+        performAttackTowards(intersectPt.x, intersectPt.z);
+        return;
+      }
+
+      if (e.button === 0) {
+        isLeftMouseDown = true;
+        if (hoveredEntity && hoveredEntity.kind === "interactable") {
+          pendingInteraction = hoveredEntity.ref;
+          hero.targetX = hoveredEntity.ref.x;
+          hero.targetZ = hoveredEntity.ref.z + 2.2;
+          hero.isMoving = true;
+        } else {
+          pendingInteraction = null;
+          hero.targetX = intersectPt.x;
+          hero.targetZ = intersectPt.z;
+          hero.isMoving = true;
+
+          hero.targetRing.position.set(intersectPt.x, 0.04, intersectPt.z);
+          hero.targetRing.scale.set(1, 1, 1);
+          hero.targetRing.material.opacity = 0.95;
+        }
+      }
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      isAltDown = !!e.altKey;
+      isShiftDown = !!e.shiftKey;
+      updateMouseWorldPoint(e.clientX, e.clientY);
+      detectHoveredEntity();
+
+      if (isRightMouseDown || (isLeftMouseDown && isShiftDown)) {
+        performAttackTowards(intersectPt.x, intersectPt.z);
+      } else if (isLeftMouseDown && !pendingInteraction) {
+        hero.targetX = intersectPt.x;
+        hero.targetZ = intersectPt.z;
+        hero.isMoving = true;
+      }
+
+      canvas.style.cursor = hoveredEntity ? "pointer" : "crosshair";
+    });
+
+    window.addEventListener("mouseup", (e) => {
+      if (e.button === 0) isLeftMouseDown = false;
+      if (e.button === 2) isRightMouseDown = false;
+    });
+
+    window.addEventListener("blur", () => {
+      isAltDown = false;
+      isShiftDown = false;
+      isLeftMouseDown = false;
+      isRightMouseDown = false;
+      hoveredEntity = null;
+    });
+
+    document.addEventListener("mouseleave", () => {
+      hoveredEntity = null;
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Shift") isShiftDown = true;
+      if (e.key === "Alt") {
+        e.preventDefault();
+        isAltDown = true;
+      }
+      if (e.code === "Space") {
+        e.preventDefault();
+        triggerCombatLeap();
+      }
+      if (e.key === "1") {
+        useBloodPotion();
+      }
+      if (e.key === "F2") {
+        e.preventDefault();
+        navMeshVisible = !navMeshVisible;
+        if (navMeshDebugGroup) navMeshDebugGroup.visible = navMeshVisible;
+        document.getElementById("navmesh-badge").style.display = navMeshVisible ? "block" : "none";
+      }
+      if (e.key === "Escape") {
+        document.getElementById("dialogue-modal").style.display = "none";
+      }
+      if (["q", "w", "e", "r"].includes(e.key.toLowerCase())) {
+        performAttackTowards(intersectPt.x, intersectPt.z);
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (e.key === "Shift") isShiftDown = false;
+      if (e.key === "Alt") isAltDown = false;
+    });
+
+    document.querySelectorAll(".class-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        switchHeroClass(btn.dataset.class);
+        document.getElementById("q-stojak").classList.add("done");
+      });
+    });
+
+    document.getElementById("potion-1").addEventListener("click", useBloodPotion);
+    document.getElementById("slot-space").addEventListener("click", triggerCombatLeap);
+    document.getElementById("dialogue-close").addEventListener("click", () => {
+      document.getElementById("dialogue-modal").style.display = "none";
+    });
+
+    function executeInteraction(inter) {
+      if (inter.type === "rack") {
+        const order = ["wiking", "zabojca", "guslarz", "wrozbita"];
+        const nextIdx = (order.indexOf(hero.classKey) + 1) % order.length;
+        switchHeroClass(order[nextIdx]);
+        document.getElementById("q-stojak").classList.add("done");
+        return;
+      }
+
+      if (inter.id === "borgar") {
+        document.getElementById("q-borgar").classList.add("done");
+      }
+      if (inter.id === "kraal") {
+        hero.potions = 3;
+        updateHudOrbs();
+      }
+      if (inter.type === "monument") {
+        hero.hp = hero.maxHp;
+        updateHudOrbs();
+      }
+
+      const modal = document.getElementById("dialogue-modal");
+      document.getElementById("dialogue-speaker").textContent = inter.name;
+      document.getElementById("dialogue-text").textContent = inter.dialogue;
+      modal.style.display = "block";
+    }
+
+    function updateQuestProgress() {
+      const deadMinions = ENEMIES.filter((e) => !e.isBoss && !e.alive).length;
+      const deadBosses = ENEMIES.filter((e) => e.isBoss && !e.alive).length;
+
+      document.getElementById("q-kills").textContent = String(deadMinions);
+      document.getElementById("q-boss-kills").textContent = String(deadBosses);
+
+      if (deadMinions >= 6) document.getElementById("q-przedmurze").classList.add("done");
+      if (deadBosses >= 3) document.getElementById("q-bosses").classList.add("done");
+    }
+
+    // ============================================================================
+    // ETYKIETY WYŁĄCZNIE NA HOVER LUB [ALT] + MINIMAPA
+    // ============================================================================
+    const labelsLayer = document.getElementById("labels-layer");
+    const labelPool = [];
+
+    function getLabelElement(index) {
+      if (!labelPool[index]) {
+        const el = document.createElement("div");
+        el.className = "world-label";
+        labelsLayer.appendChild(el);
+        labelPool[index] = el;
+      }
+      return labelPool[index];
+    }
+
+    function updateWorldLabels() {
+      let activeCount = 0;
+
+      function projectAndShow(x, y, z, title, sub, type, hpRatio) {
+        const v = new THREE.Vector3(x, y, z);
+        v.project(camera);
+        if (v.z > 1) return;
+
+        const sx = (v.x * 0.5 + 0.5) * window.innerWidth;
+        const sy = (-v.y * 0.5 + 0.5) * window.innerHeight;
+
+        const el = getLabelElement(activeCount++);
+        el.style.display = "block";
+        el.style.left = sx + "px";
+        el.style.top = sy + "px";
+        el.className = "world-label" + (type ? " " + type : "");
+
+        let html = `<div>${title}</div>`;
+        if (sub) html += `<span class="sub">${sub}</span>`;
+        if (typeof hpRatio === "number") {
+          const pct = Math.max(0, Math.min(100, Math.round(hpRatio * 100)));
+          html += `<div class="enemy-hp-mini"><div class="enemy-hp-mini-fill" style="width:${pct}%"></div></div>`;
+        }
+        el.innerHTML = html;
+      }
+
+      if (isAltDown) {
+        for (const inter of INTERACTABLES) {
+          projectAndShow(inter.x, inter.labelY + 0.25, inter.z, inter.name, inter.sub, "");
+        }
+        for (const en of ENEMIES) {
+          if (!en.alive) continue;
+          projectAndShow(
+            en.x,
+            en.h + 0.25,
+            en.z,
+            en.name,
+            en.sub || "",
+            en.isBoss ? "boss" : "enemy",
+            en.hp / en.maxHp
+          );
+        }
+      } else if (hoveredEntity) {
+        if (hoveredEntity.kind === "interactable") {
+          const inter = hoveredEntity.ref;
+          projectAndShow(inter.x, inter.labelY + 0.25, inter.z, inter.name, inter.sub, "");
+        } else if (hoveredEntity.kind === "enemy" && hoveredEntity.ref.alive) {
+          const en = hoveredEntity.ref;
+          projectAndShow(
+            en.x,
+            en.h + 0.25,
+            en.z,
+            en.name,
+            en.sub || "",
+            en.isBoss ? "boss" : "enemy",
+            en.hp / en.maxHp
+          );
+        }
+      }
+
+      for (let i = activeCount; i < labelPool.length; i++) {
+        labelPool[i].style.display = "none";
+      }
+    }
+
+    const minimapCanvas = document.getElementById("minimap-canvas");
+    const mCtx = minimapCanvas.getContext("2d");
+
+    function renderMinimap() {
+      const W = minimapCanvas.width;
+      const H = minimapCanvas.height;
+      const cx = W / 2;
+      const cy = H / 2;
+      const scale = 2.1;
+
+      mCtx.clearRect(0, 0, W, H);
+      mCtx.fillStyle = "#06111c";
+      mCtx.fillRect(0, 0, W, H);
+
+      mCtx.save();
+      mCtx.translate(cx - hero.x * scale, cy - hero.z * scale);
+
+      mCtx.fillStyle = "#262b34";
+      mCtx.strokeStyle = "#7a643d";
+      mCtx.lineWidth = 1.2;
+
+      // Plac główny (X od -11.5 do +19.5)
+      mCtx.fillRect(-11.5 * scale, -18.5 * scale, 31.0 * scale, 37.0 * scale);
+      mCtx.strokeRect(-11.5 * scale, -18.5 * scale, 31.0 * scale, 37.0 * scale);
+
+      // Dwa zachodnie drewniane pomosty
+      mCtx.fillStyle = "#5c4228";
+      mCtx.fillRect(-26.0 * scale, -8.2 * scale, 14.5 * scale, 3.4 * scale);
+      mCtx.fillRect(-26.0 * scale, 4.8 * scale, 14.5 * scale, 3.4 * scale);
+
+      // Most północny, Przedmurze i Areny
+      mCtx.fillStyle = "#262b34";
+      mCtx.fillRect(-4.2 * scale, -34.5 * scale, 8.4 * scale, 16.0 * scale);
+      mCtx.fillRect(-17.5 * scale, -55.5 * scale, 35 * scale, 21.5 * scale);
+      mCtx.fillRect(-35.5 * scale, -51.5 * scale, 18 * scale, 13 * scale);
+      mCtx.fillRect(17.5 * scale, -51.5 * scale, 18 * scale, 13 * scale);
+      mCtx.fillRect(-13.5 * scale, -81.5 * scale, 27 * scale, 21 * scale);
+
+      mCtx.fillStyle = "#f2c968";
+      mCtx.beginPath();
+      mCtx.arc(0, 0, 4, 0, Math.PI * 2);
+      mCtx.fill();
+
+      mCtx.fillStyle = "#44dd77";
+      for (const inter of INTERACTABLES) {
+        if (inter.type === "monument") continue;
+        mCtx.beginPath();
+        mCtx.arc(inter.x * scale, inter.z * scale, 3, 0, Math.PI * 2);
+        mCtx.fill();
+      }
+
+      for (const en of ENEMIES) {
+        if (!en.alive) continue;
+        mCtx.fillStyle = en.isBoss ? "#ff9922" : "#e62e2e";
+        mCtx.beginPath();
+        mCtx.arc(en.x * scale, en.z * scale, en.isBoss ? 4.5 : 2.8, 0, Math.PI * 2);
+        mCtx.fill();
+      }
+
+      mCtx.restore();
+
+      mCtx.fillStyle = "#ffffff";
+      mCtx.beginPath();
+      mCtx.arc(cx, cy, 4, 0, Math.PI * 2);
+      mCtx.fill();
+      mCtx.strokeStyle = "#c8a258";
+      mCtx.lineWidth = 1.5;
+      mCtx.stroke();
+    }
+
+    // ============================================================================
+    // GŁÓWNA PĘTLA GRY
+    // ============================================================================
+    const clock = new THREE.Clock();
+
+    function updateGame(dt, elapsed) {
+      if (hero.leapCd > 0) {
+        hero.leapCd = Math.max(0, hero.leapCd - dt);
+        const cdEl = document.getElementById("cd-SPACE");
+        if (hero.leapCd > 0) {
+          cdEl.style.height = (hero.leapCd / 4.5) * 100 + "%";
+          cdEl.textContent = hero.leapCd.toFixed(1);
+        } else {
+          cdEl.style.height = "0%";
+          cdEl.textContent = "";
+        }
+      }
+
+      if (hero.leapTimer > 0) {
+        hero.leapTimer -= dt;
+        const t = 1 - Math.max(0, hero.leapTimer) / hero.leapDuration;
+        hero.x = THREE.MathUtils.lerp(hero.leapStartX, hero.leapEndX, t);
+        hero.z = THREE.MathUtils.lerp(hero.leapStartZ, hero.leapEndZ, t);
+        const arcHeight = Math.sin(t * Math.PI) * 3.6;
+        hero.rig.group.position.set(hero.x, arcHeight - 0.06, hero.z);
+
+        if (hero.leapTimer <= 0) {
+          hero.rig.group.position.y = -0.06;
+          screenShake = 0.35;
+          hero.shockwaveRing.position.set(hero.x, 0.06, hero.z);
+          hero.shockwaveRing.scale.set(1, 1, 1);
+          hero.shockwaveRing.material.opacity = 0.95;
+
+          for (const en of ENEMIES) {
+            if (!en.alive) continue;
+            if (Math.hypot(en.x - hero.x, en.z - hero.z) <= 4.6) {
+              en.hp -= 55;
+              en.hitFlash = 0.22;
+              if (en.hp <= 0) {
+                en.alive = false;
+                en.mesh.visible = false;
+                en.shadow.visible = false;
+                updateQuestProgress();
+              }
+            }
+          }
+          if (hero.classKey === "wiking") {
+            hero.resource = Math.min(hero.maxResource, hero.resource + 20);
+            updateHudOrbs();
+          }
+        }
+      } else if (hero.isMoving) {
+        const dx = hero.targetX - hero.x;
+        const dz = hero.targetZ - hero.z;
+        const dist = Math.hypot(dx, dz);
+
+        if (pendingInteraction && Math.hypot(pendingInteraction.x - hero.x, pendingInteraction.z - hero.z) <= pendingInteraction.radius + 1.05) {
+          hero.isMoving = false;
+          executeInteraction(pendingInteraction);
+          pendingInteraction = null;
+        } else if (dist > 0.16) {
+          const dirX = dx / dist;
+          const dirZ = dz / dist;
+          updateHeroFacing(dirX, dirZ);
+
+          const res = moveWithWallSliding(hero.x, hero.z, dirX * hero.speed, dirZ * hero.speed, dt);
+          hero.x = res.x;
+          hero.z = res.z;
+          hero.walkCycle += dt * 13.5;
+          if (!res.moved) hero.isMoving = false;
+        } else {
+          hero.isMoving = false;
+        }
+        hero.rig.group.position.set(hero.x, -0.06, hero.z);
+      }
+
+      hero.shadowMesh.position.set(hero.x, 0.018, hero.z + 0.08);
+      hero.rimLight.position.set(hero.x, 3.2, hero.z + 1.1);
+
+      if (hero.targetRing.material.opacity > 0) {
+        hero.targetRing.scale.addScalar(dt * 1.4);
+        hero.targetRing.material.opacity = Math.max(0, hero.targetRing.material.opacity - dt * 1.8);
+      }
+
+      let attackProgress = 0;
+      if (hero.attackTimer > 0) {
+        hero.attackTimer = Math.max(0, hero.attackTimer - dt);
+        attackProgress = 1 - hero.attackTimer / hero.attackDuration;
+        hero.slashMesh.material.opacity = (hero.attackTimer / hero.attackDuration) * 0.92;
+      } else {
+        hero.slashMesh.material.opacity = 0;
+      }
+
+      if (hero.shockwaveRing.material.opacity > 0) {
+        hero.shockwaveRing.scale.addScalar(dt * 8.5);
+        hero.shockwaveRing.material.opacity = Math.max(0, hero.shockwaveRing.material.opacity - dt * 2.2);
+      }
+
+      // Animacja 4-częściowego Rigu Anatomicznego bohatera
+      const isSideView = hero.dir === "left" || hero.dir === "right";
+      animateCharacterRig(
+        hero.rig,
+        hero.isMoving && hero.leapTimer <= 0,
+        hero.walkCycle,
+        attackProgress,
+        elapsed,
+        isSideView
+      );
+
+      // Kowal Borgar (stabilne nogi, pracuje górna część z młotem)
+      if (kowalMeshObj) {
+        const pos = kowalMeshObj.geo.attributes.position;
+        const arr = pos.array;
+        const base = kowalMeshObj.basePos;
+        const H = kowalMeshObj.height;
+        const hammerPulse = Math.sin(elapsed * 4.8);
+
+        for (let i = 0; i < arr.length; i += 3) {
+          const normY = base[i + 1] / H;
+          if (normY < 0.5) {
+            arr[i] = base[i];
+            arr[i + 1] = base[i + 1];
+            arr[i + 2] = base[i + 2];
+          } else {
+            const weight = (normY - 0.5) * 2.0;
+            arr[i] = base[i] + hammerPulse * 0.12 * weight;
+            arr[i + 1] = base[i + 1] - Math.abs(hammerPulse) * 0.10 * weight;
+            arr[i + 2] = base[i + 2];
+          }
+        }
+        pos.needsUpdate = true;
+      }
+
+      // Przezroczystość X-Ray 42% dla Kamienia Filozofów i budynku Kuźni
+      for (const xt of xrayTargets) {
+        const isBehind =
+          hero.z < xt.z - 0.35 &&
+          hero.z > xt.z - xt.depth &&
+          Math.abs(hero.x - xt.x) < xt.halfW;
+        const targetOpacity = isBehind ? 0.42 : 1.0;
+        xt.currentOpacity = THREE.MathUtils.lerp(xt.currentOpacity, targetOpacity, dt * 8.0);
+        xt.mat.opacity = xt.currentOpacity;
+      }
+
+      // AI i animacja Rigu 2.5D Wrogów oraz Bossów
+      for (const en of ENEMIES) {
+        if (!en.alive) continue;
+        if (en.hitFlash > 0) {
+          en.hitFlash -= dt;
+          setRigTint(en.rig, 0xff6666);
+        } else {
+          setRigTint(en.rig, 0xffffff);
+        }
+
+        const dx = hero.x - en.x;
+        const dz = hero.z - en.z;
+        const dist = Math.hypot(dx, dz);
+        let enMoving = false;
+
+        if (en.attackAnim > 0) {
+          en.attackAnim = Math.max(0, en.attackAnim - dt * 3.0);
+        }
+
+        if (dist < 13.0 && hero.z < -24) {
+          if (dist > 2.3) {
+            const res = moveWithWallSliding(en.x, en.z, (dx / dist) * en.speed, (dz / dist) * en.speed, dt);
+            en.x = res.x;
+            en.z = res.z;
+            en.walkPhase += dt * 11.5;
+            enMoving = res.moved;
+            en.mesh.position.set(en.x, -0.05, en.z);
+            en.shadow.position.set(en.x, 0.018, en.z + 0.08);
+          } else {
+            en.attackCd -= dt;
+            if (en.attackCd <= 0) {
+              en.attackCd = 1.35;
+              en.attackAnim = 1.0;
+              hero.hp = Math.max(0, hero.hp - en.dmg);
+              if (hero.hp <= 0) {
+                hero.hp = hero.maxHp;
+                hero.x = 0;
+                hero.z = 8.5;
+                hero.isMoving = false;
+              }
+              updateHudOrbs();
+            }
+          }
+        }
+
+        animateCharacterRig(en.rig, enMoving, en.walkPhase, en.attackAnim, elapsed, false);
+      }
+
+      const clampedX = THREE.MathUtils.clamp(hero.x, CAM_BOUNDS.minX, CAM_BOUNDS.maxX);
+      const clampedZ = THREE.MathUtils.clamp(hero.z, CAM_BOUNDS.minZ, CAM_BOUNDS.maxZ);
+
+      let shakeX = 0, shakeY = 0;
+      if (screenShake > 0) {
+        screenShake = Math.max(0, screenShake - dt * 1.5);
+        shakeX = (Math.random() - 0.5) * screenShake * 0.6;
+        shakeY = (Math.random() - 0.5) * screenShake * 0.6;
+      }
+
+      const camY = Math.sin(CAMERA_PITCH) * CAMERA_DIST;
+      const camZOffset = Math.cos(CAMERA_PITCH) * CAMERA_DIST;
+      camera.position.set(clampedX + shakeX, camY + shakeY, clampedZ + camZOffset);
+      camera.lookAt(clampedX, 1.4, clampedZ);
+
+      // Animacja wzburzonego morza i białej piany rozbijającej się o kamienne nabrzeże
+      if (seaGeo) {
+        const sPos = seaGeo.attributes.position;
+        for (let i = 0; i < sPos.count; i++) {
+          const sx = sPos.getX(i);
+          const sz = sPos.getZ(i);
+          const wave =
+            Math.sin(sx * 0.28 + elapsed * 2.4) * 0.24 +
+            Math.cos(sz * 0.32 + elapsed * 1.9) * 0.20;
+          sPos.setY(i, wave);
+        }
+        sPos.needsUpdate = true;
+      }
+
+      for (const f of foamRings) {
+        if (f.isQuayBreaker) {
+          const surge = Math.sin(elapsed * 2.5 + f.phase);
+          f.mesh.position.x = f.baseX + surge * 0.42;
+          f.mesh.material.opacity = 0.34 + surge * 0.22;
+        } else {
+          const s = 1 + Math.sin(elapsed * 2.5 + f.phase) * 0.14;
+          f.mesh.scale.set(s, s, s);
+          f.mesh.material.opacity = 0.28 + Math.sin(elapsed * 2.5 + f.phase) * 0.14;
+        }
+      }
+
+      for (const tf of torchFlames) {
+        tf.light.intensity = tf.baseIntensity + Math.sin(elapsed * 14 + tf.phase) * 0.28 + Math.cos(elapsed * 23) * 0.15;
+        for (const p of tf.particles) {
+          p.mesh.position.y += dt * p.speed;
+          p.mesh.position.x = p.baseX + Math.sin(elapsed * 8 + p.phase) * 0.11;
+          if (p.mesh.position.y > 2.55) p.mesh.position.y = 1.78;
+        }
+      }
+
+      if (forgeSparks) {
+        const sp = forgeSparks.geometry.attributes.position;
+        for (let i = 0; i < sp.count; i++) {
+          let y = sp.getY(i) + dt * 1.8;
+          if (y > 6.2) y = 1.2;
+          sp.setY(i, y);
+        }
+        sp.needsUpdate = true;
+      }
+
+      if (rainLines) {
+        rainLines.position.set(clampedX, 0, clampedZ);
+        const rPos = rainLines.geometry.attributes.position;
+        const arr = rPos.array;
+        for (let i = 0; i < RAIN_COUNT; i++) {
+          const idx = i * 6;
+          arr[idx + 1] -= dt * 26;
+          arr[idx + 4] -= dt * 26;
+          if (arr[idx + 1] < 0) {
+            const ny = 24 + Math.random() * 4;
+            arr[idx + 1] = ny;
+            arr[idx + 4] = ny - 1.55;
+          }
+        }
+        rPos.needsUpdate = true;
+      }
+
+      const banner = document.getElementById("zone-name-banner");
+      if (hero.z < -58) banner.textContent = "CYTADELA LALKARZA";
+      else if (hero.x < -19 && hero.z < -34) banner.textContent = "ARENA LATARNIKA";
+      else if (hero.x > 19 && hero.z < -34) banner.textContent = "ARENA BRACI POPIOŁU";
+      else if (hero.z < -33) banner.textContent = "PRZEDMURZE PRZYSTANI";
+      else if (hero.x < -11.2) banner.textContent = "ZACHODNIE POMOSTY";
+      else banner.textContent = "POPIELNA PRZYSTAŃ";
+
+      updateWorldLabels();
+      renderMinimap();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(0.05, clock.getDelta());
+      const elapsed = clock.getElapsedTime();
+      updateGame(dt, elapsed);
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    (async function bootstrap() {
+      try {
+        await loadAllAssets();
+        buildWorldEnvironment();
+        populateWorldObjects();
+        initHero();
+        buildNavMeshVisualizer();
+        buildRainSystem();
+        updateHudOrbs();
+
+        const loadingScreen = document.getElementById("loading-screen");
+        loadingScreen.classList.add("hidden");
+        setTimeout(() => {
+          loadingScreen.style.display = "none";
+        }, 550);
+
+        clock.start();
+        animate();
+      } catch (err) {
+        const status = document.getElementById("loading-status");
+        if (status) {
+          status.style.color = "#ff6b6b";
+          status.textContent = "Błąd inicjalizacji: " + (err && err.message ? err.message : err);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
