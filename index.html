@@ -1,0 +1,3068 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Akt I: Popielna Przystań — Izometryczne Action RPG 2.5D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #c8a258;
+      --gold-bright: #f0d082;
+      --iron-dark: #121316;
+      --iron-mid: #23262d;
+      --iron-light: #3b404c;
+      --stone-bg: rgba(12, 13, 16, 0.92);
+      --blood: #9e1316;
+      --rage: #d95b12;
+      --cunning: #1ca64c;
+      --death: #7a28b8;
+      --mana: #1b66c9;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050608;
+      font-family: 'Cinzel', serif;
+      color: #d8d0c1;
+    }
+
+    #game-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      cursor: crosshair;
+    }
+
+    /* EKRAN ŁADOWANIA ZASOBÓW */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: radial-gradient(circle at center, #14171f 0%, #050608 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s ease;
+    }
+
+    #loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-title {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 5px;
+      color: var(--gold-bright);
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.9), 0 0 22px rgba(200, 162, 88, 0.35);
+      margin-bottom: 10px;
+    }
+
+    .loading-subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      color: #9a9284;
+      margin-bottom: 28px;
+      letter-spacing: 1px;
+    }
+
+    .loading-frame {
+      width: 420px;
+      height: 16px;
+      background: #0d0e11;
+      border: 2px solid var(--gold);
+      padding: 2px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
+    }
+
+    #loading-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #6e5223, #d6b168);
+      transition: width 0.15s ease;
+    }
+
+    #loading-status {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #888277;
+      letter-spacing: 1.5px;
+    }
+
+    /* WARSTWA ETYKIET NAD OBIEKTAMI (HOVER / ALT) */
+    #labels-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+      overflow: hidden;
+    }
+
+    .world-label {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      padding: 4px 12px;
+      background: rgba(8, 9, 12, 0.88);
+      border: 1px solid var(--gold);
+      color: #efe6d5;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85);
+      pointer-events: none;
+      transition: opacity 0.12s ease;
+    }
+
+    .world-label .sub {
+      display: block;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 12px;
+      color: var(--gold);
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    .world-label.enemy {
+      border-color: #9e2a2b;
+      color: #ffccd0;
+    }
+
+    .world-label.boss {
+      border-color: #d49b35;
+      color: #ffe299;
+      font-size: 13px;
+    }
+
+    .enemy-hp-mini {
+      width: 86px;
+      height: 5px;
+      background: #1b0909;
+      border: 1px solid #591c1c;
+      margin: 3px auto 0;
+      overflow: hidden;
+    }
+
+    .enemy-hp-mini-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #881111, #df2c2c);
+      width: 100%;
+    }
+
+    /* PRAWY GÓRNY RÓG: MINIMAPA I DZIENNIK ZADAŃ */
+    #top-right-hud {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .minimap-wrapper {
+      position: relative;
+      width: 184px;
+      height: 184px;
+      border-radius: 50%;
+      background: #090b0f;
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 0 3px #181a20, 0 8px 25px rgba(0, 0, 0, 0.9), inset 0 0 22px rgba(0, 0, 0, 0.9);
+      overflow: hidden;
+      pointer-events: auto;
+    }
+
+    #minimap-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .minimap-compass {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .minimap-compass span {
+      position: absolute;
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--gold-bright);
+      text-shadow: 0 1px 4px #000;
+    }
+
+    .minimap-compass .n { top: 4px; left: 50%; transform: translateX(-50%); }
+    .minimap-compass .s { bottom: 4px; left: 50%; transform: translateX(-50%); }
+    .minimap-compass .w { left: 6px; top: 50%; transform: translateY(-50%); }
+    .minimap-compass .e { right: 6px; top: 50%; transform: translateY(-50%); }
+
+    .zone-banner {
+      background: var(--stone-bg);
+      border: 1px solid var(--gold);
+      padding: 5px 14px;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      color: var(--gold-bright);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);
+    }
+
+    .quest-box {
+      width: 270px;
+      background: linear-gradient(180deg, rgba(16, 18, 23, 0.92), rgba(9, 10, 13, 0.92));
+      border: 1px solid #6b5735;
+      border-top: 2px solid var(--gold);
+      padding: 10px 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+      pointer-events: auto;
+    }
+
+    .quest-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      letter-spacing: 1.5px;
+      border-bottom: 1px solid rgba(200, 162, 88, 0.3);
+      padding-bottom: 5px;
+      margin-bottom: 7px;
+    }
+
+    .quest-item {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px;
+      color: #d6cfc2;
+      line-height: 1.35;
+      margin-bottom: 5px;
+    }
+
+    .quest-item.done {
+      color: #6b8e63;
+      text-decoration: line-through;
+    }
+
+    /* LEWY GÓRNY RÓG: PRZEŁĄCZNIK KLAS (STOJAK ZBROJMISTRZA) I SKRÓTY */
+    #top-left-hud {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .armory-panel {
+      background: var(--stone-bg);
+      border: 1px solid var(--gold);
+      padding: 8px 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .armory-title {
+      font-size: 11px;
+      color: var(--gold-bright);
+      letter-spacing: 1.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .class-buttons {
+      display: flex;
+      gap: 5px;
+    }
+
+    .class-btn {
+      background: #171920;
+      border: 1px solid #52452e;
+      color: #bfb6a4;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      padding: 5px 9px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .class-btn:hover {
+      border-color: var(--gold);
+      color: #fff;
+    }
+
+    .class-btn.active {
+      background: linear-gradient(180deg, #4b381a, #241b0c);
+      border-color: var(--gold-bright);
+      color: var(--gold-bright);
+      box-shadow: 0 0 10px rgba(200, 162, 88, 0.35);
+    }
+
+    .controls-hint {
+      background: rgba(10, 11, 14, 0.82);
+      border: 1px solid #383c47;
+      padding: 6px 10px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      color: #aaa294;
+      line-height: 1.4;
+    }
+
+    .controls-hint b {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      color: var(--gold);
+    }
+
+    #navmesh-badge {
+      display: none;
+      background: rgba(20, 85, 38, 0.9);
+      border: 1px solid #55d67b;
+      color: #e4ffec;
+      padding: 5px 10px;
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+
+    /* OKNO DIALOGOWE NPC */
+    #dialogue-modal {
+      position: fixed;
+      top: 22%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 480px;
+      background: linear-gradient(180deg, rgba(18, 20, 26, 0.96), rgba(10, 11, 14, 0.97));
+      border: 2px solid var(--gold);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.95);
+      padding: 18px 22px;
+      z-index: 45;
+      display: none;
+    }
+
+    #dialogue-speaker {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(200, 162, 88, 0.3);
+      padding-bottom: 6px;
+    }
+
+    #dialogue-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 17px;
+      line-height: 1.45;
+      color: #e2dacb;
+      margin-bottom: 14px;
+    }
+
+    #dialogue-close {
+      background: #241c10;
+      border: 1px solid var(--gold);
+      color: var(--gold-bright);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      padding: 6px 14px;
+      cursor: pointer;
+      float: right;
+    }
+
+    /* DOLNY GOTYCKI HUD */
+    #bottom-hud {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 35;
+      display: flex;
+      align-items: flex-end;
+      gap: 0;
+      pointer-events: none;
+    }
+
+    /* KULE ZASOBÓW (KREW / SZAŁ / SPRYT / ŚMIERĆ / MANA) */
+    .orb-module {
+      position: relative;
+      width: 152px;
+      height: 152px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      pointer-events: auto;
+      margin-bottom: 6px;
+    }
+
+    .orb-shell {
+      position: relative;
+      width: 126px;
+      height: 126px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #1c1d22, #07080a);
+      border: 4px solid #6b5839;
+      box-shadow:
+        0 0 0 2px #141519,
+        0 8px 24px rgba(0, 0, 0, 0.95),
+        inset 0 0 24px rgba(0, 0, 0, 0.95);
+      overflow: hidden;
+    }
+
+    .orb-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      transition: height 0.2s ease, background 0.25s ease;
+    }
+
+    #blood-fill {
+      background: radial-gradient(circle at 38% 35%, #e3292d 0%, #8f0d10 55%, #3d0305 100%);
+      box-shadow: inset 0 4px 12px rgba(255, 130, 130, 0.45);
+    }
+
+    #resource-fill {
+      background: radial-gradient(circle at 38% 35%, #ff8826 0%, #bd4206 58%, #4d1700 100%);
+      box-shadow: inset 0 4px 12px rgba(255, 200, 130, 0.45);
+    }
+
+    /* 10-SEGMENTOWY SPRYT DLA ZABÓJCY */
+    #cunning-segments {
+      position: absolute;
+      inset: 6px;
+      border-radius: 50%;
+      display: none;
+      flex-direction: column-reverse;
+      justify-content: space-between;
+      padding: 6px 14px;
+      z-index: 3;
+    }
+
+    .cunning-seg {
+      height: 7%;
+      width: 100%;
+      background: rgba(15, 35, 22, 0.75);
+      border: 1px solid #1b4d2b;
+      border-radius: 3px;
+      transition: all 0.15s ease;
+    }
+
+    .cunning-seg.lit {
+      background: linear-gradient(90deg, #169440, #3ef279, #169440);
+      border-color: #98ffba;
+      box-shadow: 0 0 8px rgba(62, 242, 121, 0.7);
+    }
+
+    .orb-glass {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.06) 24%, transparent 60%);
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .orb- cage-svg {
+      position: absolute;
+      inset: -4px;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .orb-readout {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 6;
+      text-shadow: 0 2px 5px #000, 0 0 8px #000;
+      pointer-events: none;
+    }
+
+    .orb-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #f0e6d2;
+    }
+
+    .orb-values {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      margin-top: 2px;
+    }
+
+    /* CENTRALNY PANEL GOTYCKI */
+    .center-console {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: auto;
+      margin: 0 -8px;
+      z-index: 2;
+    }
+
+    /* KUTY GOTYCKI ORNAMENT NAD PASKIEM SKILLI (ZERO CZERWONYCH PASKÓW!) */
+    .gothic-ornament-crest {
+      width: 540px;
+      height: 44px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      position: relative;
+      margin-bottom: -3px;
+      pointer-events: none;
+    }
+
+    .level-medallion {
+      position: absolute;
+      top: 4px;
+      padding: 3px 18px;
+      background: linear-gradient(180deg, #1f232b, #0e1014);
+      border: 1px solid var(--gold);
+      color: var(--gold-bright);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.95);
+    }
+
+    .console-body {
+      background: linear-gradient(180deg, #1a1d24 0%, #0d0f13 100%);
+      border-top: 2px solid var(--gold);
+      border-left: 2px solid #594a30;
+      border-right: 2px solid #594a30;
+      border-bottom: 3px solid #382e1e;
+      padding: 10px 18px 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 -6px 26px rgba(0, 0, 0, 0.95), inset 0 2px 12px rgba(0, 0, 0, 0.85);
+    }
+
+    .slots-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .hud-divider {
+      width: 2px;
+      height: 46px;
+      background: linear-gradient(180deg, transparent, var(--gold), transparent);
+      opacity: 0.6;
+    }
+
+    .skill-slot, .potion-slot {
+      position: relative;
+      width: 50px;
+      height: 50px;
+      background: radial-gradient(circle at center, #222630 0%, #101217 100%);
+      border: 1px solid #6b5839;
+      box-shadow: inset 0 0 10px #000, 0 2px 6px rgba(0, 0, 0, 0.8);
+      display: flex;
+       flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .potion-slot {
+      width: 44px;
+      height: 44px;
+    }
+
+    .skill-slot:hover, .potion-slot:hover {
+      border-color: var(--gold-bright);
+    }
+
+    .skill-slot:active, .potion-slot:active {
+      transform: scale(0.95);
+    }
+
+    .slot-key {
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--gold-bright);
+      text-shadow: 0 1px 3px #000;
+      z-index: 3;
+    }
+
+    .slot-charges {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 1px 3px #000;
+      z-index: 3;
+    }
+
+    .slot-icon {
+      font-size: 18px;
+      color: #d8c396;
+      z-index: 2;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .slot-sub {
+      font-size: 8px;
+      color: #9e9482;
+      letter-spacing: 0.5px;
+      margin-top: 3px;
+      z-index: 2;
+    }
+
+    .cd-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0%;
+      background: rgba(5, 6, 8, 0.82);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--gold-bright);
+      z-index: 4;
+      pointer-events: none;
+    }
+  </style>
+  <!-- Import Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <!-- EKRAN ŁADOWANIA I WYCINANIA TŁA FLOOD-FILL -->
+  <div id="loading-screen">
+    <div class="loading-title">AKT I: POPIELNA PRZYSTAŃ</div>
+    <div class="loading-subtitle">Inicjalizacja świata 2.5D i wycinanie tła ze sprajtów (BFS Flood-Fill)...</div>
+    <div class="loading-frame">
+      <div id="loading-bar"></div>
+    </div>
+    <div id="loading-status">Pobieranie zasobów z repozytorium GitHub (0 / 22)...</div>
+  </div>
+
+  <!-- CANVAS 3D THREE.JS -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- WARSTWA ETYKIET NAD NPC/WROGAMI/OBIEKTAMI -->
+  <div id="labels-layer"></div>
+
+  <!-- LEWY GÓRNY PANEL: STOJAK ZBROJMISTRZA & SKRÓTY -->
+  <div id="top-left-hud">
+    <div class="armory-panel">
+      <div class="armory-title">
+        <span>STOJAK ZBROJMISTRZA (KLASA)</span>
+        <span id="active-class-label" style="color:#fff;">WIKING</span>
+      </div>
+      <div class="class-buttons">
+        <button class="class-btn active" data-class="wiking">Wiking</button>
+        <button class="class-btn" data-class="zabojca">Zabójca</button>
+        <button class="class-btn" data-class="guslarz">Guślarz</button>
+        <button class="class-btn" data-class="wrozbita">Wróżbita</button>
+      </div>
+    </div>
+    <div class="controls-hint">
+      <b>LPM</b> Ruch / Interakcja &nbsp;|&nbsp; <b>PPM</b> lub <b>SHIFT+LPM</b> Atak w miejscu<br>
+      <b>SPACJA</b> Przeskok Bojowy (CD 4.5s) &nbsp;|&nbsp; <b>[1]</b> Mikstura Krwi<br>
+      <b>[F2]</b> Siatka NavMesh &nbsp;|&nbsp; <b>[ALT]</b> Pokaż wszystkie etykiety
+    </div>
+    <div id="navmesh-badge">PODGLĄD SIATKI NAVMESH [F2]: ZIELONY = RUCH, CZERWONY = BLOKADA</div>
+  </div>
+
+  <!-- PRAWY GÓRNY PANEL: MINIMAPA & DZIENNIK ZADAŃ -->
+  <div id="top-right-hud">
+    <div class="zone-banner" id="zone-name-banner">POPIELNA PRZYSTAŃ</div>
+    <div class="minimap-wrapper">
+      <canvas id="minimap-canvas" width="184" height="184"></canvas>
+      <div class="minimap-compass">
+        <span class="n">N</span>
+        <span class="s">S</span>
+        <span class="w">W</span>
+        <span class="e">E</span>
+      </div>
+    </div>
+    <div class="quest-box">
+      <div class="quest-header">DZIENNIK ZADAŃ — AKT I</div>
+      <div class="quest-item" id="q-borgar">• Porozmawiaj z Kowalem Borgarem przy kuźni</div>
+      <div class="quest-item" id="q-stojak">• Przetestuj zbroje na Stojaku Zbrojmistrza</div>
+      <div class="quest-item" id="q-przedmurze">• Oczyść Przedmurze za północnym mostem (<span id="q-kills">0</span>/6)</div>
+      <div class="quest-item" id="q-bosses">• Pokonaj Bossów Przystani (<span id="q-boss-kills">0</span>/3)</div>
+    </div>
+  </div>
+
+  <!-- MODAL DIALOGOWY NPC -->
+  <div id="dialogue-modal">
+    <div id="dialogue-speaker">KOWAL BORGAR</div>
+    <div id="dialogue-text">...</div>
+    <button id="dialogue-close">ZAMKNIJ [ESC]</button>
+  </div>
+
+  <!-- DOLNY GOTYCKI HUD -->
+  <div id="bottom-hud">
+    <!-- LEWA KULA: KREW -->
+    <div class="orb-module">
+      <div class="orb-shell">
+        <div class="orb-fill" id="blood-fill"></div>
+        <div class="orb-glass"></div>
+        <div class="orb-readout">
+          <span class="orb-label">KREW</span>
+          <span class="orb-values" id="blood-text">485/485</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTRALNA KONSOLA Z KUTYM GOTYCKIM ORNAMENTEM -->
+    <div class="center-console">
+      <div class="gothic-ornament-crest">
+        <!-- Kuty gotycki ornament ze stali i złota (całkowity brak czerwonych poziomych pasków) -->
+        <svg width="540" height="44" viewBox="0 0 540 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 42 L65 24 L155 24 L195 8 L345 8 L385 24 L475 24 L530 42" stroke="#c8a258" stroke-width="2" fill="rgba(16,18,24,0.92)"/>
+          <path d="M40 42 L85 29 L170 29 L208 15 L332 15 L370 29 L455 29 L500 42" stroke="#6d5833" stroke-width="1.2" fill="none"/>
+          <circle cx="95" cy="29" r="3.5" fill="#c8a258"/>
+          <circle cx="150" cy="26" r="3" fill="#8b703f"/>
+          <circle cx="390" cy="26" r="3" fill="#8b703f"/>
+          <circle cx="445" cy="29" r="3.5" fill="#c8a258"/>
+          <path d="M120 35 L140 28 L160 35 M380 35 L400 28 L420 35" stroke="#c8a258" stroke-width="1.3"/>
+        </svg>
+        <div class="level-medallion" id="hud-level-badge">POZIOM 1 — WIKING</div>
+      </div>
+
+      <div class="console-body">
+        <!-- SLOTY MIKSTUR -->
+        <div class="slots-group">
+          <div class="potion-slot" id="potion-1" title="Mikstura Krwi (Klawisz 1)">
+            <span class="slot-key">1</span>
+            <span class="slot-icon" style="color:#e33b3f;">♦</span>
+            <span class="slot-sub">KREW</span>
+            <span class="slot-charges" id="potion-1-charges">3</span>
+          </div>
+          <div class="potion-slot" id="potion-2" title="Eliksir Żelaza (Klawisz 2)">
+            <span class="slot-key">2</span>
+            <span class="slot-icon" style="color:#78a8c8;">◊</span>
+            <span class="slot-sub">STAL</span>
+            <span class="slot-charges">2</span>
+          </div>
+        </div>
+
+        <div class="hud-divider"></div>
+
+        <!-- SLOTY UMIEJĘTNOŚCI Q, W, E, R + LPM, PPM, SPACJA -->
+        <div class="slots-group">
+          <div class="skill-slot" data-skill="Q" title="Rozpłatanie [Q]">
+            <span class="slot-key">Q</span>
+            <span class="slot-icon">⚔</span>
+            <span class="slot-sub" id="skill-q-name">CIĘCIE</span>
+            <div class="cd-overlay" id="cd-Q"></div>
+          </div>
+          <div class="skill-slot" data-skill="W" title="Zew Popiołów [W]">
+            <span class="slot-key">W</span>
+            <span class="slot-icon">❖</span>
+            <span class="slot-sub" id="skill-w-name">ZEW</span>
+            <div class="cd-overlay" id="cd-W"></div>
+          </div>
+          <div class="skill-slot" data-skill="E" title="Gniew Runiczny [E]">
+            <span class="slot-key">E</span>
+            <span class="slot-icon">✹</span>
+            <span class="slot-sub" id="skill-e-name">GNIEW</span>
+            <div class="cd-overlay" id="cd-E"></div>
+          </div>
+          <div class="skill-slot" data-skill="R" title="Przebudzenie Krwi [R]">
+            <span class="slot-key">R</span>
+            <span class="slot-icon">♛</span>
+            <span class="slot-sub" id="skill-r-name">FURIA</span>
+            <div class="cd-overlay" id="cd-R"></div>
+          </div>
+        </div>
+
+        <div class="hud-divider"></div>
+
+        <!-- SLOTY MYSZY I PRZESKOKU BOJOWEGO (SPACJA) -->
+        <div class="slots-group">
+          <div class="skill-slot" id="slot-lpm" title="LPM: Tylko Ruch i Interakcja">
+            <span class="slot-key">LPM</span>
+            <span class="slot-icon">👣</span>
+            <span class="slot-sub">RUCH</span>
+          </div>
+          <div class="skill-slot" id="slot-ppm" title="PPM / SHIFT+LPM: Autoatak w miejscu">
+            <span class="slot-key">PPM</span>
+            <span class="slot-icon">🗡</span>
+            <span class="slot-sub">ATAK</span>
+          </div>
+          <div class="skill-slot" id="slot-space" title="SPACJA: Ciężki przeskok bojowy (CD 4.5s)">
+            <span class="slot-key">SPC</span>
+            <span class="slot-icon">☄</span>
+            <span class="slot-sub">SKOK</span>
+            <div class="cd-overlay" id="cd-SPACE"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRAWA KULA: SZAŁ / SPRYT / ŚMIERĆ / MANA -->
+    <div class="orb-module">
+      <div class="orb-shell">
+        <div class="orb-fill" id="resource-fill"></div>
+        <div id="cunning-segments">
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+          <div class="cunning-seg lit"></div>
+        </div>
+        <div class="orb-glass"></div>
+        <div class="orb-readout">
+          <span class="orb-label" id="resource-label">SZAŁ</span>
+          <span class="orb-values" id="resource-text">0/100</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================================
+    // KONTRAKT ZASOBÓW — BAZA GITHUB (22 PLIKI)
+    // ============================================================================
+    const BASE_URL = "https://raw.githubusercontent.com/franekimono2026/DiabelZzz/main/";
+
+    const REPO_FILES = [
+      // Postacie (8)
+      "wiking_przod.jpg", "wiking_tyl.jpg",
+      "zabojca_przod.jpg", "zabojca_tyl.jpg",
+      "guslarz_przod.jpg", "guslarz_tyl.jpg",
+      "wrozbita_przod.jpg", "wrozbita_tyl.jpg",
+      // Podłoża i Posągi (4)
+      "bruk.jpg", "pomost.jpg", "krag_runiczny.jpg", "kamien_filozofow.jpg",
+      // NPC i Kuźnia (5)
+      "kowal_borgar.jpg", "kuznia_piec.jpg", "stojak_broni.jpg", "straznik_vorn.jpg", "handlarz_kraal.jpg",
+      // Wrogowie i Bossowie (5)
+      "wrog_tarczownik.jpg", "wrog_ogar.jpg", "boss1_latarnik.jpg", "boss2_bracia.jpg", "boss3_lalkarz.jpg"
+    ];
+
+    const ASSETS = {};
+    let loadedCount = 0;
+
+    function updateLoadingProgress(filename) {
+      loadedCount++;
+      const pct = Math.min(100, Math.round((loadedCount / REPO_FILES.length) * 100));
+      const bar = document.getElementById("loading-bar");
+      const status = document.getElementById("loading-status");
+      if (bar) bar.style.width = pct + "%";
+      if (status) status.textContent = `Przetworzono: ${filename} (${loadedCount} / ${REPO_FILES.length})`;
+    }
+
+    // ============================================================================
+    // 1. AUTOMATYCZNE WYCINANIE CIEMNEGO TŁA (BFS FLOOD-FILL + FEATHERING + KOTWICZENIE Y=0)
+    // ============================================================================
+    function loadRawImage(filename) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = (err) => reject(err);
+        img.src = BASE_URL + filename;
+      });
+    }
+
+    async function loadAndKeyOutSprite(filename, options = {}) {
+      const img = await loadRawImage(filename);
+      const maxDim = options.maxDim || 512;
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const W = Math.max(64, Math.round(img.width * scale));
+      const H = Math.max(64, Math.round(img.height * scale));
+
+      const workCanvas = document.createElement("canvas");
+      workCanvas.width = W;
+      workCanvas.height = H;
+      const ctx = workCanvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, W, H);
+
+      const imgData = ctx.getImageData(0, 0, W, H);
+      const data = imgData.data;
+
+      // Pobranie koloru tła z 4 narożników obrazu
+      const corners = [
+        [2, 2],
+        [W - 3, 2],
+        [2, H - 3],
+        [W - 3, H - 3]
+      ];
+      let bgR = 0, bgG = 0, bgB = 0;
+      for (let i = 0; i < corners.length; i++) {
+        const idx = (corners[i][1] * W + corners[i][0]) * 4;
+        bgR += data[idx];
+        bgG += data[idx + 1];
+        bgB += data[idx + 2];
+      }
+      bgR /= 4;
+      bgG /= 4;
+      bgB /= 4;
+
+      const totalPixels = W * H;
+      const visited = new Uint8Array(totalPixels);
+      const queue = new Int32Array(totalPixels);
+      let qHead = 0;
+      let qTail = 0;
+
+      const tolCorner = options.tolerance || 46;
+      const maxLuma = options.maxLuma || 88;
+
+      function isBackgroundCandidate(pIdx, refR, refG, refB) {
+        const i4 = pIdx * 4;
+        const r = data[i4];
+        const g = data[i4 + 1];
+        const b = data[i4 + 2];
+        const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+        if (luma > maxLuma) return false;
+
+        // Odległość od koloru narożników lub sąsiedniego piksela tła
+        const dCorner = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+        const dNeighbor = Math.abs(r - refR) + Math.abs(g - refG) + Math.abs(b - refB);
+        const sat = Math.max(r, g, b) - Math.min(r, g, b);
+
+        return (dCorner < tolCorner * 2.4 && sat < 42) || (dNeighbor < 24 && luma < 68 && sat < 35);
+      }
+
+      // Inicjalizacja kolejki BFS od 4 krawędzi obrazu
+      for (let x = 0; x < W; x++) {
+        const topIdx = x;
+        const botIdx = (H - 1) * W + x;
+        if (isBackgroundCandidate(topIdx, bgR, bgG, bgB)) {
+          visited[topIdx] = 1;
+          queue[qTail++] = topIdx;
+        }
+        if (isBackgroundCandidate(botIdx, bgR, bgG, bgB)) {
+          visited[botIdx] = 1;
+          queue[qTail++] = botIdx;
+        }
+      }
+      for (let y = 1; y < H - 1; y++) {
+        const leftIdx = y * W;
+        const rightIdx = y * W + (W - 1);
+        if (isBackgroundCandidate(leftIdx, bgR, bgG, bgB)) {
+          visited[leftIdx] = 1;
+          queue[qTail++] = leftIdx;
+        }
+        if (isBackgroundCandidate(rightIdx, bgR, bgG, bgB)) {
+          visited[rightIdx] = 1;
+          queue[qTail++] = rightIdx;
+        }
+      }
+
+      // Algorytm BFS Flood-Fill
+      while (qHead < qTail) {
+        const curr = queue[qHead++];
+        const cx = curr % W;
+        const cy = (curr / W) | 0;
+        const c4 = curr * 4;
+        const cr = data[c4];
+        const cg = data[c4 + 1];
+        const cb = data[c4 + 2];
+
+        // 4 sąsiadów
+        if (cx > 0) {
+          const n = curr - 1;
+          if (!visited[n] && isBackgroundCandidate(n, cr, cg, cb)) {
+            visited[n] = 1;
+            queue[qTail++] = n;
+          }
+        }
+        if (cx < W - 1) {
+          const n = curr + 1;
+          if (!visited[n] && isBackgroundCandidate(n, cr, cg, cb)) {
+            visited[n] = 1;
+            queue[qTail++] = n;
+          }
+        }
+        if (cy > 0) {
+          const n = curr - W;
+          if (!visited[n] && isBackgroundCandidate(n, cr, cg, cb)) {
+            visited[n] = 1;
+            queue[qTail++] = n;
+          }
+        }
+        if (cy < H - 1) {
+          const n = curr + W;
+          if (!visited[n] && isBackgroundCandidate(n, cr, cg, cb)) {
+            visited[n] = 1;
+            queue[qTail++] = n;
+          }
+        }
+      }
+
+      // Wycięcie tła (alpha = 0)
+      for (let i = 0; i < totalPixels; i++) {
+        if (visited[i]) {
+          data[i * 4 + 3] = 0;
+        }
+      }
+
+      // Miękkie wygładzanie krawędzi (Feathering 1-2 px) + usuwanie ciemnej obwódki
+      const alphaCopy = new Uint8Array(totalPixels);
+      for (let i = 0; i < totalPixels; i++) {
+        alphaCopy[i] = data[i * 4 + 3];
+      }
+
+      for (let y = 1; y < H - 1; y++) {
+        for (let x = 1; x < W - 1; x++) {
+          const idx = y * W + x;
+          if (alphaCopy[idx] === 0) continue;
+
+          let emptyNeighbors = 0;
+          if (alphaCopy[idx - 1] === 0) emptyNeighbors++;
+          if (alphaCopy[idx + 1] === 0) emptyNeighbors++;
+          if (alphaCopy[idx - W] === 0) emptyNeighbors++;
+          if (alphaCopy[idx + W] === 0) emptyNeighbors++;
+          if (alphaCopy[idx - W - 1] === 0) emptyNeighbors++;
+          if (alphaCopy[idx - W + 1] === 0) emptyNeighbors++;
+          if (alphaCopy[idx + W - 1] === 0) emptyNeighbors++;
+          if (alphaCopy[idx + W + 1] === 0) emptyNeighbors++;
+
+          if (emptyNeighbors > 0) {
+            const factor = Math.max(0.25, 1 - emptyNeighbors * 0.11);
+            data[idx * 4 + 3] = Math.round(255 * factor);
+          }
+        }
+      }
+
+      // Drugi przebieg miękkiego wygładzenia (2 px feather)
+      for (let y = 2; y < H - 2; y++) {
+        for (let x = 2; x < W - 2; x++) {
+          const idx = y * W + x;
+          const a = data[idx * 4 + 3];
+          if (a === 0 || a < 255) continue;
+          if (
+            data[(idx - 1) * 4 + 3] < 255 ||
+            data[(idx + 1) * 4 + 3] < 255 ||
+            data[(idx - W) * 4 + 3] < 255 ||
+            data[(idx + W) * 4 + 3] < 255
+          ) {
+            data[idx * 4 + 3] = 225;
+          }
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+
+      // Wykrywanie najniższego nieprzezroczystego piksela sylwetki i kotwiczenie do y = 0 (dolna krawędź)
+      let lowestY = H - 1;
+      let highestY = 0;
+
+      if (!options.noBottomAnchor) {
+        for (let y = H - 1; y >= 0; y--) {
+          let opaqueInRow = 0;
+          for (let x = 0; x < W; x++) {
+            if (data[(y * W + x) * 4 + 3] > 90) {
+              opaqueInRow++;
+            }
+          }
+          if (opaqueInRow >= 3) {
+            lowestY = y;
+            break;
+          }
+        }
+        for (let y = 0; y < H; y++) {
+          let opaqueInRow = 0;
+          for (let x = 0; x < W; x++) {
+            if (data[(y * W + x) * 4 + 3] > 90) {
+              opaqueInRow++;
+            }
+          }
+          if (opaqueInRow >= 3) {
+            highestY = y;
+            break;
+          }
+        }
+      }
+
+      const outCanvas = document.createElement("canvas");
+      outCanvas.width = W;
+      outCanvas.height = H;
+      const outCtx = outCanvas.getContext("2d");
+
+      const shiftDown = (H - 1) - lowestY;
+      outCtx.drawImage(workCanvas, 0, shiftDown);
+
+      const texture = new THREE.CanvasTexture(outCanvas);
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.needsUpdate = true;
+
+      updateLoadingProgress(filename);
+      return {
+        texture,
+        canvas: outCanvas,
+        aspect: W / H,
+        contentHeightRatio: Math.max(0.4, (lowestY - highestY) / H)
+      };
+    }
+
+    // Generator tekstury bruku 1024x1024 z filtrem detilingu i mokrymi kałużami (roughness: 0.1)
+    async function buildDetiledCobbleTextures(filename) {
+      const img = await loadRawImage(filename);
+      const size = 1024;
+
+      const diffCanvas = document.createElement("canvas");
+      diffCanvas.width = size;
+      diffCanvas.height = size;
+      const dCtx = diffCanvas.getContext("2d");
+
+      // Warstwa bazowa (2x2 z lekkim przyciemnieniem gotyckim)
+      for (let y = 0; y < 2; y++) {
+        for (let x = 0; x < 2; x++) {
+          dCtx.drawImage(img, x * 512, y * 512, 512, 512);
+        }
+      }
+
+      // Filtr detilingu: mieszanie obróconych wariantów w miękkich maskach kołowych (brak szachownicy)
+      const patchCanvas = document.createElement("canvas");
+      patchCanvas.width = 384;
+      patchCanvas.height = 384;
+      const pCtx = patchCanvas.getContext("2d");
+
+      const angles = [Math.PI * 0.5, Math.PI, Math.PI * 1.5, 0.45, 2.1];
+      for (let i = 0; i < 14; i++) {
+        const px = ((i * 197) % (size - 280)) + 140;
+        const py = ((i * 313) % (size - 280)) + 140;
+        const angle = angles[i % angles.length];
+
+        pCtx.clearRect(0, 0, 384, 384);
+        pCtx.save();
+        pCtx.beginPath();
+        pCtx.arc(192, 192, 175, 0, Math.PI * 2);
+        pCtx.closePath();
+        pCtx.clip();
+
+        pCtx.translate(192, 192);
+        pCtx.rotate(angle);
+        pCtx.drawImage(img, -192, -192, 384, 384);
+        pCtx.restore();
+
+        // Miękka winieta alfa na brzegach łaty
+        pCtx.globalCompositeOperation = "destination-in";
+        const grad = pCtx.createRadialGradient(192, 192, 60, 192, 192, 175);
+        grad.addColorStop(0, "rgba(0,0,0,0.85)");
+        grad.addColorStop(1, "rgba(0,0,0,0)");
+        pCtx.fillStyle = grad;
+        pCtx.fillRect(0, 0, 384, 384);
+        pCtx.globalCompositeOperation = "source-over";
+
+        dCtx.drawImage(patchCanvas, px - 192, py - 192);
+      }
+
+      // Mapa Roughness (suchy kamień ~0.82, mokre kałuże odbijające światło ~0.08 - 0.1)
+      const roughCanvas = document.createElement("canvas");
+      roughCanvas.width = size;
+      roughCanvas.height = size;
+      const rCtx = roughCanvas.getContext("2d");
+      rCtx.fillStyle = "rgb(205, 205, 205)";
+      rCtx.fillRect(0, 0, size, size);
+
+      const puddles = [
+        { x: 220, y: 260, r: 135 },
+        { x: 680, y: 210, r: 150 },
+        { x: 490, y: 540, r: 165 },
+        { x: 210, y: 790, r: 140 },
+        { x: 810, y: 730, r: 155 },
+        { x: 840, y: 420, r: 110 }
+      ];
+
+      for (const p of puddles) {
+        // Przyciemnienie mokrego kamienia na mapie dyfuzyjnej
+        const dGrad = dCtx.createRadialGradient(p.x, p.y, p.r * 0.2, p.x, p.y, p.r);
+        dGrad.addColorStop(0, "rgba(8, 12, 18, 0.52)");
+        dGrad.addColorStop(0.7, "rgba(10, 14, 20, 0.28)");
+        dGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        dCtx.fillStyle = dGrad;
+        dCtx.beginPath();
+        dCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        dCtx.fill();
+
+        // Lustrzane odbicie światła w kałuży na mapie roughness (roughness ~ 0.1 -> ciemny piksel ~25)
+        const rGrad = rCtx.createRadialGradient(p.x, p.y, p.r * 0.25, p.x, p.y, p.r);
+        rGrad.addColorStop(0, "rgb(22, 22, 22)");
+        rGrad.addColorStop(0.65, "rgb(35, 35, 35)");
+        rGrad.addColorStop(1, "rgba(205, 205, 205, 0)");
+        rCtx.fillStyle = rGrad;
+        rCtx.beginPath();
+        rCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        rCtx.fill();
+      }
+
+      const diffuseTex = new THREE.CanvasTexture(diffCanvas);
+      diffuseTex.wrapS = THREE.RepeatWrapping;
+      diffuseTex.wrapT = THREE.RepeatWrapping;
+      diffuseTex.repeat.set(3.5, 3.5);
+
+      const roughTex = new THREE.CanvasTexture(roughCanvas);
+      roughTex.wrapS = THREE.RepeatWrapping;
+      roughTex.wrapT = THREE.RepeatWrapping;
+      roughTex.repeat.set(3.5, 3.5);
+
+      updateLoadingProgress(filename);
+      return { diffuseTex, roughTex };
+    }
+
+    async function loadWoodPierTexture(filename) {
+      const img = await loadRawImage(filename);
+      const tex = new THREE.Texture(img);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(3, 1);
+      tex.needsUpdate = true;
+      updateLoadingProgress(filename);
+      return tex;
+    }
+
+    async function loadAllAssets() {
+      const spriteFiles = [
+        "wiking_przod.jpg", "wiking_tyl.jpg",
+        "zabojca_przod.jpg", "zabojca_tyl.jpg",
+        "guslarz_przod.jpg", "guslarz_tyl.jpg",
+        "wrozbita_przod.jpg", "wrozbita_tyl.jpg",
+        "kamien_filozofow.jpg",
+        "kowal_borgar.jpg", "kuznia_piec.jpg", "stojak_broni.jpg", "straznik_vorn.jpg", "handlarz_kraal.jpg",
+        "wrog_tarczownik.jpg", "wrog_ogar.jpg", "boss1_latarnik.jpg", "boss2_bracia.jpg", "boss3_lalkarz.jpg"
+      ];
+
+      const tasks = spriteFiles.map(async (f) => {
+        ASSETS[f] = await loadAndKeyOutSprite(f, { maxDim: 512 });
+      });
+
+      // Krąg runiczny wycinany płasko bez przesuwania do dolnej krawędzi
+      tasks.push((async () => {
+        ASSETS["krag_runiczny.jpg"] = await loadAndKeyOutSprite("krag_runiczny.jpg", {
+          maxDim: 512,
+          noBottomAnchor: true,
+          tolerance: 48
+        });
+      })());
+
+      tasks.push((async () => {
+        ASSETS["bruk.jpg"] = await buildDetiledCobbleTextures("bruk.jpg");
+      })());
+
+      tasks.push((async () => {
+        ASSETS["pomost.jpg"] = await loadWoodPierTexture("pomost.jpg");
+      })());
+
+      await Promise.all(tasks);
+    }
+
+    // ============================================================================
+    // 2. KONFIGURACJA ŚWIATA 3D, KAMERY IZOMETRYCZNEJ 55° I SIATKI NAVMESH
+    // ============================================================================
+    const canvas = document.getElementById("game-canvas");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x06080c);
+    scene.fog = new THREE.FogExp2(0x080b10, 0.012);
+
+    // Kamera sztywno zablokowana pod kątem 55° z góry, wąski FOV 30°
+    const CAMERA_FOV = 30;
+    const CAMERA_PITCH = (55 * Math.PI) / 180;
+    const CAMERA_DIST = 37;
+    const camera = new THREE.PerspectiveCamera(CAMERA_FOV, window.innerWidth / window.innerHeight, 0.5, 220);
+
+    // Granice przesuwania kamery na krańcach mapy
+    const CAM_BOUNDS = {
+      minX: -30, maxX: 30,
+      minZ: -76, maxZ: 15
+    };
+
+    // System kolizji i NavMesh (rozdzielczość 0.5m)
+    const NAV_CELL = 0.5;
+    const NAV_MIN_X = -42, NAV_MAX_X = 42;
+    const NAV_MIN_Z = -86, NAV_MAX_Z = 24;
+
+    const OBSTACLES = [
+      // Kamień Filozofów na środku placu (0, 0, 0)
+      { x: 0, z: 0, r: 1.25, name: "Kamień Filozofów" },
+      // Piec Kuźni i Kowadło
+      { x: 13.5, z: -2.5, r: 2.35, name: "Piec Kuźni" },
+      // Kowal Borgar
+      { x: 9.6, z: -1.1, r: 0.85, name: "Kowal Borgar" },
+      // Stojak Broni
+      { x: 11.4, z: 3.1, r: 0.95, name: "Stojak Zbrojmistrza" },
+      // Strażnik Vorn
+      { x: -3.4, z: -16.8, r: 0.85, name: "Strażnik Vorn" },
+      // Handlarz Kraal
+      { x: -13.6, z: 1.4, r: 0.85, name: "Handlarz Kraal" },
+      // Kosze pochodni na pomostach i przy schodach
+      { x: -21.5, z: -9.8, r: 0.55 },
+      { x: -21.5, z: -5.2, r: 0.55 },
+      { x: -35.2, z: -9.8, r: 0.55 },
+      { x: -35.2, z: -5.2, r: 0.55 },
+      { x: -21.5, z: 4.2, r: 0.55 },
+      { x: -21.5, z: 8.8, r: 0.55 },
+      { x: -35.2, z: 4.2, r: 0.55 },
+      { x: -35.2, z: 8.8, r: 0.55 },
+      { x: -5.0, z: -19.2, r: 0.65 },
+      { x: 5.0, z: -19.2, r: 0.65 }
+    ];
+
+    function isInsideWalkableRegion(x, z) {
+      // 1. Główny plac Popielnej Przystani
+      if (x >= -21.0 && x <= 21.0 && z >= -19.0 && z <= 19.0) return true;
+      // 2. Północno-zachodni drewniany pomost (do samego końca!)
+      if (x >= -35.8 && x <= -20.5 && z >= -9.1 && z <= -5.9) return true;
+      // 3. Południowo-zachodni drewniany pomost (do samego końca!)
+      if (x >= -35.8 && x <= -20.5 && z >= 4.9 && z <= 8.1) return true;
+      // 4. Północne kamienne schody i most na Przedmurze
+      if (x >= -4.1 && x <= 4.1 && z >= -34.5 && z <= -18.5) return true;
+      // 5. Przedmurze
+      if (x >= -17.5 && x <= 17.5 && z >= -55.5 && z <= -34.0) return true;
+      // 6. Arena Bossa 1 (Zachodnia - Latarnik) + łącznik
+      if (x >= -35.5 && x <= -17.0 && z >= -51.5 && z <= -38.5) return true;
+      // 7. Arena Bossa 2 (Wschodnia - Bracia) + łącznik
+      if (x >= 17.0 && x <= 35.5 && z >= -51.5 && z <= -38.5) return true;
+      // 8. Most północny i Arena Bossa 3 (Cytadela Lalkarza)
+      if (x >= -3.8 && x <= 3.8 && z >= -61.0 && z <= -55.0) return true;
+      if (x >= -13.5 && x <= 13.5 && z >= -81.5 && z <= -60.5) return true;
+
+      return false;
+    }
+
+    function isWalkable(x, z, radius = 0.42) {
+      if (!isInsideWalkableRegion(x, z)) return false;
+      // Sprawdzenie marginesu od krawędzi regionu
+      if (
+        !isInsideWalkableRegion(x - radius * 0.6, z) ||
+        !isInsideWalkableRegion(x + radius * 0.6, z) ||
+        !isInsideWalkableRegion(x, z - radius * 0.6) ||
+        !isInsideWalkableRegion(x, z + radius * 0.6)
+      ) {
+        return false;
+      }
+      // Sprawdzenie kolizji z przeszkodami (obelisk, piec, stojak, NPC, filary)
+      for (let i = 0; i < OBSTACLES.length; i++) {
+        const ob = OBSTACLES[i];
+        const dx = x - ob.x;
+        const dz = z - ob.z;
+        const minDist = ob.r + radius;
+        if (dx * dx + dz * dz < minDist * minDist) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // Płynne ślizganie się wzdłuż krawędzi przeszkód (Wall Sliding)
+    function moveWithWallSliding(x, z, vx, vz, dt) {
+      const targetX = x + vx * dt;
+      const targetZ = z + vz * dt;
+      if (isWalkable(targetX, targetZ)) {
+        return { x: targetX, z: targetZ, moved: true };
+      }
+      // Próba ruchu tylko w osi X
+      if (Math.abs(vx) > 0.001 && isWalkable(targetX, z)) {
+        return { x: targetX, z: z, moved: true };
+      }
+      // Próba ruchu tylko w osi Z
+      if (Math.abs(vz) > 0.001 && isWalkable(x, targetZ)) {
+        return { x: x, z: targetZ, moved: true };
+      }
+      // Próba odchylenia kątowego (ślizg po okrągłych przeszkodach)
+      const baseAngle = Math.atan2(vz, vx);
+      const speed = Math.hypot(vx, vz) * 0.78;
+      const offsets = [0.45, -0.45, 0.85, -0.85, 1.2, -1.2];
+      for (let i = 0; i < offsets.length; i++) {
+        const ang = baseAngle + offsets[i];
+        const nx = x + Math.cos(ang) * speed * dt;
+        const nz = z + Math.sin(ang) * speed * dt;
+        if (isWalkable(nx, nz)) {
+          return { x: nx, z: nz, moved: true };
+        }
+      }
+      return { x, z, moved: false };
+    }
+
+    // ============================================================================
+    // 3. BUDOWA ŚWIATA 3D (PLAC, MURY OPOROWE, POMOSTY, WODA, PRZEDMURZE, ARENY)
+    // ============================================================================
+    let seaMesh = null;
+    let seaGeo = null;
+    let foamRings = [];
+    let torchFlames = [];
+    let forgeSparks = null;
+    let navMeshDebugGroup = null;
+    let xrayTargets = []; // Obiekty z przezroczystością X-Ray 42%
+
+    // Miękki cień kontaktowy Ambient Occlusion pod stopami/podstawą
+    function createContactShadowTexture() {
+      const c = document.createElement("canvas");
+      c.width = 128;
+      c.height = 128;
+      const ctx = c.getContext("2d");
+      const g = ctx.createRadialGradient(64, 64, 6, 64, 64, 60);
+      g.addColorStop(0, "rgba(0, 0, 0, 0.78)");
+      g.addColorStop(0.55, "rgba(0, 0, 0, 0.38)");
+      g.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 128, 128);
+      return new THREE.CanvasTexture(c);
+    }
+    const contactShadowTex = createContactShadowTexture();
+
+    function addContactShadow(parentOrScene, x, z, scaleX, scaleZ) {
+      const geo = new THREE.PlaneGeometry(scaleX, scaleZ);
+      geo.rotateX(-Math.PI / 2);
+      const mat = new THREE.MeshBasicMaterial({
+        map: contactShadowTex,
+        transparent: true,
+        depthWrite: false
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, 0.015, z);
+      parentOrScene.add(mesh);
+      return mesh;
+    }
+
+    function buildWorldEnvironment() {
+      // Oświetlenie globalne (mroczny gotyk + odbicia w kałużach)
+      const ambientLight = new THREE.AmbientLight(0x526078, 0.75);
+      scene.add(ambientLight);
+
+      const moonDirLight = new THREE.DirectionalLight(0x88a4cc, 0.65);
+      moonDirLight.position.set(-25, 45, 25);
+      scene.add(moonDirLight);
+
+      const cobbleData = ASSETS["bruk.jpg"];
+      const cobbleMat = new THREE.MeshStandardMaterial({
+        map: cobbleData.diffuseTex,
+        roughnessMap: cobbleData.roughTex,
+        roughness: 0.85,
+        metalness: 0.15
+      });
+
+      const stoneWallMat = new THREE.MeshStandardMaterial({
+        color: 0x2a2e37,
+        roughness: 0.88,
+        metalness: 0.12
+      });
+      const corniceMat = new THREE.MeshStandardMaterial({
+        color: 0x3b404c,
+        roughness: 0.75,
+        metalness: 0.18
+      });
+
+      // 1. GŁÓWNY PLAC POPIELNEJ PRZYSTANI (44 x 40)
+      const plazaGeo = new THREE.PlaneGeometry(44, 40);
+      plazaGeo.rotateX(-Math.PI / 2);
+      const plazaMesh = new THREE.Mesh(plazaGeo, cobbleMat);
+      plazaMesh.position.set(0, 0, 0);
+      scene.add(plazaMesh);
+
+      // 2. KAMIENNY MUR OPOROWY NABRZEŻA, GZYMSY, NAROŻNE FILARY I PACHOŁKI CUMOWNICZE
+      function addRetainingWall(x, y, z, w, h, d) {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), stoneWallMat);
+        wall.position.set(x, y, z);
+        scene.add(wall);
+
+        const cornice = new THREE.Mesh(new THREE.BoxGeometry(w + 0.35, 0.38, d + 0.35), corniceMat);
+        cornice.position.set(x, y + h / 2 + 0.08, z);
+        scene.add(cornice);
+      }
+
+      // Mury oporowe wokół placu
+      addRetainingWall(0, -1.6, 20.3, 45.2, 3.6, 1.2);   // Południe
+      addRetainingWall(22.3, -1.6, 0, 1.2, 3.6, 41.2);   // Wschód
+      addRetainingWall(-22.3, -1.6, 0, 1.2, 3.6, 41.2);  // Zachód
+      addRetainingWall(-13.5, -1.6, -20.3, 18.0, 3.6, 1.2); // Północ-Zachód
+      addRetainingWall(13.5, -1.6, -20.3, 18.0, 3.6, 1.2);  // Północ-Wschód
+
+      // Narożne filary i filary przy bramach/pomostach
+      const pillarPositions = [
+        [-22.2, 20.2], [22.2, 20.2], [-22.2, -20.2], [22.2, -20.2],
+        [-4.8, -20.2], [4.8, -20.2],
+        [-22.2, -10.2], [-22.2, -4.8],
+        [-22.2, 3.8], [-22.2, 9.2]
+      ];
+      for (const [px, pz] of pillarPositions) {
+        const pillar = new THREE.Mesh(new THREE.BoxGeometry(1.7, 4.6, 1.7), corniceMat);
+        pillar.position.set(px, -1.1, pz);
+        scene.add(pillar);
+        const cap = new THREE.Mesh(new THREE.BoxGeometry(2.05, 0.35, 2.05), stoneWallMat);
+        cap.position.set(px, 1.25, pz);
+        scene.add(cap);
+      }
+
+      // Pachołki cumownicze (bollards) wzdłuż zachodniego i południowego nabrzeża
+      const bollardCoords = [
+        [-21.5, -15], [-21.5, -1.5], [-21.5, 13], [-21.5, 17.5],
+        [-14, 19.6], [-6, 19.6], [6, 19.6], [14, 19.6]
+      ];
+      const bollardMat = new THREE.MeshStandardMaterial({ color: 0x1d2026, roughness: 0.5, metalness: 0.6 });
+      for (const [bx, bz] of bollardCoords) {
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.35, 0.75, 10), bollardMat);
+        base.position.set(bx, 0.37, bz);
+        scene.add(base);
+        const top = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.28, 0.22, 10), bollardMat);
+        top.position.set(bx, 0.8, bz);
+        scene.add(top);
+      }
+
+      // Skały nadbrzeżne schodzące do wody morskiej (zero efektu kwadratowej wyspy w próżni)
+      const rockMat = new THREE.MeshStandardMaterial({ color: 0x1a1e24, roughness: 0.92 });
+      const rockGeo = new THREE.DodecahedronGeometry(1.8, 1);
+      const rockRingCoords = [
+        [-24.5, -17], [-25, -13], [-24.2, -2], [-24.8, 12], [-24, 18],
+        [-18, 22.2], [-10, 22.8], [0, 22.5], [11, 22.6], [19, 22.2],
+        [24.5, 15], [24.8, 4], [24.4, -8], [24.6, -16],
+        [-12, -22.5], [12, -22.5], [-28, -7.5], [-28, 6.5]
+      ];
+      for (let i = 0; i < rockRingCoords.length; i++) {
+        const [rx, rz] = rockRingCoords[i];
+        const rock = new THREE.Mesh(rockGeo, rockMat);
+        rock.position.set(rx, -1.55 - (i % 3) * 0.25, rz);
+        rock.scale.set(1.2 + (i % 3) * 0.4, 0.85, 1.1 + (i % 2) * 0.5);
+        rock.rotation.set(i * 0.7, i * 1.1, 0);
+        scene.add(rock);
+
+        // Pierścień animowanej białej piany wokół skał
+        const foamGeo = new THREE.RingGeometry(1.6, 2.35, 18);
+        foamGeo.rotateX(-Math.PI / 2);
+        const foamMat = new THREE.MeshBasicMaterial({
+          color: 0xbfd6e6,
+          transparent: true,
+          opacity: 0.28,
+          depthWrite: false
+        });
+        const foam = new THREE.Mesh(foamGeo, foamMat);
+        foam.position.set(rx, -1.68, rz);
+        scene.add(foam);
+        foamRings.push({ mesh: foam, phase: i * 0.65 });
+      }
+
+      // 3. FALUJĄCA WODA MORSKA Z ANIMOWANĄ PIANĄ
+      seaGeo = new THREE.PlaneGeometry(220, 220, 72, 72);
+      seaGeo.rotateX(-Math.PI / 2);
+      const seaMat = new THREE.MeshStandardMaterial({
+        color: 0x09131c,
+        roughness: 0.16,
+        metalness: 0.65
+      });
+      seaMesh = new THREE.Mesh(seaGeo, seaMat);
+      seaMesh.position.set(0, -1.75, -25);
+      scene.add(seaMesh);
+
+      // Pas białej piany morskiej wzdłuż murów oporowych
+      const shoreFoamGeo = new THREE.PlaneGeometry(46.5, 42.5);
+      shoreFoamGeo.rotateX(-Math.PI / 2);
+      const shoreFoamMat = new THREE.MeshBasicMaterial({
+        color: 0x9ab8cc,
+        transparent: true,
+        opacity: 0.22
+      });
+      const shoreFoam = new THREE.Mesh(shoreFoamGeo, shoreFoamMat);
+      shoreFoam.position.set(0, -1.71, 0);
+      scene.add(shoreFoam);
+      foamRings.push({ mesh: shoreFoam, phase: 0, isShore: true });
+
+      // 4. DWA DREWNIANE POMOSTY PO ZACHODNIEJ STRONIE (pokryte pomost.jpg + kosze pochodni)
+      const pierMat = new THREE.MeshStandardMaterial({
+        map: ASSETS["pomost.jpg"],
+        roughness: 0.8,
+        metalness: 0.08
+      });
+      const timberMat = new THREE.MeshStandardMaterial({ color: 0x261a12, roughness: 0.9 });
+
+      function buildWoodenPier(zCenter) {
+        const deck = new THREE.Mesh(new THREE.BoxGeometry(15.2, 0.28, 3.8), pierMat);
+        deck.position.set(-29.0, -0.05, zCenter);
+        scene.add(deck);
+
+        // Belki boczne i pale wbite w dno morskie
+        const postXs = [-23.5, -27.2, -31.0, -34.8];
+        for (const px of postXs) {
+          for (const side of [-1.85, 1.85]) {
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 3.2, 8), timberMat);
+            post.position.set(px, -1.0, zCenter + side);
+            scene.add(post);
+          }
+        }
+
+        // Żelazne kosze pochodni z żywym ogniem cząsteczkowym 3D
+        createTorchBrazier(-21.6, zCenter - 2.1);
+        createTorchBrazier(-21.6, zCenter + 2.1);
+        createTorchBrazier(-35.2, zCenter - 2.0);
+        createTorchBrazier(-35.2, zCenter + 2.0);
+      }
+
+      buildWoodenPier(-7.5); // Pomost Północno-Zachodni
+      buildWoodenPier(6.5);  // Pomost Południowo-Zachodni
+
+      // 5. PÓŁNOCNE KAMIENNE SCHODY, MOST, PRZEDMURZE I 3 ARENY BOSSÓW
+      // Schody i most (X: -4.5..4.5, Z: -20..-34)
+      for (let i = 0; i < 5; i++) {
+        const step = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.25, 1.1), corniceMat);
+        step.position.set(0, 0.02, -19.5 - i * 0.9);
+        scene.add(step);
+      }
+      const northBridge = new THREE.Mesh(new THREE.BoxGeometry(8.8, 1.4, 11.5), cobbleMat);
+      northBridge.position.set(0, -0.68, -28.8);
+      scene.add(northBridge);
+
+      // Balustrady mostu
+      addRetainingWall(-4.5, 0.35, -28.5, 0.5, 0.8, 11.5);
+      addRetainingWall(4.5, 0.35, -28.5, 0.5, 0.8, 11.5);
+      createTorchBrazier(-5.0, -19.2);
+      createTorchBrazier(5.0, -19.2);
+      createTorchBrazier(-4.5, -33.8);
+      createTorchBrazier(4.5, -33.8);
+
+      // Przedmurze (X: -18..18, Z: -34..-56)
+      const forewallFloor = new THREE.Mesh(new THREE.BoxGeometry(36, 2.8, 22), cobbleMat);
+      forewallFloor.position.set(0, -1.4, -45);
+      scene.add(forewallFloor);
+      addRetainingWall(0, -1.2, -56.2, 36.6, 3.0, 0.8);
+
+      // Arena Bossa 1 (Zachód — Latarnik)
+      const arena1Floor = new THREE.Mesh(new THREE.BoxGeometry(19, 2.8, 14), cobbleMat);
+      arena1Floor.position.set(-27.0, -1.4, -45);
+      scene.add(arena1Floor);
+      createTorchBrazier(-20.0, -40.0);
+      createTorchBrazier(-20.0, -50.0);
+
+      // Arena Bossa 2 (Wschód — Bracia)
+      const arena2Floor = new THREE.Mesh(new THREE.BoxGeometry(19, 2.8, 14), cobbleMat);
+      arena2Floor.position.set(27.0, -1.4, -45);
+      scene.add(arena2Floor);
+      createTorchBrazier(20.0, -40.0);
+      createTorchBrazier(20.0, -50.0);
+
+      // Most i Arena Bossa 3 (Północ — Lalkarz)
+      const bossBridge = new THREE.Mesh(new THREE.BoxGeometry(8.0, 2.4, 7.0), cobbleMat);
+      bossBridge.position.set(0, -1.2, -58.0);
+      scene.add(bossBridge);
+
+      const arena3Floor = new THREE.Mesh(new THREE.BoxGeometry(28, 3.0, 22), cobbleMat);
+      arena3Floor.position.set(0, -1.5, -71.0);
+      scene.add(arena3Floor);
+      createTorchBrazier(-4.2, -60.5);
+      createTorchBrazier(4.2, -60.5);
+    }
+
+    // Kosz pochodni z migoczącym ogniem cząsteczkowym 3D i światłem punktowym
+    function createTorchBrazier(x, z) {
+      const ironMat = new THREE.MeshStandardMaterial({ color: 0x1c1e24, roughness: 0.5, metalness: 0.7 });
+      const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.22, 1.55, 8), ironMat);
+      stand.position.set(x, 0.77, z);
+      scene.add(stand);
+
+      const basket = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.18, 0.42, 8), ironMat);
+      basket.position.set(x, 1.62, z);
+      scene.add(basket);
+
+      const light = new THREE.PointLight(0xff7b24, 1.65, 13, 2);
+      light.position.set(x, 2.2, z);
+      scene.add(light);
+
+      // Cząsteczki ognia 3D (małe świecące czworościany/kryształki unoszące się w górę)
+      const particles = [];
+      const pGeo = new THREE.OctahedronGeometry(0.11, 0);
+      for (let i = 0; i < 9; i++) {
+        const pMat = new THREE.MeshBasicMaterial({
+          color: i % 2 === 0 ? 0xffae34 : 0xff4d12,
+          transparent: true,
+          opacity: 0.9
+        });
+        const p = new THREE.Mesh(pGeo, pMat);
+        p.position.set(x, 1.85 + Math.random() * 0.5, z);
+        scene.add(p);
+        particles.push({
+          mesh: p,
+          baseX: x,
+          baseZ: z,
+          phase: Math.random() * Math.PI * 2,
+          speed: 1.4 + Math.random() * 1.2
+        });
+      }
+
+      torchFlames.push({ light, particles, baseIntensity: 1.65, phase: Math.random() * 10 });
+    }
+
+    // ============================================================================
+    // 4. ROZMIESZCZENIE OBIEKTÓW 2.5D, NPC, WROGÓW I BOSSÓW
+    // ============================================================================
+    const INTERACTABLES = [];
+    const ENEMIES = [];
+    let kowalMeshObj = null;
+
+    function createBillboardSprite25D(assetKey, width, height, x, z, opts = {}) {
+      const asset = ASSETS[assetKey];
+      const segX = opts.segX || 1;
+      const segY = opts.segY || 1;
+      const geo = new THREE.PlaneGeometry(width, height, segX, segY);
+      // Przesunięcie siatki tak, aby y = 0 odpowiadało dokładnemu spodowi tekstury
+      geo.translate(0, height / 2, 0);
+
+      const mat = new THREE.MeshStandardMaterial({
+        map: asset.texture,
+        transparent: true,
+        alphaTest: 0.06,
+        roughness: 0.72,
+        metalness: 0.1,
+        side: THREE.DoubleSide
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, 0, z);
+      // Lekkie pochylenie pod kamerę 55° dla naturalnej głębi 2.5D
+      mesh.rotation.x = -0.32;
+      scene.add(mesh);
+
+      if (!opts.noShadow) {
+        addContactShadow(scene, x, z + 0.08, width * 0.78, width * 0.45);
+      }
+
+      return { mesh, geo, mat };
+    }
+
+    function populateWorldObjects() {
+      // 1. KRĄG RUNICZNY PŁASKO NA ZIEMI + POSĄG KAMIENIA FILOZOFÓW W (0, 0, 0)
+      const runeGeo = new THREE.PlaneGeometry(8.6, 8.6);
+      runeGeo.rotateX(-Math.PI / 2);
+      const runeMat = new THREE.MeshBasicMaterial({
+        map: ASSETS["krag_runiczny.jpg"].texture,
+        transparent: true,
+        opacity: 0.92,
+        depthWrite: false
+      });
+      const runeMesh = new THREE.Mesh(runeGeo, runeMat);
+      runeMesh.position.set(0, 0.025, 0);
+      scene.add(runeMesh);
+
+      const obelisk = createBillboardSprite25D("kamien_filozofow.jpg", 4.4, 5.8, 0, 0);
+      const obeliskLight = new THREE.PointLight(0xf5c85c, 2.2, 14, 2);
+      obeliskLight.position.set(0, 3.6, 0.8);
+      scene.add(obeliskLight);
+
+      xrayTargets.push({
+        mesh: obelisk.mesh,
+        mat: obelisk.mat,
+        x: 0,
+        z: 0,
+        halfW: 2.1,
+        depth: 4.8,
+        currentOpacity: 1.0
+      });
+
+      INTERACTABLES.push({
+        type: "monument",
+        name: "KAMIEŃ FILOZOFÓW",
+        sub: "Pradawny Obelisk Runiczny",
+        x: 0,
+        z: 0,
+        labelY: 5.5,
+        radius: 2.2,
+        mesh: obelisk.mesh,
+        dialogue: "Złote runy Kamienia Filozofów pulsują ciepłem, odpychając morską mgłę znad Popielnej Przystani. Twoja Krew zostaje całkowicie odnowiona."
+      });
+
+      // 2. WSCHODNIA KUŹNIA: PIEC, KOWAL BORGAR (pracuje tylko górna część z młotem) I STOJAK BRONI
+      const forge = createBillboardSprite25D("kuznia_piec.jpg", 5.8, 5.4, 13.5, -2.5);
+      const forgeLight = new THREE.PointLight(0xff5e14, 2.6, 16, 2);
+      forgeLight.position.set(12.8, 2.2, -1.2);
+      scene.add(forgeLight);
+      torchFlames.push({ light: forgeLight, particles: [], baseIntensity: 2.6, phase: 1.5 });
+
+      // Iskry z pieca kuźni
+      const sparkGeo = new THREE.BufferGeometry();
+      const sparkPositions = new Float32Array(35 * 3);
+      for (let i = 0; i < 35; i++) {
+        sparkPositions[i * 3] = 12.8 + (Math.random() - 0.5) * 2.2;
+        sparkPositions[i * 3 + 1] = 0.8 + Math.random() * 3.5;
+        sparkPositions[i * 3 + 2] = -1.8 + (Math.random() - 0.5) * 1.5;
+      }
+      sparkGeo.setAttribute("position", new THREE.BufferAttribute(sparkPositions, 3));
+      forgeSparks = new THREE.Points(
+        sparkGeo,
+        new THREE.PointsMaterial({ color: 0xffaa33, size: 0.14, transparent: true, opacity: 0.9 })
+      );
+      scene.add(forgeSparks);
+
+      xrayTargets.push({
+        mesh: forge.mesh,
+        mat: forge.mat,
+        x: 13.5,
+        z: -2.5,
+        halfW: 2.8,
+        depth: 4.8,
+        currentOpacity: 1.0
+      });
+
+      // Kowal Borgar (siatka 6x10 — dolna część nieruchoma, delikatnie pracuje góra z młotem)
+      const kowal = createBillboardSprite25D("kowal_borgar.jpg", 2.4, 2.85, 9.6, -1.1, {
+        segX: 6,
+        segY: 10
+      });
+      kowalMeshObj = {
+        geo: kowal.geo,
+        basePos: Float32Array.from(kowal.geo.attributes.position.array),
+        height: 2.85
+      };
+
+      INTERACTABLES.push({
+        type: "npc",
+        id: "borgar",
+        name: "KOWAL BORGAR",
+        sub: "Mistrz Kuźni Popielnej Przystani",
+        x: 9.6,
+        z: -1.1,
+        labelY: 2.85,
+        radius: 2.0,
+        mesh: kowal.mesh,
+        dialogue: "Stal w Popielnej Przystani kruszeje od słonej mgły, wojowniku. Sprawdź uzbrojenie na Stojaku Zbrojmistrza obok mojego pieca, a potem ruszaj przez północny most na Przedmurze!"
+      });
+
+      // Nieruchomy Stojak Broni (Stojak Zbrojmistrza)
+      const rack = createBillboardSprite25D("stojak_broni.jpg", 2.3, 2.5, 11.4, 3.1);
+      INTERACTABLES.push({
+        type: "rack",
+        id: "stojak",
+        name: "STOJAK ZBROJMISTRZA",
+        sub: "Kliknij, aby przełączyć klasę postaci",
+        x: 11.4,
+        z: 3.1,
+        labelY: 2.55,
+        radius: 2.0,
+        mesh: rack.mesh
+      });
+
+      // 3. STRAŻNIK VORN PRZY PÓŁNOCNYCH SCHODACH
+      const vorn = createBillboardSprite25D("straznik_vorn.jpg", 2.35, 2.85, -3.4, -16.8);
+      INTERACTABLES.push({
+        type: "npc",
+        id: "vorn",
+        name: "STRAŻNIK VORN",
+        sub: "Wartownik Północnego Mostu",
+        x: -3.4,
+        z: -16.8,
+        labelY: 2.85,
+        radius: 2.0,
+        mesh: vorn.mesh,
+        dialogue: "Za tym mostem rozciąga się Przedmurze opanowane przez Tarczowników i Ogary Popiołu. Na trzech skrzydłach twierdzy czają się Latarnik, Bracia Popiołu oraz Lalkarz. Miej się na baczności!"
+      });
+
+      // 4. HANDLARZ KRAAL PO ZACHODNIEJ STRONIE PLACU NA SUCHYM BRUKU
+      const kraal = createBillboardSprite25D("handlarz_kraal.jpg", 2.35, 2.8, -13.6, 1.4);
+      INTERACTABLES.push({
+        type: "npc",
+        id: "kraal",
+        name: "HANDLARZ KRAAL",
+        sub: "Kupiec Zamorski",
+        x: -13.6,
+        z: 1.4,
+        labelY: 2.8,
+        radius: 2.0,
+        mesh: kraal.mesh,
+        dialogue: "Moje statki utknęły przy zachodnich pomostach. Uzupełniłem twoje zapasy Mikstur Krwi (3/3) na drogę ku północnym arenom."
+      });
+
+      // 5. WROGOWIE NA PRZEDMURZU I BOSSOWIE NA 3 ARENACH
+      const enemyConfigs = [
+        { file: "wrog_tarczownik.jpg", name: "Upadły Tarczownik", x: -6.5, z: -39.5, hp: 140, w: 2.2, h: 2.6, speed: 2.6, dmg: 14 },
+        { file: "wrog_ogar.jpg", name: "Ogar Popiołów", x: 5.5, z: -40.5, hp: 95, w: 2.1, h: 1.9, speed: 4.1, dmg: 11 },
+        { file: "wrog_tarczownik.jpg", name: "Upadły Tarczownik", x: -9.5, z: -47.5, hp: 140, w: 2.2, h: 2.6, speed: 2.6, dmg: 14 },
+        { file: "wrog_ogar.jpg", name: "Ogar Popiołów", x: 0.5, z: -46.0, hp: 95, w: 2.1, h: 1.9, speed: 4.1, dmg: 11 },
+        { file: "wrog_tarczownik.jpg", name: "Upadły Tarczownik", x: 9.2, z: -48.0, hp: 140, w: 2.2, h: 2.6, speed: 2.6, dmg: 14 },
+        { file: "wrog_ogar.jpg", name: "Ogar Popiołów", x: -2.5, z: -52.5, hp: 95, w: 2.1, h: 1.9, speed: 4.1, dmg: 11 },
+
+        // Boss 1 (Arena Zachodnia)
+        { file: "boss1_latarnik.jpg", name: "BOSS: PRZEKLĘTY LATARNIK", sub: "Strażnik Zgasłych Dusz", x: -29.0, z: -45.0, hp: 460, w: 3.6, h: 4.2, speed: 2.2, dmg: 26, isBoss: true },
+        // Boss 2 (Arena Wschodnia)
+        { file: "boss2_bracia.jpg", name: "BOSS: BRACIA POPIOŁU", sub: "Bliźniacy Rzezi", x: 29.0, z: -45.0, hp: 520, w: 3.8, h: 4.1, speed: 2.4, dmg: 28, isBoss: true },
+        // Boss 3 (Arena Północna)
+        { file: "boss3_lalkarz.jpg", name: "BOSS: LALKARZ", sub: "Władca Marionetek", x: 0.0, z: -72.5, hp: 640, w: 3.9, h: 4.5, speed: 2.3, dmg: 32, isBoss: true }
+      ];
+
+      for (const cfg of enemyConfigs) {
+        const obj = createBillboardSprite25D(cfg.file, cfg.w, cfg.h, cfg.x, cfg.z, { segX: 4, segY: 6 });
+        const shadow = addContactShadow(scene, cfg.x, cfg.z + 0.08, cfg.w * 0.75, cfg.w * 0.45);
+        ENEMIES.push({
+          ...cfg,
+          maxHp: cfg.hp,
+          homeX: cfg.x,
+          homeZ: cfg.z,
+          mesh: obj.mesh,
+          mat: obj.mat,
+          shadow,
+          alive: true,
+          attackCd: 0,
+          hitFlash: 0
+        });
+      }
+    }
+
+    // ============================================================================
+    // 5. BOHATER (WIKING + 3 POZOSTAŁE KLASY), ANIMACJA SIATKI 2.5D (8x12) I STEROWANIE
+    // ============================================================================
+    const CLASSES = {
+      wiking: {
+        name: "WIKING",
+        front: "wiking_przod.jpg",
+        back: "wiking_tyl.jpg",
+        resName: "SZAŁ",
+        resMax: 100,
+        resInitial: 0,
+        orbStyle: "rage",
+        skills: ["CIĘCIE", "ZEW", "GNIEW", "FURIA"]
+      },
+      zabojca: {
+        name: "ZABÓJCA",
+        front: "zabojca_przod.jpg",
+        back: "zabojca_tyl.jpg",
+        resName: "SPRYT",
+        resMax: 10,
+        resInitial: 10,
+        orbStyle: "cunning",
+        skills: ["SZTYLET", "CIEŃ", "TRUCIZNA", "EGZEKUCJA"]
+      },
+      guslarz: {
+        name: "GUŚLARZ",
+        front: "guslarz_przod.jpg",
+        back: "guslarz_tyl.jpg",
+        resName: "ŚMIERĆ",
+        resMax: 100,
+        resInitial: 100,
+        orbStyle: "death",
+        skills: ["KLĄTWA", "KOŚCI", "ŻNIWA", "RYTUAŁ"]
+      },
+      wrozbita: {
+        name: "WRÓŻBITA",
+        front: "wrozbita_przod.jpg",
+        back: "wrozbita_tyl.jpg",
+        resName: "MANA",
+        resMax: 120,
+        resInitial: 120,
+        orbStyle: "mana",
+        skills: ["GWIAZDA", "PROROCTWO", "ASTRAL", "KOMETA"]
+      }
+    };
+
+    const hero = {
+      classKey: "wiking",
+      x: 0,
+      z: 7.5,
+      targetX: 0,
+      targetZ: 7.5,
+      isMoving: false,
+      speed: 7.2,
+      facingNorth: false,
+      flipX: 1,
+      walkCycle: 0,
+      attackTimer: 0,
+      attackDuration: 0.34,
+      attackAngle: 0,
+      leapTimer: 0,
+      leapDuration: 0.42,
+      leapStartX: 0,
+      leapStartZ: 0,
+      leapEndX: 0,
+      leapEndZ: 0,
+      leapCd: 0,
+      hp: 485,
+      maxHp: 485,
+      resource: 0,
+      maxResource: 100,
+      potions: 3,
+      width: 2.35,
+      height: 2.85,
+      mesh: null,
+      geo: null,
+      mat: null,
+      basePositions: null,
+      shadowMesh: null,
+      rimLight: null,
+      slashMesh: null,
+      targetRing: null,
+      shockwaveRing: null
+    };
+
+    function initHero() {
+      // Gęsta siatka PlaneGeometry(w, h, 8, 12) do animacji nóg i zamachu bronią
+      const geo = new THREE.PlaneGeometry(hero.width, hero.height, 8, 12);
+      geo.translate(0, hero.height / 2, 0);
+      hero.basePositions = Float32Array.from(geo.attributes.position.array);
+
+      const mat = new THREE.MeshStandardMaterial({
+        map: ASSETS["wiking_przod.jpg"].texture,
+        transparent: true,
+        alphaTest: 0.06,
+        roughness: 0.55,
+        metalness: 0.15,
+        side: THREE.DoubleSide
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(hero.x, 0, hero.z);
+      mesh.rotation.x = -0.32;
+      scene.add(mesh);
+
+      hero.geo = geo;
+      hero.mat = mat;
+      hero.mesh = mesh;
+      hero.shadowMesh = addContactShadow(scene, hero.x, hero.z, 1.85, 1.15);
+
+      // Ciepłe światło obrysowe (Hero Rim Light), aby Wiking wyróżniał się na tle ciemnego bruku
+      const rimLight = new THREE.PointLight(0xffdca8, 1.35, 6.5, 2);
+      rimLight.position.set(hero.x, 1.9, hero.z + 0.9);
+      scene.add(rimLight);
+      hero.rimLight = rimLight;
+
+      // Trójwymiarowa smuga cięcia (3D Slash Arc)
+      const slashGeo = new THREE.RingGeometry(1.1, 2.35, 20, 1, -Math.PI * 0.48, Math.PI * 0.96);
+      slashGeo.rotateX(-Math.PI / 2);
+      const slashMat = new THREE.MeshBasicMaterial({
+        color: 0xffd27d,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      hero.slashMesh = new THREE.Mesh(slashGeo, slashMat);
+      hero.slashMesh.position.set(hero.x, 1.05, hero.z);
+      scene.add(hero.slashMesh);
+
+      // Złoty krąg znacznika ruchu LPM na ziemi
+      const ringGeo = new THREE.RingGeometry(0.35, 0.55, 24);
+      ringGeo.rotateX(-Math.PI / 2);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xf0c869,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      hero.targetRing = new THREE.Mesh(ringGeo, ringMat);
+      hero.targetRing.position.y = 0.04;
+      scene.add(hero.targetRing);
+
+      // Fala uderzeniowa po Ciężkim Przeskoku Bojowym (SPACJA)
+      const shockGeo = new THREE.RingGeometry(0.4, 0.85, 32);
+      shockGeo.rotateX(-Math.PI / 2);
+      const shockMat = new THREE.MeshBasicMaterial({
+        color: 0xff9436,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      hero.shockwaveRing = new THREE.Mesh(shockGeo, shockMat);
+      hero.shockwaveRing.position.y = 0.06;
+      scene.add(hero.shockwaveRing);
+    }
+
+    function switchHeroClass(classKey) {
+      const cfg = CLASSES[classKey];
+      if (!cfg) return;
+      hero.classKey = classKey;
+      hero.maxResource = cfg.resMax;
+      hero.resource = cfg.resInitial;
+
+      // Aktualizacja tekstury przód/tył
+      const texKey = hero.facingNorth ? cfg.back : cfg.front;
+      hero.mat.map = ASSETS[texKey].texture;
+      hero.mat.needsUpdate = true;
+
+      // Aktualizacja przycisków i HUD
+      document.querySelectorAll(".class-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.class === classKey);
+      });
+      document.getElementById("active-class-label").textContent = cfg.name;
+      document.getElementById("hud-level-badge").textContent = `POZIOM 1 — ${cfg.name}`;
+      document.getElementById("resource-label").textContent = cfg.resName;
+
+      document.getElementById("skill-q-name").textContent = cfg.skills[0];
+      document.getElementById("skill-w-name").textContent = cfg.skills[1];
+      document.getElementById("skill-e-name").textContent = cfg.skills[2];
+      document.getElementById("skill-r-name").textContent = cfg.skills[3];
+
+      updateHudOrbs();
+    }
+
+    function updateHudOrbs() {
+      const bloodPct = Math.max(0, Math.min(100, (hero.hp / hero.maxHp) * 100));
+      document.getElementById("blood-fill").style.height = bloodPct + "%";
+      document.getElementById("blood-text").textContent = `${Math.ceil(hero.hp)}/${hero.maxHp}`;
+
+      const cfg = CLASSES[hero.classKey];
+      const resFill = document.getElementById("resource-fill");
+      const cunningSegs = document.getElementById("cunning-segments");
+
+      if (cfg.orbStyle === "cunning") {
+        // Zielony 10-segmentowy Spryt dla Zabójcy
+        resFill.style.height = "100%";
+        resFill.style.background = "radial-gradient(circle at 50% 50%, #092614, #041209)";
+        cunningSegs.style.display = "flex";
+        const segEls = cunningSegs.querySelectorAll(".cunning-seg");
+        segEls.forEach((el, idx) => {
+          el.classList.toggle("lit", idx < Math.floor(hero.resource));
+        });
+      } else {
+        cunningSegs.style.display = "none";
+        const resPct = Math.max(0, Math.min(100, (hero.resource / hero.maxResource) * 100));
+        resFill.style.height = resPct + "%";
+
+        if (cfg.orbStyle === "rage") {
+          resFill.style.background = "radial-gradient(circle at 38% 35%, #ff8826 0%, #bd4206 58%, #4d1700 100%)";
+        } else if (cfg.orbStyle === "death") {
+          resFill.style.background = "radial-gradient(circle at 38% 35%, #b84dff 0%, #63189e 58%, #260542 100%)";
+        } else if (cfg.orbStyle === "mana") {
+          resFill.style.background = "radial-gradient(circle at 38% 35%, #4da6ff 0%, #1452ad 58%, #051c42 100%)";
+        }
+      }
+
+      document.getElementById("resource-text").textContent = `${Math.floor(hero.resource)}/${hero.maxResource}`;
+      document.getElementById("potion-1-charges").textContent = String(hero.potions);
+    }
+
+    // Aktualizacja orientacji Wikinga z martwą strefą obrotu (histerezą)
+    function updateHeroFacing(dx, dz) {
+      const cfg = CLASSES[hero.classKey];
+      // Histereza przód/tył (oś Z)
+      if (dz < -0.22 && !hero.facingNorth) {
+        hero.facingNorth = true;
+        hero.mat.map = ASSETS[cfg.back].texture;
+        hero.mat.needsUpdate = true;
+      } else if (dz > 0.22 && hero.facingNorth) {
+        hero.facingNorth = false;
+        hero.mat.map = ASSETS[cfg.front].texture;
+        hero.mat.needsUpdate = true;
+      }
+      // Histereza lewo/prawo (oś X)
+      if (dx < -0.24) {
+        hero.flipX = -1;
+      } else if (dx > 0.24) {
+        hero.flipX = 1;
+      }
+    }
+
+    // Animacja wierzchołków siatki 8x12 Wikinga (nogi podczas biegu, góra podczas ataku)
+    function animateHeroMesh(dt, elapsed) {
+      const posAttr = hero.geo.attributes.position;
+      const arr = posAttr.array;
+      const base = hero.basePositions;
+      const H = hero.height;
+
+      for (let i = 0; i < arr.length; i += 3) {
+        const bx = base[i];
+        const by = base[i + 1];
+        const bz = base[i + 2];
+        const normY = by / H; // 0.0 = stopy, 1.0 = głowa
+
+        let dx = 0;
+        let dy = 0;
+        let dz = 0;
+
+        // 1. Praca dolnych wierzchołków (nóg) podczas biegu
+        if (hero.isMoving && hero.leapTimer <= 0) {
+          const legWeight = Math.max(0, 1 - normY / 0.48);
+          if (legWeight > 0) {
+            const sidePhase = bx < 0 ? 0 : Math.PI;
+            const stride = Math.sin(hero.walkCycle + sidePhase);
+            const lift = Math.max(0, Math.cos(hero.walkCycle + sidePhase));
+            dx += stride * 0.14 * legWeight;
+            dy += lift * 0.13 * legWeight;
+            dz += stride * 0.12 * legWeight;
+          } else {
+            // Subtelna praca barków podczas biegu
+            dy += Math.abs(Math.sin(hero.walkCycle)) * 0.04;
+            dx += Math.sin(hero.walkCycle * 0.5) * 0.03 * normY;
+          }
+        } else {
+          // Oddech w spoczynku
+          dy += Math.sin(elapsed * 2.6) * 0.025 * normY;
+        }
+
+        // 2. Dynamiczny zamach górnych wierzchołków podczas ataku
+        if (hero.attackTimer > 0) {
+          const progress = 1 - hero.attackTimer / hero.attackDuration;
+          const upperWeight = Math.max(0, (normY - 0.25) / 0.75);
+          const swingCurve = Math.sin(progress * Math.PI);
+          dx += Math.cos(hero.attackAngle) * 0.42 * swingCurve * upperWeight * hero.flipX;
+          dz += Math.sin(hero.attackAngle) * 0.32 * swingCurve * upperWeight;
+          dy += Math.sin(progress * Math.PI * 2) * 0.06 * upperWeight;
+        }
+
+        arr[i] = bx * hero.flipX + dx;
+        arr[i + 1] = by + dy;
+        arr[i + 2] = bz + dz;
+      }
+
+      posAttr.needsUpdate = true;
+    }
+
+    // ============================================================================
+    // 6. PODGLĄD SIATKI KOLIZJI NAVMESH POD KLAWISZEM [F2]
+    // ============================================================================
+    let navMeshVisible = false;
+
+    function buildNavMeshVisualizer() {
+      navMeshDebugGroup = new THREE.Group();
+      const step = 1.0;
+      const cellGeo = new THREE.PlaneGeometry(step * 0.86, step * 0.86);
+      cellGeo.rotateX(-Math.PI / 2);
+
+      const greenMat = new THREE.MeshBasicMaterial({
+        color: 0x22cc55,
+        transparent: true,
+        opacity: 0.36,
+        depthWrite: false
+      });
+      const redMat = new THREE.MeshBasicMaterial({
+        color: 0xdd2233,
+        transparent: true,
+        opacity: 0.38,
+        depthWrite: false
+      });
+
+      const greenCells = [];
+      const redCells = [];
+
+      for (let x = -37; x <= 37; x += step) {
+        for (let z = -82; z <= 21; z += step) {
+          const walk = isWalkable(x, z, 0.38);
+          if (walk) {
+            greenCells.push([x, z]);
+          } else {
+            // Pokaż czerwone komórki blokad blisko grywalnych krawędzi i przeszkód
+            const nearWalkable =
+              isInsideWalkableRegion(x, z) ||
+              isInsideWalkableRegion(x + 2, z) ||
+              isInsideWalkableRegion(x - 2, z) ||
+              isInsideWalkableRegion(x, z + 2) ||
+              isInsideWalkableRegion(x, z - 2);
+            if (nearWalkable) {
+              redCells.push([x, z]);
+            }
+          }
+        }
+      }
+
+      const greenInst = new THREE.InstancedMesh(cellGeo, greenMat, greenCells.length);
+      const dummy = new THREE.Object3D();
+      greenCells.forEach(([x, z], i) => {
+        dummy.position.set(x, 0.05, z);
+        dummy.updateMatrix();
+        greenInst.setMatrixAt(i, dummy.matrix);
+      });
+      navMeshDebugGroup.add(greenInst);
+
+      const redInst = new THREE.InstancedMesh(cellGeo, redMat, redCells.length);
+      redCells.forEach(([x, z], i) => {
+        dummy.position.set(x, 0.05, z);
+        dummy.updateMatrix();
+        redInst.setMatrixAt(i, dummy.matrix);
+      });
+      navMeshDebugGroup.add(redInst);
+
+      navMeshDebugGroup.visible = false;
+      scene.add(navMeshDebugGroup);
+    }
+
+    // ============================================================================
+    // 7. CIĄGŁY ZACINAJĄCY DESZCZ 3D
+    // ============================================================================
+    let rainLines = null;
+    const RAIN_COUNT = 1100;
+
+    function buildRainSystem() {
+      const geo = new THREE.BufferGeometry();
+      const positions = new Float32Array(RAIN_COUNT * 6);
+
+      for (let i = 0; i < RAIN_COUNT; i++) {
+        const rx = (Math.random() - 0.5) * 48;
+        const ry = Math.random() * 26;
+        const rz = (Math.random() - 0.5) * 44;
+        const idx = i * 6;
+        positions[idx] = rx;
+        positions[idx + 1] = ry;
+        positions[idx + 2] = rz;
+        positions[idx + 3] = rx - 0.45;
+        positions[idx + 4] = ry - 1.55;
+        positions[idx + 5] = rz + 0.15;
+      }
+
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const mat = new THREE.LineBasicMaterial({
+        color: 0x9bb8d4,
+        transparent: true,
+        opacity: 0.34
+      });
+      rainLines = new THREE.LineSegments(geo, mat);
+      scene.add(rainLines);
+    }
+
+    // ============================================================================
+    // 8. OBSŁUGA WEJŚCIA (LPM, PPM, SHIFT+LPM, SPACJA, [1], [F2], [ALT])
+    // ============================================================================
+    const raycaster = new THREE.Raycaster();
+    const mouseNDC = new THREE.Vector2();
+    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const intersectPt = new THREE.Vector3();
+
+    let isLeftMouseDown = false;
+    let isRightMouseDown = false;
+    let isShiftDown = false;
+    let isAltDown = false;
+    let hoveredEntity = null;
+    let pendingInteraction = null;
+    let screenShake = 0;
+
+    function updateMouseWorldPoint(clientX, clientY) {
+      mouseNDC.x = (clientX / window.innerWidth) * 2 - 1;
+      mouseNDC.y = -(clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouseNDC, camera);
+      raycaster.ray.intersectPlane(groundPlane, intersectPt);
+      return intersectPt;
+    }
+
+    function performAttackTowards(worldX, worldZ) {
+      if (hero.attackTimer > 0 || hero.leapTimer > 0) return;
+      hero.isMoving = false;
+
+      const dx = worldX - hero.x;
+      const dz = worldZ - hero.z;
+      updateHeroFacing(dx, dz);
+
+      hero.attackAngle = Math.atan2(dz, dx);
+      hero.attackTimer = hero.attackDuration;
+
+      // Ustawienie smugi cięcia 3D (3D Slash Arc)
+      hero.slashMesh.position.set(hero.x, 1.08, hero.z);
+      hero.slashMesh.rotation.y = -hero.attackAngle + Math.PI / 2;
+      hero.slashMesh.material.opacity = 0.92;
+
+      // Zadawanie obrażeń wrogom w zasięgu cięcia
+      let hitAny = false;
+      for (const en of ENEMIES) {
+        if (!en.alive) continue;
+        const dist = Math.hypot(en.x - hero.x, en.z - hero.z);
+        if (dist <= 3.35) {
+          en.hp -= 38;
+          en.hitFlash = 0.18;
+          hitAny = true;
+          if (en.hp <= 0) {
+            en.alive = false;
+            en.mesh.visible = false;
+            en.shadow.visible = false;
+            updateQuestProgress();
+          }
+        }
+      }
+
+      // Generowanie Szału dla Wikinga
+      if (hero.classKey === "wiking") {
+        hero.resource = Math.min(hero.maxResource, hero.resource + (hitAny ? 14 : 5));
+      } else if (hero.classKey === "zabojca" && hitAny) {
+        hero.resource = Math.min(hero.maxResource, hero.resource + 1);
+      }
+      updateHudOrbs();
+    }
+
+    // SPACJA: Ciężki przeskok bojowy Wikinga ze wstrząsem ziemi (CD: 4.5s)
+    function triggerCombatLeap() {
+      if (hero.leapCd > 0 || hero.leapTimer > 0) return;
+
+      const dx = intersectPt.x - hero.x;
+      const dz = intersectPt.z - hero.z;
+      const dist = Math.min(8.5, Math.hypot(dx, dz));
+      if (dist < 0.5) return;
+
+      const dirX = dx / Math.max(0.001, Math.hypot(dx, dz));
+      const dirZ = dz / Math.max(0.001, Math.hypot(dx, dz));
+      updateHeroFacing(dirX, dirZ);
+
+      // Szukanie najdalszego dozwolonego punktu lądowania na siatce NavMesh
+      let landX = hero.x;
+      let landZ = hero.z;
+      for (let step = dist; step >= 0.5; step -= 0.4) {
+        const tx = hero.x + dirX * step;
+        const tz = hero.z + dirZ * step;
+        if (isWalkable(tx, tz)) {
+          landX = tx;
+          landZ = tz;
+          break;
+        }
+      }
+
+      hero.isMoving = false;
+      hero.leapStartX = hero.x;
+      hero.leapStartZ = hero.z;
+      hero.leapEndX = landX;
+      hero.leapEndZ = landZ;
+      hero.leapTimer = hero.leapDuration;
+      hero.leapCd = 4.5;
+    }
+
+    function useBloodPotion() {
+      if (hero.potions <= 0 || hero.hp >= hero.maxHp) return;
+      hero.potions--;
+      hero.hp = Math.min(hero.maxHp, hero.hp + 185);
+      updateHudOrbs();
+    }
+
+    window.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    canvas.addEventListener("mousedown", (e) => {
+      updateMouseWorldPoint(e.clientX, e.clientY);
+
+      if (e.button === 2 || (e.button === 0 && e.shiftKey)) {
+        // PPM lub SHIFT + LPM: Tylko autoatak w miejscu w stronę kursora
+        isRightMouseDown = true;
+        performAttackTowards(intersectPt.x, intersectPt.z);
+        return;
+      }
+
+      if (e.button === 0) {
+        // LPM: Tylko ruch postaci (ze złotym kręgiem znacznika) i interakcja
+        isLeftMouseDown = true;
+
+        if (hoveredEntity && hoveredEntity.kind === "interactable") {
+          pendingInteraction = hoveredEntity.ref;
+          hero.targetX = hoveredEntity.ref.x;
+          hero.targetZ = hoveredEntity.ref.z + 1.4;
+          hero.isMoving = true;
+        } else {
+          pendingInteraction = null;
+          hero.targetX = intersectPt.x;
+          hero.targetZ = intersectPt.z;
+          hero.isMoving = true;
+
+          hero.targetRing.position.set(intersectPt.x, 0.04, intersectPt.z);
+          hero.targetRing.scale.set(1, 1, 1);
+          hero.targetRing.material.opacity = 0.95;
+        }
+      }
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      updateMouseWorldPoint(e.clientX, e.clientY);
+
+      if (isRightMouseDown || (isLeftMouseDown && isShiftDown)) {
+        performAttackTowards(intersectPt.x, intersectPt.z);
+      } else if (isLeftMouseDown && !pendingInteraction) {
+        hero.targetX = intersectPt.x;
+        hero.targetZ = intersectPt.z;
+        hero.isMoving = true;
+      }
+
+      // Wykrywanie obiektu pod kursorem myszy
+      hoveredEntity = null;
+      for (const inter of INTERACTABLES) {
+        const d = Math.hypot(intersectPt.x - inter.x, intersectPt.z - inter.z);
+        if (d < inter.radius) {
+          hoveredEntity = { kind: "interactable", ref: inter };
+          break;
+        }
+      }
+      if (!hoveredEntity) {
+        for (const en of ENEMIES) {
+          if (!en.alive) continue;
+          const d = Math.hypot(intersectPt.x - en.x, intersectPt.z - en.z);
+          if (d < 1.9) {
+            hoveredEntity = { kind: "enemy", ref: en };
+            break;
+          }
+        }
+      }
+
+      canvas.style.cursor = hoveredEntity ? "pointer" : "crosshair";
+    });
+
+    window.addEventListener("mouseup", (e) => {
+      if (e.button === 0) isLeftMouseDown = false;
+      if (e.button === 2) isRightMouseDown = false;
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Shift") isShiftDown = true;
+      if (e.key === "Alt") {
+        e.preventDefault();
+        isAltDown = true;
+      }
+      if (e.code === "Space") {
+        e.preventDefault();
+        triggerCombatLeap();
+      }
+      if (e.key === "1") {
+        useBloodPotion();
+      }
+      if (e.key === "F2") {
+        e.preventDefault();
+        navMeshVisible = !navMeshVisible;
+        if (navMeshDebugGroup) navMeshDebugGroup.visible = navMeshVisible;
+        document.getElementById("navmesh-badge").style.display = navMeshVisible ? "block" : "none";
+      }
+      if (e.key === "Escape") {
+        document.getElementById("dialogue-modal").style.display = "none";
+      }
+      if (["q", "w", "e", "r"].includes(e.key.toLowerCase())) {
+        performAttackTowards(intersectPt.x, intersectPt.z);
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (e.key === "Shift") isShiftDown = false;
+      if (e.key === "Alt") isAltDown = false;
+    });
+
+    // Obsługa interfejsu klas i dialogów
+    document.querySelectorAll(".class-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        switchHeroClass(btn.dataset.class);
+        document.getElementById("q-stojak").classList.add("done");
+      });
+    });
+
+    document.getElementById("potion-1").addEventListener("click", useBloodPotion);
+    document.getElementById("slot-space").addEventListener("click", triggerCombatLeap);
+    document.getElementById("dialogue-close").addEventListener("click", () => {
+      document.getElementById("dialogue-modal").style.display = "none";
+    });
+
+    function executeInteraction(inter) {
+      if (inter.type === "rack") {
+        const order = ["wiking", "zabojca", "guslarz", "wrozbita"];
+        const nextIdx = (order.indexOf(hero.classKey) + 1) % order.length;
+        switchHeroClass(order[nextIdx]);
+        document.getElementById("q-stojak").classList.add("done");
+        return;
+      }
+
+      if (inter.id === "borgar") {
+        document.getElementById("q-borgar").classList.add("done");
+      }
+      if (inter.id === "kraal") {
+        hero.potions = 3;
+        updateHudOrbs();
+      }
+      if (inter.type === "monument") {
+        hero.hp = hero.maxHp;
+        updateHudOrbs();
+      }
+
+      const modal = document.getElementById("dialogue-modal");
+      document.getElementById("dialogue-speaker").textContent = inter.name;
+      document.getElementById("dialogue-text").textContent = inter.dialogue;
+      modal.style.display = "block";
+    }
+
+    function updateQuestProgress() {
+      const deadMinions = ENEMIES.filter((e) => !e.isBoss && !e.alive).length;
+      const deadBosses = ENEMIES.filter((e) => e.isBoss && !e.alive).length;
+
+      document.getElementById("q-kills").textContent = String(deadMinions);
+      document.getElementById("q-boss-kills").textContent = String(deadBosses);
+
+      if (deadMinions >= 6) document.getElementById("q-przedmurze").classList.add("done");
+      if (deadBosses >= 3) document.getElementById("q-bosses").classList.add("done");
+    }
+
+    // ============================================================================
+    // 9. ETYKIETY NAD OBIEKTAMI (TYLKO NA HOVER LUB ALT) ORAZ MINIMAPA
+    // ============================================================================
+    const labelsLayer = document.getElementById("labels-layer");
+    const labelPool = [];
+
+    function getLabelElement(index) {
+      if (!labelPool[index]) {
+        const el = document.createElement("div");
+        el.className = "world-label";
+        labelsLayer.appendChild(el);
+        labelPool[index] = el;
+      }
+      return labelPool[index];
+    }
+
+    function updateWorldLabels() {
+      let activeCount = 0;
+
+      function projectAndShow(x, y, z, title, sub, type, hpRatio) {
+        const v = new THREE.Vector3(x, y, z);
+        v.project(camera);
+        if (v.z > 1) return;
+
+        const sx = (v.x * 0.5 + 0.5) * window.innerWidth;
+        const sy = (-v.y * 0.5 + 0.5) * window.innerHeight;
+
+        const el = getLabelElement(activeCount++);
+        el.style.display = "block";
+        el.style.left = sx + "px";
+        el.style.top = sy + "px";
+        el.className = "world-label" + (type ? " " + type : "");
+
+        let html = `<div>${title}</div>`;
+        if (sub) html += `<span class="sub">${sub}</span>`;
+        if (typeof hpRatio === "number") {
+          const pct = Math.max(0, Math.min(100, Math.round(hpRatio * 100)));
+          html += `<div class="enemy-hp-mini"><div class="enemy-hp-mini-fill" style="width:${pct}%"></div></div>`;
+        }
+        el.innerHTML = html;
+      }
+
+      for (const inter of INTERACTABLES) {
+        const isHovered = hoveredEntity && hoveredEntity.ref === inter;
+        if (isAltDown || isHovered) {
+          projectAndShow(inter.x, inter.labelY + 0.25, inter.z, inter.name, inter.sub, "");
+        }
+      }
+
+      for (const en of ENEMIES) {
+        if (!en.alive) continue;
+        const isHovered = hoveredEntity && hoveredEntity.ref === en;
+        if (isAltDown || isHovered || en.hp < en.maxHp) {
+          projectAndShow(
+            en.x,
+            en.h + 0.25,
+            en.z,
+            en.name,
+            en.sub || "",
+            en.isBoss ? "boss" : "enemy",
+            en.hp / en.maxHp
+          );
+        }
+      }
+
+      for (let i = activeCount; i < labelPool.length; i++) {
+        labelPool[i].style.display = "none";
+      }
+    }
+
+    // Rysowanie okrągłej minimapy w prawym górnym rogu
+    const minimapCanvas = document.getElementById("minimap-canvas");
+    const mCtx = minimapCanvas.getContext("2d");
+
+    function renderMinimap() {
+      const W = minimapCanvas.width;
+      const H = minimapCanvas.height;
+      const cx = W / 2;
+      const cy = H / 2;
+      const scale = 2.05;
+
+      mCtx.clearRect(0, 0, W, H);
+      mCtx.fillStyle = "#060a10";
+      mCtx.fillRect(0, 0, W, H);
+
+      mCtx.save();
+      mCtx.translate(cx - hero.x * scale, cy - hero.z * scale);
+
+      // Rysowanie głównych stref lądowych na minimapie
+      mCtx.fillStyle = "#262b34";
+      mCtx.strokeStyle = "#7a643d";
+      mCtx.lineWidth = 1.2;
+
+      // Plac
+      mCtx.fillRect(-21 * scale, -19 * scale, 42 * scale, 38 * scale);
+      mCtx.strokeRect(-21 * scale, -19 * scale, 42 * scale, 38 * scale);
+
+      // Dwa zachodnie pomosty
+      mCtx.fillStyle = "#4a3520";
+      mCtx.fillRect(-35.8 * scale, -9.2 * scale, 15 * scale, 3.4 * scale);
+      mCtx.fillRect(-35.8 * scale, 4.8 * scale, 15 * scale, 3.4 * scale);
+
+      // Most, Przedmurze i 3 Areny Bossów
+      mCtx.fillStyle = "#262b34";
+      mCtx.fillRect(-4.2 * scale, -34.5 * scale, 8.4 * scale, 15.5 * scale);
+      mCtx.fillRect(-17.5 * scale, -55.5 * scale, 35 * scale, 21.5 * scale);
+      mCtx.fillRect(-35.5 * scale, -51.5 * scale, 18 * scale, 13 * scale);
+      mCtx.fillRect(17.5 * scale, -51.5 * scale, 18 * scale, 13 * scale);
+      mCtx.fillRect(-13.5 * scale, -81.5 * scale, 27 * scale, 21 * scale);
+
+      // Kamień Filozofów (złoty punkt w 0,0)
+      mCtx.fillStyle = "#f2c968";
+      mCtx.beginPath();
+      mCtx.arc(0, 0, 4, 0, Math.PI * 2);
+      mCtx.fill();
+
+      // NPC (zielone punkty)
+      mCtx.fillStyle = "#44dd77";
+      for (const inter of INTERACTABLES) {
+        if (inter.type === "monument") continue;
+        mCtx.beginPath();
+        mCtx.arc(inter.x * scale, inter.z * scale, 3, 0, Math.PI * 2);
+        mCtx.fill();
+      }
+
+      // Wrogowie i Bossowie (czerwone / pomarańczowe punkty)
+      for (const en of ENEMIES) {
+        if (!en.alive) continue;
+        mCtx.fillStyle = en.isBoss ? "#ff9922" : "#e62e2e";
+        mCtx.beginPath();
+        mCtx.arc(en.x * scale, en.z * scale, en.isBoss ? 4.5 : 2.8, 0, Math.PI * 2);
+        mCtx.fill();
+      }
+
+      mCtx.restore();
+
+      // Znacznik bohatera w centrum minimapy
+      mCtx.fillStyle = "#ffffff";
+      mCtx.beginPath();
+      mCtx.arc(cx, cy, 4, 0, Math.PI * 2);
+      mCtx.fill();
+      mCtx.strokeStyle = "#c8a258";
+      mCtx.lineWidth = 1.5;
+      mCtx.stroke();
+    }
+
+    // ============================================================================
+    // 10. GŁÓWNA PĘTLA GRY (FIZYKA, AI, X-RAY 42%, WODA, POGODA, KAMERA)
+    // ============================================================================
+    const clock = new THREE.Clock();
+
+    function updateGame(dt, elapsed) {
+      // 1. Cooldown Przeskoku Bojowego (SPACJA)
+      if (hero.leapCd > 0) {
+        hero.leapCd = Math.max(0, hero.leapCd - dt);
+        const cdEl = document.getElementById("cd-SPACE");
+        if (hero.leapCd > 0) {
+          cdEl.style.height = (hero.leapCd / 4.5) * 100 + "%";
+          cdEl.textContent = hero.leapCd.toFixed(1);
+        } else {
+          cdEl.style.height = "0%";
+          cdEl.textContent = "";
+        }
+      }
+
+      // 2. Obsługa Ciężkiego Przeskoku Bojowego Wikinga (SPACJA)
+      if (hero.leapTimer > 0) {
+        hero.leapTimer -= dt;
+        const t = 1 - Math.max(0, hero.leapTimer) / hero.leapDuration;
+        hero.x = THREE.MathUtils.lerp(hero.leapStartX, hero.leapEndX, t);
+        hero.z = THREE.MathUtils.lerp(hero.leapStartZ, hero.leapEndZ, t);
+        const arcHeight = Math.sin(t * Math.PI) * 3.1;
+        hero.mesh.position.set(hero.x, arcHeight, hero.z);
+
+        if (hero.leapTimer <= 0) {
+          hero.mesh.position.y = 0;
+          screenShake = 0.35;
+          hero.shockwaveRing.position.set(hero.x, 0.06, hero.z);
+          hero.shockwaveRing.scale.set(1, 1, 1);
+          hero.shockwaveRing.material.opacity = 0.95;
+
+          // Obrażenia obszarowe przy lądowaniu
+          for (const en of ENEMIES) {
+            if (!en.alive) continue;
+            if (Math.hypot(en.x - hero.x, en.z - hero.z) <= 3.8) {
+              en.hp -= 55;
+              en.hitFlash = 0.22;
+              if (en.hp <= 0) {
+                en.alive = false;
+                en.mesh.visible = false;
+                en.shadow.visible = false;
+                updateQuestProgress();
+              }
+            }
+          }
+          if (hero.classKey === "wiking") {
+            hero.resource = Math.min(hero.maxResource, hero.resource + 20);
+            updateHudOrbs();
+          }
+        }
+      } else if (hero.isMoving) {
+        // 3. Ruch postaci z Wall Slidingiem po siatce NavMesh
+        const dx = hero.targetX - hero.x;
+        const dz = hero.targetZ - hero.z;
+        const dist = Math.hypot(dx, dz);
+
+        if (pendingInteraction && Math.hypot(pendingInteraction.x - hero.x, pendingInteraction.z - hero.z) <= pendingInteraction.radius + 0.65) {
+          hero.isMoving = false;
+          executeInteraction(pendingInteraction);
+          pendingInteraction = null;
+        } else if (dist > 0.14) {
+          const dirX = dx / dist;
+          const dirZ = dz / dist;
+          updateHeroFacing(dirX, dirZ);
+
+          const res = moveWithWallSliding(hero.x, hero.z, dirX * hero.speed, dirZ * hero.speed, dt);
+          hero.x = res.x;
+          hero.z = res.z;
+          hero.walkCycle += dt * 13.5;
+          if (!res.moved) hero.isMoving = false;
+        } else {
+          hero.isMoving = false;
+        }
+        hero.mesh.position.set(hero.x, 0, hero.z);
+      }
+
+      // Pozycja cienia i światła obrysowego bohatera (Hero Rim Light)
+      hero.shadowMesh.position.set(hero.x, 0.018, hero.z + 0.08);
+      hero.rimLight.position.set(hero.x, 1.95, hero.z + 0.85);
+
+      // Zanikanie znacznika LPM, smugi cięcia 3D i fali uderzeniowej
+      if (hero.targetRing.material.opacity > 0) {
+        hero.targetRing.scale.addScalar(dt * 1.4);
+        hero.targetRing.material.opacity = Math.max(0, hero.targetRing.material.opacity - dt * 1.8);
+      }
+      if (hero.attackTimer > 0) {
+        hero.attackTimer = Math.max(0, hero.attackTimer - dt);
+        hero.slashMesh.material.opacity = (hero.attackTimer / hero.attackDuration) * 0.9;
+      } else {
+        hero.slashMesh.material.opacity = 0;
+      }
+      if (hero.shockwaveRing.material.opacity > 0) {
+        hero.shockwaveRing.scale.addScalar(dt * 8.5);
+        hero.shockwaveRing.material.opacity = Math.max(0, hero.shockwaveRing.material.opacity - dt * 2.2);
+      }
+
+      // Animacja siatki 8x12 bohatera
+      animateHeroMesh(dt, elapsed);
+
+      // 4. Animacja Kowala Borgara (stoi stabilnie na nogach, pracuje tylko górna część z młotem)
+      if (kowalMeshObj) {
+        const pos = kowalMeshObj.geo.attributes.position;
+        const arr = pos.array;
+        const base = kowalMeshObj.basePos;
+        const H = kowalMeshObj.height;
+        const hammerPulse = Math.sin(elapsed * 4.8);
+
+        for (let i = 0; i < arr.length; i += 3) {
+          const normY = base[i + 1] / H;
+          if (normY < 0.5) {
+            // Nogi i pas w 100% stabilnie zakotwiczone
+            arr[i] = base[i];
+            arr[i + 1] = base[i + 1];
+            arr[i + 2] = base[i + 2];
+          } else {
+            const weight = (normY - 0.5) * 2.0;
+            arr[i] = base[i] + hammerPulse * 0.08 * weight;
+            arr[i + 1] = base[i + 1] - Math.abs(hammerPulse) * 0.07 * weight;
+            arr[i + 2] = base[i + 2];
+          }
+        }
+        pos.needsUpdate = true;
+      }
+
+      // 5. Przezroczystość przeszkód (X-Ray 42%): Kamień Filozofów i budynek Kuźni
+      for (const xt of xrayTargets) {
+        const isBehind =
+          hero.z < xt.z - 0.25 &&
+          hero.z > xt.z - xt.depth &&
+          Math.abs(hero.x - xt.x) < xt.halfW;
+        const targetOpacity = isBehind ? 0.42 : 1.0;
+        xt.currentOpacity = THREE.MathUtils.lerp(xt.currentOpacity, targetOpacity, dt * 8.0);
+        xt.mat.opacity = xt.currentOpacity;
+      }
+
+      // 6. AI Wrogów i Bossów na Przedmurzu i Arenach
+      for (const en of ENEMIES) {
+        if (!en.alive) continue;
+        if (en.hitFlash > 0) {
+          en.hitFlash -= dt;
+          en.mat.color.setHex(0xff7777);
+        } else {
+          en.mat.color.setHex(0xffffff);
+        }
+
+        const dx = hero.x - en.x;
+        const dz = hero.z - en.z;
+        const dist = Math.hypot(dx, dz);
+
+        if (dist < 11.5 && hero.z < -26) {
+          if (dist > 1.65) {
+            const res = moveWithWallSliding(en.x, en.z, (dx / dist) * en.speed, (dz / dist) * en.speed, dt);
+            en.x = res.x;
+            en.z = res.z;
+            en.mesh.position.set(en.x, Math.abs(Math.sin(elapsed * 8)) * 0.08, en.z);
+            en.shadow.position.set(en.x, 0.018, en.z + 0.08);
+          } else {
+            en.attackCd -= dt;
+            if (en.attackCd <= 0) {
+              en.attackCd = 1.35;
+              hero.hp = Math.max(0, hero.hp - en.dmg);
+              if (hero.hp <= 0) {
+                // Odrodzenie przy Kamieniu Filozofów
+                hero.hp = hero.maxHp;
+                hero.x = 0;
+                hero.z = 5.5;
+                hero.isMoving = false;
+              }
+              updateHudOrbs();
+            }
+          }
+        }
+      }
+
+      // 7. Aktualizacja kamery izometrycznej 55° przyspawanej do bohatera z blokadą na granicach
+      const clampedX = THREE.MathUtils.clamp(hero.x, CAM_BOUNDS.minX, CAM_BOUNDS.maxX);
+      const clampedZ = THREE.MathUtils.clamp(hero.z, CAM_BOUNDS.minZ, CAM_BOUNDS.maxZ);
+
+      let shakeX = 0, shakeY = 0;
+      if (screenShake > 0) {
+        screenShake = Math.max(0, screenShake - dt * 1.5);
+        shakeX = (Math.random() - 0.5) * screenShake * 0.6;
+        shakeY = (Math.random() - 0.5) * screenShake * 0.6;
+      }
+
+      const camY = Math.sin(CAMERA_PITCH) * CAMERA_DIST;
+      const camZOffset = Math.cos(CAMERA_PITCH) * CAMERA_DIST;
+      camera.position.set(clampedX + shakeX, camY + shakeY, clampedZ + camZOffset);
+      camera.lookAt(clampedX, 0.85, clampedZ);
+
+      // 8. Animacja falującej wody morskiej, piany, pochodni i deszczu 3D
+      if (seaGeo) {
+        const sPos = seaGeo.attributes.position;
+        for (let i = 0; i < sPos.count; i++) {
+          const sx = sPos.getX(i);
+          const sz = sPos.getZ(i);
+          const wave = Math.sin(sx * 0.22 + elapsed * 1.8) * 0.14 + Math.cos(sz * 0.25 + elapsed * 1.5) * 0.12;
+          sPos.setY(i, wave);
+        }
+        sPos.needsUpdate = true;
+      }
+
+      for (const f of foamRings) {
+        if (f.isShore) {
+          const s = 1 + Math.sin(elapsed * 2.1) * 0.012;
+          f.mesh.scale.set(s, 1, s);
+          f.mesh.material.opacity = 0.18 + Math.sin(elapsed * 2.1) * 0.08;
+        } else {
+          const s = 1 + Math.sin(elapsed * 2.4 + f.phase) * 0.12;
+          f.mesh.scale.set(s, s, s);
+          f.mesh.material.opacity = 0.22 + Math.sin(elapsed * 2.4 + f.phase) * 0.1;
+        }
+      }
+
+      for (const tf of torchFlames) {
+        tf.light.intensity = tf.baseIntensity + Math.sin(elapsed * 14 + tf.phase) * 0.28 + Math.cos(elapsed * 23) * 0.15;
+        for (const p of tf.particles) {
+          p.mesh.position.y += dt * p.speed;
+          p.mesh.position.x = p.baseX + Math.sin(elapsed * 8 + p.phase) * 0.11;
+          if (p.mesh.position.y > 2.55) {
+            p.mesh.position.y = 1.78;
+          }
+        }
+      }
+
+      if (forgeSparks) {
+        const sp = forgeSparks.geometry.attributes.position;
+        for (let i = 0; i < sp.count; i++) {
+          let y = sp.getY(i) + dt * 1.8;
+          if (y > 4.6) y = 1.0;
+          sp.setY(i, y);
+        }
+        sp.needsUpdate = true;
+      }
+
+      if (rainLines) {
+        rainLines.position.set(clampedX, 0, clampedZ);
+        const rPos = rainLines.geometry.attributes.position;
+        const arr = rPos.array;
+        for (let i = 0; i < RAIN_COUNT; i++) {
+          const idx = i * 6;
+          arr[idx + 1] -= dt * 26;
+          arr[idx + 4] -= dt * 26;
+          if (arr[idx + 1] < 0) {
+            const ny = 24 + Math.random() * 4;
+            arr[idx + 1] = ny;
+            arr[idx + 4] = ny - 1.55;
+          }
+        }
+        rPos.needsUpdate = true;
+      }
+
+      // Aktualizacja nazwy strefy w prawym górnym rogu
+      const banner = document.getElementById("zone-name-banner");
+      if (hero.z < -58) banner.textContent = "CYTADELA LALKARZA";
+      else if (hero.x < -19 && hero.z < -34) banner.textContent = "ARENA LATARNIKA";
+      else if (hero.x > 19 && hero.z < -34) banner.textContent = "ARENA BRACI POPIOŁU";
+      else if (hero.z < -33) banner.textContent = "PRZEDMURZE PRZYSTANI";
+      else if (hero.x < -21) banner.textContent = "ZACHODNIE POMOSTY";
+      else banner.textContent = "POPIELNA PRZYSTAŃ";
+
+      updateWorldLabels();
+      renderMinimap();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(0.05, clock.getDelta());
+      const elapsed = clock.getElapsedTime();
+      updateGame(dt, elapsed);
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // ============================================================================
+    // START INICJALIZACJI MODUŁU 1
+    // ============================================================================
+    (async function bootstrap() {
+      try {
+        await loadAllAssets();
+        buildWorldEnvironment();
+        populateWorldObjects();
+        initHero();
+        buildNavMeshVisualizer();
+        buildRainSystem();
+        updateHudOrbs();
+
+        const loadingScreen = document.getElementById("loading-screen");
+        loadingScreen.classList.add("hidden");
+        setTimeout(() => {
+          loadingScreen.style.display = "none";
+        }, 650);
+
+        clock.start();
+        animate();
+      } catch (err) {
+        const status = document.getElementById("loading-status");
+        if (status) {
+          status.style.color = "#ff6b6b";
+          status.textContent = "Błąd wczytywania zasobów: " + (err && err.message ? err.message : err);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
