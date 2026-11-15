@@ -1,0 +1,2460 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Akt I: Popielna Przystań — Przeklęta Czarna Twierdza i Zimny Błękit Dusz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #b89650;
+      --gold-bright: #e8c97a;
+      --soul-blue: #48b8ff;
+      --soul-cyan: #7ce8ff;
+      --obsidian: rgba(8, 11, 16, 0.92);
+      --iron-border: #3a4659;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #040609;
+      font-family: 'Cinzel', serif;
+      color: #d8e0e8;
+    }
+
+    #game-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      cursor: crosshair;
+    }
+
+    /* EKRAN ŁADOWANIA I EKSTRAKCJI KLATEK MP4 */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: radial-gradient(circle at center, #0e1724 0%, #040609 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.55s ease;
+    }
+
+    #loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-title {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 5px;
+      color: var(--soul-cyan);
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.95), 0 0 24px rgba(72, 184, 255, 0.45);
+      margin-bottom: 8px;
+    }
+
+    .loading-subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      color: #9ab0c4;
+      margin-bottom: 26px;
+      letter-spacing: 1px;
+    }
+
+    .loading-frame {
+      width: 480px;
+      height: 16px;
+      background: #070a0f;
+      border: 2px solid var(--soul-blue);
+      padding: 2px;
+      box-shadow: 0 0 24px rgba(72, 184, 255, 0.25);
+    }
+
+    #loading-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #1b527a, #48b8ff, #9beeff);
+      transition: width 0.15s ease;
+    }
+
+    #loading-status {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #9ab0c4;
+      letter-spacing: 1.4px;
+    }
+
+    /* LEWY GÓRNY PANEL: TRYB SKOSÓW [F3], NAVMESH [F2] I STEROWANIE */
+    #top-left-hud {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-panel {
+      background: var(--obsidian);
+      border: 1px solid var(--soul-blue);
+      padding: 9px 13px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.9), inset 0 0 14px rgba(72, 184, 255, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      color: var(--soul-cyan);
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .gothic-btn {
+      background: linear-gradient(180deg, #152030, #0a1018);
+      border: 1px solid #3c6488;
+      color: #d4e8f8;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 11px;
+      cursor: pointer;
+      letter-spacing: 0.8px;
+      transition: all 0.15s ease;
+    }
+
+    .gothic-btn:hover {
+      border-color: var(--soul-cyan);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(72, 184, 255, 0.35);
+    }
+
+    .gothic-btn.active {
+      background: linear-gradient(180deg, #1b496e, #0d263b);
+      border-color: var(--soul-cyan);
+      color: #ffffff;
+      box-shadow: 0 0 14px rgba(72, 184, 255, 0.45);
+    }
+
+    .controls-hint {
+      background: rgba(7, 10, 15, 0.86);
+      border: 1px solid var(--iron-border);
+      padding: 7px 11px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px;
+      color: #b4c4d4;
+      line-height: 1.42;
+    }
+
+    .controls-hint b {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      color: var(--soul-cyan);
+    }
+
+    #navmesh-badge {
+      display: none;
+      background: rgba(14, 62, 42, 0.92);
+      border: 1px solid #48e89a;
+      color: #e2fff0;
+      padding: 6px 11px;
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+
+    /* PRAWY GÓRNY RÓG: MINIMAPA I DZIENNIK ZADAŃ */
+    #top-right-hud {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .zone-banner {
+      background: var(--obsidian);
+      border: 1px solid var(--soul-blue);
+      padding: 5px 14px;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      color: var(--soul-cyan);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.85);
+    }
+
+    .minimap-wrapper {
+      position: relative;
+      width: 192px;
+      height: 192px;
+      border-radius: 50%;
+      background: #05080c;
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 0 3px #121822, 0 8px 25px rgba(0, 0, 0, 0.95), inset 0 0 20px rgba(0, 0, 0, 0.9);
+      overflow: hidden;
+      pointer-events: auto;
+    }
+
+    #minimap-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .minimap-compass {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .minimap-compass span {
+      position: absolute;
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--gold-bright);
+      text-shadow: 0 1px 4px #000;
+    }
+
+    .minimap-compass .n { top: 4px; left: 50%; transform: translateX(-50%); }
+    .minimap-compass .s { bottom: 4px; left: 50%; transform: translateX(-50%); }
+    .minimap-compass .w { left: 6px; top: 50%; transform: translateY(-50%); }
+    .minimap-compass .e { right: 6px; top: 50%; transform: translateY(-50%); }
+
+    .quest-box {
+      width: 276px;
+      background: linear-gradient(180deg, rgba(12, 16, 24, 0.92), rgba(7, 9, 14, 0.94));
+      border: 1px solid #3c5470;
+      border-top: 2px solid var(--soul-blue);
+      padding: 10px 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
+      pointer-events: auto;
+    }
+
+    .quest-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--soul-cyan);
+      letter-spacing: 1.5px;
+      border-bottom: 1px solid rgba(72, 184, 255, 0.28);
+      padding-bottom: 5px;
+      margin-bottom: 7px;
+    }
+
+    .quest-item {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px;
+      color: #cad6e2;
+      line-height: 1.35;
+      margin-bottom: 5px;
+    }
+
+    .quest-item.done {
+      color: #5ec488;
+      text-decoration: line-through;
+    }
+
+    /* OKNO DIALOGOWE NPC */
+    #dialogue-modal {
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 490px;
+      background: linear-gradient(180deg, rgba(14, 19, 28, 0.97), rgba(7, 10, 16, 0.98));
+      border: 2px solid var(--soul-blue);
+      box-shadow: 0 14px 44px rgba(0, 0, 0, 0.96), 0 0 26px rgba(72, 184, 255, 0.22);
+      padding: 18px 22px;
+      z-index: 45;
+      display: none;
+    }
+
+    #dialogue-speaker {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--soul-cyan);
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(72, 184, 255, 0.3);
+      padding-bottom: 6px;
+    }
+
+    #dialogue-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      line-height: 1.45;
+      color: #e0eaf4;
+      margin-bottom: 14px;
+    }
+
+    #dialogue-close {
+      background: #102236;
+      border: 1px solid var(--soul-blue);
+      color: var(--soul-cyan);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      padding: 6px 14px;
+      cursor: pointer;
+      float: right;
+    }
+
+    /* DOLNY GOTYCKI HUD (KULA KRWI, KULA SZAŁU, KUTY ORNAMENT BEZ PASKÓW HP) */
+    #bottom-hud {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 35;
+      display: flex;
+      align-items: flex-end;
+      gap: 0;
+      pointer-events: none;
+    }
+
+    .orb-module {
+      position: relative;
+      width: 152px;
+      height: 152px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      pointer-events: auto;
+      margin-bottom: 6px;
+    }
+
+    .orb-shell {
+      position: relative;
+      width: 126px;
+      height: 126px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #161b24, #06080c);
+      border: 4px solid #6b5839;
+      box-shadow: 0 0 0 2px #10141d, 0 8px 24px rgba(0, 0, 0, 0.95), inset 0 0 24px rgba(0, 0, 0, 0.95);
+      overflow: hidden;
+    }
+
+    .orb-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      transition: height 0.2s ease;
+    }
+
+    #blood-fill {
+      background: radial-gradient(circle at 38% 35%, #e3292d 0%, #8f0d10 55%, #3d0305 100%);
+      box-shadow: inset 0 4px 12px rgba(255, 130, 130, 0.45);
+    }
+
+    #rage-fill {
+      background: radial-gradient(circle at 38% 35%, #ff8826 0%, #bd4206 58%, #4d1700 100%);
+      box-shadow: inset 0 4px 12px rgba(255, 200, 130, 0.45);
+    }
+
+    .orb-glass {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.06) 24%, transparent 60%);
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .orb-readout {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 6;
+      text-shadow: 0 2px 5px #000, 0 0 8px #000;
+      pointer-events: none;
+    }
+
+    .orb-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #f0e6d2;
+    }
+
+    .orb-values {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      margin-top: 2px;
+    }
+
+    .center-console {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: auto;
+      margin: 0 -8px;
+      z-index: 2;
+    }
+
+    /* KUTY GOTYCKI ORNAMENT NAD PASKIEM SKILLI (CAŁKOWITY BRAK POZIOMYCH PASKÓW HP) */
+    .gothic-ornament-crest {
+      width: 540px;
+      height: 44px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      position: relative;
+      margin-bottom: -3px;
+      pointer-events: none;
+    }
+
+    .level-medallion {
+      position: absolute;
+      top: 4px;
+      padding: 3px 18px;
+      background: linear-gradient(180deg, #16202e, #0b1018);
+      border: 1px solid var(--gold);
+      color: var(--gold-bright);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.95);
+    }
+
+    .console-body {
+      background: linear-gradient(180deg, #161c26 0%, #0b0e14 100%);
+      border-top: 2px solid var(--gold);
+      border-left: 2px solid #594a30;
+      border-right: 2px solid #594a30;
+      border-bottom: 3px solid #382e1e;
+      padding: 10px 18px 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 -6px 26px rgba(0, 0, 0, 0.95), inset 0 2px 12px rgba(0, 0, 0, 0.85);
+    }
+
+    .slots-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .hud-divider {
+      width: 2px;
+      height: 46px;
+      background: linear-gradient(180deg, transparent, var(--gold), transparent);
+      opacity: 0.6;
+    }
+
+    .skill-slot, .potion-slot {
+      position: relative;
+      width: 50px;
+      height: 50px;
+      background: radial-gradient(circle at center, #1c2533 0%, #0d1118 100%);
+      border: 1px solid #6b5839;
+      box-shadow: inset 0 0 10px #000, 0 2px 6px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .potion-slot {
+      width: 44px;
+      height: 44px;
+    }
+
+    .skill-slot:hover, .potion-slot:hover {
+      border-color: var(--soul-cyan);
+    }
+
+    .skill-slot:active, .potion-slot:active {
+      transform: scale(0.95);
+    }
+
+    .slot-key {
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--gold-bright);
+      text-shadow: 0 1px 3px #000;
+      z-index: 3;
+    }
+
+    .slot-charges {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 1px 3px #000;
+      z-index: 3;
+    }
+
+    .slot-icon {
+      font-size: 18px;
+      color: var(--soul-cyan);
+      z-index: 2;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .slot-sub {
+      font-size: 8px;
+      color: #9eb0c2;
+      letter-spacing: 0.5px;
+      margin-top: 3px;
+      z-index: 2;
+    }
+
+    .cd-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0%;
+      background: rgba(5, 7, 11, 0.84);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--soul-cyan);
+      z-index: 4;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- EKRAN ŁADOWANIA I EKSTRAKCJI KLATEK WIDEO MP4 -->
+  <div id="loading-screen">
+    <div class="loading-title">AKT I: POPIELNA PRZYSTAŃ</div>
+    <div class="loading-subtitle">Styl C: Przeklęta Czarna Twierdza i Zimny Błękit Dusz — Ekstrakcja Klatek Wideo MP4...</div>
+    <div class="loading-frame">
+      <div id="loading-bar"></div>
+    </div>
+    <div id="loading-status">Inicjalizacja VideoSpriteExtractor (0 / 9)...</div>
+  </div>
+
+  <!-- GŁÓWNY CANVAS ŚWIATA 2.5D -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- LEWY GÓRNY PANEL: PRZEŁĄCZNIK SKOSÓW GÓRNYCH [F3] ORAZ SIATKI NAVMESH [F2] -->
+  <div id="top-left-hud">
+    <div class="control-panel">
+      <div class="panel-title">
+        <span>KONFIGURACJA ANIMACJI WIKINGA</span>
+        <span id="current-anim-tag" style="color:#fff;">IDLE</span>
+      </div>
+      <div class="btn-row">
+        <button class="gothic-btn active" id="btn-f3-toggle" title="Przełącz animację chodzenia na skosach górnych (np. schody na most)">
+          Tryb Skosów Górnych [F3]: PLECY (Góra)
+        </button>
+        <button class="gothic-btn" id="btn-f2-toggle" title="Pokaż/ukryj wielokąty kolizji NavMesh">
+          Siatka NavMesh [F2]
+        </button>
+      </div>
+    </div>
+    <div class="controls-hint">
+      <b>LPM</b> Ruch (8 kierunków) / Interakcja &nbsp;|&nbsp; <b>PPM</b> lub <b>SHIFT+LPM</b> Atak<br>
+      <b>[F3]</b> Skosy Górne: Plecy / Profil &nbsp;|&nbsp; <b>SPACJA</b> Przeskok Bojowy<br>
+      <b>[F2]</b> Podgląd NavMesh &nbsp;|&nbsp; <b>[ALT]</b> Pokaż nazwy obiektów
+    </div>
+    <div id="navmesh-badge">TRYB NAVMESH [F2] AKTYWNY — ZIELONY: RUCH DOZWOLONY | CZERWONY: PRZESZKODA</div>
+  </div>
+
+  <!-- PRAWY GÓRNY PANEL: MINIMAPA I ZADANIA -->
+  <div id="top-right-hud">
+    <div class="zone-banner" id="zone-name-banner">NABRZEŻE POPIELNEJ PRZYSTANI</div>
+    <div class="minimap-wrapper">
+      <canvas id="minimap-canvas" width="192" height="192"></canvas>
+      <div class="minimap-compass">
+        <span class="n">N</span>
+        <span class="s">S</span>
+        <span class="w">W</span>
+        <span class="e">E</span>
+      </div>
+    </div>
+    <div class="quest-box">
+      <div class="quest-header">DZIENNIK ZADAŃ — AKT I</div>
+      <div class="quest-item" id="q-monolith">• Zbadaj Kamień Filozofów w kręgu runicznym</div>
+      <div class="quest-item" id="q-borgar">• Porozmawiaj z Kowalem Borgarem przy kuźni</div>
+      <div class="quest-item" id="q-vorn">• Zamelduj się Strażnikowi Vornowi przy schodach</div>
+      <div class="quest-item" id="q-stairs">• Przetestuj wejście na most północny [F3]</div>
+    </div>
+  </div>
+
+  <!-- OKNO DIALOGOWE NPC -->
+  <div id="dialogue-modal">
+    <div id="dialogue-speaker">KOWAL BORGAR</div>
+    <div id="dialogue-text">...</div>
+    <button id="dialogue-close">ZAMKNIJ [ESC]</button>
+  </div>
+
+  <!-- DOLNY GOTYCKI HUD -->
+  <div id="bottom-hud">
+    <!-- KULA KRWI -->
+    <div class="orb-module">
+      <div class="orb-shell">
+        <div class="orb-fill" id="blood-fill"></div>
+        <div class="orb-glass"></div>
+        <div class="orb-readout">
+          <span class="orb-label">KREW</span>
+          <span class="orb-values" id="blood-text">485/485</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTRALNY PANEL Z KUTYM ORNAMENTEM -->
+    <div class="center-console">
+      <div class="gothic-ornament-crest">
+        <svg width="540" height="44" viewBox="0 0 540 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 42 L65 24 L155 24 L195 8 L345 8 L385 24 L475 24 L530 42" stroke="#b89650" stroke-width="2" fill="rgba(11,15,22,0.94)"/>
+          <path d="M40 42 L85 29 L170 29 L208 15 L332 15 L370 29 L455 29 L500 42" stroke="#48b8ff" stroke-width="1.1" stroke-opacity="0.65" fill="none"/>
+          <circle cx="95" cy="29" r="3.5" fill="#48b8ff"/>
+          <circle cx="150" cy="26" r="3" fill="#b89650"/>
+          <circle cx="390" cy="26" r="3" fill="#b89650"/>
+          <circle cx="445" cy="29" r="3.5" fill="#48b8ff"/>
+          <path d="M120 35 L140 28 L160 35 M380 35 L400 28 L420 35" stroke="#b89650" stroke-width="1.3"/>
+        </svg>
+        <div class="level-medallion">POZIOM 1 — WIKING POPOŁÓW</div>
+      </div>
+
+      <div class="console-body">
+        <div class="slots-group">
+          <div class="potion-slot" id="potion-1" title="Mikstura Krwi [1]">
+            <span class="slot-key">1</span>
+            <span class="slot-icon" style="color:#e33b3f;">♦</span>
+            <span class="slot-sub">KREW</span>
+            <span class="slot-charges" id="potion-1-charges">3</span>
+          </div>
+          <div class="potion-slot" id="potion-2" title="Eliksir Dusz [2]">
+            <span class="slot-key">2</span>
+            <span class="slot-icon" style="color:#48b8ff;">◊</span>
+            <span class="slot-sub">DUSZA</span>
+            <span class="slot-charges">2</span>
+          </div>
+        </div>
+
+        <div class="hud-divider"></div>
+
+        <div class="slots-group">
+          <div class="skill-slot" data-skill="Q" title="Rozpłatanie Dusz [Q]">
+            <span class="slot-key">Q</span>
+            <span class="slot-icon">⚔</span>
+            <span class="slot-sub">CIĘCIE</span>
+          </div>
+          <div class="skill-slot" data-skill="W" title="Zew Twierdzy [W]">
+            <span class="slot-key">W</span>
+            <span class="slot-icon">❖</span>
+            <span class="slot-sub">ZEW</span>
+          </div>
+          <div class="skill-slot" data-skill="E" title="Gniew Runiczny [E]">
+            <span class="slot-key">E</span>
+            <span class="slot-icon">✹</span>
+            <span class="slot-sub">GNIEW</span>
+          </div>
+          <div class="skill-slot" data-skill="R" title="Furia Przodków [R]">
+            <span class="slot-key">R</span>
+            <span class="slot-icon">♛</span>
+            <span class="slot-sub">FURIA</span>
+          </div>
+        </div>
+
+        <div class="hud-divider"></div>
+
+        <div class="slots-group">
+          <div class="skill-slot" id="slot-lpm" title="LPM: Ruch i Interakcja">
+            <span class="slot-key">LPM</span>
+            <span class="slot-icon">👣</span>
+            <span class="slot-sub">RUCH</span>
+          </div>
+          <div class="skill-slot" id="slot-ppm" title="PPM / SHIFT+LPM: Atak w stronę kursora">
+            <span class="slot-key">PPM</span>
+            <span class="slot-icon">🗡</span>
+            <span class="slot-sub">ATAK</span>
+          </div>
+          <div class="skill-slot" id="slot-space" title="SPACJA: Przeskok Bojowy (CD 4.0s)">
+            <span class="slot-key">SPC</span>
+            <span class="slot-icon">☄</span>
+            <span class="slot-sub">SKOK</span>
+            <div class="cd-overlay" id="cd-SPACE"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KULA SZAŁU -->
+    <div class="orb-module">
+      <div class="orb-shell">
+        <div class="orb-fill" id="rage-fill" style="height: 0%;"></div>
+        <div class="orb-glass"></div>
+        <div class="orb-readout">
+          <span class="orb-label">SZAŁ</span>
+          <span class="orb-values" id="rage-text">0/100</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================================
+    // KONFIGURACJA BAZY ZASOBÓW GITHUB ORAZ WYMIARÓW ŚWIATA 2560x1440
+    // ============================================================================
+    const BASE_URL = "https://raw.githubusercontent.com/franekimono2026/DiabelZzz/main/";
+    const WORLD_W = 2560;
+    const WORLD_H = 1440;
+
+    // Standaryzowane płótno dla każdej wyciętej klatki Wikinga (zero pływania i stała wysokość 190 px)
+    const SPRITE_CANVAS_W = 340;
+    const SPRITE_CANVAS_H = 310;
+    const TARGET_HERO_HEIGHT = 190;
+    const ANCHOR_X = Math.floor(SPRITE_CANVAS_W / 2); // 170
+    const ANCHOR_Y = 278; // Dokładna linia podeszwy butów we wszystkich animacjach
+
+    let totalTasks = 9;
+    let completedTasks = 0;
+
+    function advanceLoadingBar(label) {
+      completedTasks++;
+      const pct = Math.min(100, Math.round((completedTasks / totalTasks) * 100));
+      const bar = document.getElementById("loading-bar");
+      const status = document.getElementById("loading-status");
+      if (bar) bar.style.width = pct + "%";
+      if (status) status.textContent = `Przetworzono: ${label} (${completedTasks} / ${totalTasks})`;
+    }
+
+    // ============================================================================
+    // GENERATOR DŹWIĘKÓW WEB AUDIO API (ZAMACH, UDERZENIE, KROKI, SKOK)
+    // ============================================================================
+    const SoundFX = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === "suspended") {
+          this.ctx.resume();
+        }
+      },
+      playSwing() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        // Szum przecinanego powietrza (whoosh)
+        const bufferSize = this.ctx.sampleRate * 0.22;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.sin((i / bufferSize) * Math.PI);
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.setValueAtTime(520, now);
+        filter.frequency.exponentialRampToValueAtTime(140, now + 0.21);
+        filter.Q.value = 1.8;
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.28, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.21);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start(now);
+
+        // Metaliczny pogłos ostrza
+        const osc = this.ctx.createOscillator();
+        const oscGain = this.ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(290, now);
+        osc.frequency.exponentialRampToValueAtTime(95, now + 0.18);
+        oscGain.gain.setValueAtTime(0.14, now);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(oscGain);
+        oscGain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.19);
+      },
+      playLeapImpact() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(28, now + 0.35);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.005, now + 0.36);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.37);
+      },
+      playStep() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(75 + Math.random() * 20, now);
+        osc.frequency.exponentialRampToValueAtTime(32, now + 0.055);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.065);
+      }
+    };
+
+    // ============================================================================
+    // 1. EKSTRAKTOR KLATEK Z WIDEO .MP4 + HARD-EDGE INK RESTORER + AUTO-CENTROWANIE
+    // ============================================================================
+    const VideoSpriteExtractor = {
+      loadImage(filename, timeoutMs = 8000) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          const timer = setTimeout(() => {
+            img.src = "";
+            reject(new Error("Timeout: " + filename));
+          }, timeoutMs);
+          img.onload = () => {
+            clearTimeout(timer);
+            resolve(img);
+          };
+          img.onerror = () => {
+            clearTimeout(timer);
+            reject(new Error("404: " + filename));
+          };
+          img.src = BASE_URL + filename;
+        });
+      },
+
+      // Wycinanie zielonego tła #00FF00 z naprawą czarnego konturu tuszu (Hard-Edge Ink Restorer)
+      // oraz wyznaczaniem dokładnego Bounding Boxa nieprzezroczystych pikseli
+      keyOutGreenAndMeasure(ctx, w, h) {
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+        const total = w * h;
+
+        for (let i = 0; i < total; i++) {
+          const i4 = i * 4;
+          let r = data[i4];
+          let g = data[i4 + 1];
+          let b = data[i4 + 2];
+
+          // a) Usunięcie pikseli zielonego tła #00FF00 (z uwzględnieniem kompresji MP4)
+          if (
+            (g > 95 && g > r * 1.18 && g > b * 1.15) ||
+            (g > 135 && g - Math.max(r, b) > 32)
+          ) {
+            data[i4 + 3] = 0;
+            continue;
+          }
+
+          // b) Hard-Edge Ink Restorer: dla pikseli brzegowych z zielonym zafarbem (green spill)
+          // wyzeruj nasycenie zieleni i przyciemnij je do kruczoczarnego tuszu
+          if (g > r && g > b) {
+            r = Math.round(r * 0.25);
+            g = Math.round(g * 0.20);
+            b = Math.round(b * 0.30);
+            data[i4] = r;
+            data[i4 + 1] = g;
+            data[i4 + 2] = b;
+            data[i4 + 3] = 255;
+          } else {
+            data[i4 + 3] = 255;
+          }
+        }
+
+        // Oczyszczenie pojedynczych pikseli szumu kompresji MP4 wiszących w powietrzu
+        const alphaCopy = new Uint8Array(total);
+        for (let i = 0; i < total; i++) alphaCopy[i] = data[i * 4 + 3];
+
+        for (let y = 1; y < h - 1; y++) {
+          for (let x = 1; x < w - 1; x++) {
+            const idx = y * w + x;
+            if (alphaCopy[idx] === 0) continue;
+            let opaqueNeighbors = 0;
+            if (alphaCopy[idx - 1] > 0) opaqueNeighbors++;
+            if (alphaCopy[idx + 1] > 0) opaqueNeighbors++;
+            if (alphaCopy[idx - w] > 0) opaqueNeighbors++;
+            if (alphaCopy[idx + w] > 0) opaqueNeighbors++;
+            if (opaqueNeighbors <= 1) {
+              data[idx * 4 + 3] = 0;
+              alphaCopy[idx] = 0;
+            }
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+
+        // Wyznaczenie dokładnego Bounding Boxa sylwetki (z pominięciem 2px marginesu ramki wideo)
+        const marginX = Math.max(2, Math.floor(w * 0.02));
+        const marginY = Math.max(2, Math.floor(h * 0.02));
+
+        let minX = w, maxX = 0, minY = h, maxY = 0;
+        let foundPixels = 0;
+
+        // Zliczanie gęstości w wierszach i kolumnach, aby pojedynczy artefakt nie przekłamał rozmiaru butów/hełmu
+        const rowCounts = new Int32Array(h);
+        const colCounts = new Int32Array(w);
+
+        for (let y = marginY; y < h - marginY; y++) {
+          for (let x = marginX; x < w - marginX; x++) {
+            if (alphaCopy[y * w + x] > 128) {
+              rowCounts[y]++;
+              colCounts[x]++;
+              foundPixels++;
+            }
+          }
+        }
+
+        if (foundPixels < 25) {
+          return { minX: 0, maxX: w - 1, minY: 0, maxY: h - 1, coreCenterX: w / 2, valid: false };
+        }
+
+        for (let y = marginY; y < h - marginY; y++) {
+          if (rowCounts[y] >= 2) { minY = y; break; }
+        }
+        for (let y = h - marginY - 1; y >= marginY; y--) {
+          if (rowCounts[y] >= 2) { maxY = y; break; }
+        }
+        for (let x = marginX; x < w - marginX; x++) {
+          if (colCounts[x] >= 2) { minX = x; break; }
+        }
+        for (let x = w - marginX - 1; x >= marginX; x--) {
+          if (colCounts[x] >= 2) { maxX = x; break; }
+        }
+
+        // Wyznaczenie środka ciężkości tułowia (między 30% a 78% wysokości sylwetki),
+        // aby wystawiony w bok topór nie przesuwał osi kręgosłupa postaci!
+        const charH = Math.max(10, maxY - minY);
+        const torsoStartY = Math.floor(minY + charH * 0.30);
+        const torsoEndY = Math.floor(minY + charH * 0.78);
+        let sumX = 0, countX = 0;
+
+        for (let y = torsoStartY; y <= torsoEndY; y++) {
+          for (let x = minX; x <= maxX; x++) {
+            if (alphaCopy[y * w + x] > 128) {
+              sumX += x;
+              countX++;
+            }
+          }
+        }
+
+        const coreCenterX = countX > 20 ? (sumX / countX) : ((minX + maxX) * 0.5);
+        return { minX, maxX, minY, maxY, coreCenterX, valid: true };
+      },
+
+      // Przeskalowanie i zakotwiczenie wyciętej klatki tak, by wysokość wynosiła TARGET_HERO_HEIGHT (190 px),
+      // środek ciężkości tułowia leżał na X = ANCHOR_X, a podeszwy butów na Y = ANCHOR_Y
+      normalizeFrameToSpriteCanvas(workCanvas, bbox, customTargetHeight = TARGET_HERO_HEIGHT) {
+        const out = document.createElement("canvas");
+        out.width = SPRITE_CANVAS_W;
+        out.height = SPRITE_CANVAS_H;
+        const oCtx = out.getContext("2d");
+
+        if (!bbox.valid) return out;
+
+        const srcW = Math.max(1, bbox.maxX - bbox.minX + 1);
+        const srcH = Math.max(1, bbox.maxY - bbox.minY + 1);
+
+        const scale = customTargetHeight / srcH;
+        const drawW = srcW * scale;
+        const drawH = srcH * scale;
+
+        // Odległość środka ciężkości tułowia od lewej krawędzi wycinka
+        const coreOffsetFromLeft = (bbox.coreCenterX - bbox.minX) * scale;
+        const destX = Math.round(ANCHOR_X - coreOffsetFromLeft);
+        const destY = Math.round(ANCHOR_Y - drawH);
+
+        oCtx.drawImage(
+          workCanvas,
+          bbox.minX, bbox.minY, srcW, srcH,
+          destX, destY, Math.round(drawW), Math.round(drawH)
+        );
+
+        return out;
+      },
+
+      async extractIdleSprite(filename) {
+        const img = await this.loadImage(filename);
+        const work = document.createElement("canvas");
+        work.width = img.width;
+        work.height = img.height;
+        const ctx = work.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0);
+
+        const bbox = this.keyOutGreenAndMeasure(ctx, work.width, work.height);
+        const normalized = this.normalizeFrameToSpriteCanvas(work, bbox, TARGET_HERO_HEIGHT);
+        advanceLoadingBar(filename);
+        return normalized;
+      },
+
+      // Wycięcie 3 osobnych obiektów z arkusza npc_zestaw.jpg (Kamień Filozofów, Kowal Borgar, Strażnik Vorn)
+      async extractNpcSheet(filename) {
+        const img = await this.loadImage(filename);
+        const W = img.width;
+        const H = img.height;
+
+        const slices = [
+          { key: "monolith", x0: 0, x1: Math.floor(W * 0.333), targetH: 295 },
+          { key: "borgar", x0: Math.floor(W * 0.333), x1: Math.floor(W * 0.666), targetH: 205 },
+          { key: "vorn", x0: Math.floor(W * 0.666), x1: W, targetH: 215 }
+        ];
+
+        const result = {};
+
+        for (const s of slices) {
+          const sw = s.x1 - s.x0;
+          const work = document.createElement("canvas");
+          work.width = sw;
+          work.height = H;
+          const ctx = work.getContext("2d", { willReadFrequently: true });
+          ctx.drawImage(img, s.x0, 0, sw, H, 0, 0, sw, H);
+
+          const bbox = this.keyOutGreenAndMeasure(ctx, sw, H);
+          const srcW = Math.max(1, bbox.maxX - bbox.minX + 1);
+          const srcH = Math.max(1, bbox.maxY - bbox.minY + 1);
+          const scale = s.targetH / srcH;
+
+          const outW = Math.max(64, Math.ceil(srcW * scale) + 16);
+          const outH = Math.max(64, Math.ceil(srcH * scale) + 12);
+          const out = document.createElement("canvas");
+          out.width = outW;
+          out.height = outH;
+          const oCtx = out.getContext("2d");
+
+          // Kotwiczenie podstawy dokładnie na samym dole canvasu (outH - 2)
+          const drawW = Math.round(srcW * scale);
+          const drawH = Math.round(srcH * scale);
+          const dx = Math.round((outW - drawW) * 0.5);
+          const dy = outH - 2 - drawH;
+
+          oCtx.drawImage(work, bbox.minX, bbox.minY, srcW, srcH, dx, dy, drawW, drawH);
+          result[s.key] = out;
+        }
+
+        advanceLoadingBar(filename);
+        return result;
+      },
+
+      // Ekstrakcja 12 równomiernych klatek z pliku .mp4 (całkowicie wyciszony dźwięk!)
+      async extractVideoFrames(primaryFile, fallbackFile, frameCount = 12, isAttack = false) {
+        const video = document.createElement("video");
+        video.crossOrigin = "anonymous";
+        video.muted = true;
+        video.defaultMuted = true;
+        video.volume = 0;
+        video.playsInline = true;
+        video.preload = "auto";
+        video.setAttribute("muted", "");
+        video.setAttribute("playsinline", "");
+
+        const loadVideoSource = (file) => new Promise((resolve, reject) => {
+          const timer = setTimeout(() => {
+            reject(new Error("Video load timeout: " + file));
+          }, 9500);
+
+          video.onloadedmetadata = () => {
+            video.muted = true;
+            video.volume = 0;
+          };
+          video.onloadeddata = () => {
+            clearTimeout(timer);
+            video.muted = true;
+            video.volume = 0;
+            resolve();
+          };
+          video.onerror = () => {
+            clearTimeout(timer);
+            reject(new Error("Video 404/error: " + file));
+          };
+          video.src = BASE_URL + file;
+          video.load();
+        });
+
+        try {
+          await loadVideoSource(primaryFile);
+        } catch (err) {
+          if (fallbackFile) {
+            await loadVideoSource(fallbackFile);
+          } else {
+            throw err;
+          }
+        }
+
+        video.muted = true;
+        video.volume = 0;
+        video.pause();
+
+        const duration = Number.isFinite(video.duration) && video.duration > 0.4 ? video.duration : 1.5;
+        const startT = Math.min(0.15, duration * 0.1);
+        const endT = Math.max(startT + 0.1, duration - 0.15);
+
+        const vw = Math.max(128, video.videoWidth || 480);
+        const vh = Math.max(128, video.videoHeight || 480);
+
+        const rawFrames = [];
+        let medianHeight = 0;
+        const heights = [];
+
+        for (let i = 0; i < frameCount; i++) {
+          const t = frameCount === 1
+            ? startT
+            : startT + (i / (frameCount - 1)) * (endT - startT);
+
+          await new Promise((resolve) => {
+            const seekTimer = setTimeout(resolve, 650);
+            video.onseeked = () => {
+              clearTimeout(seekTimer);
+              resolve();
+            };
+            try {
+              video.currentTime = t;
+            } catch (_) {
+              clearTimeout(seekTimer);
+              resolve();
+            }
+          });
+
+          const work = document.createElement("canvas");
+          work.width = vw;
+          work.height = vh;
+          const ctx = work.getContext("2d", { willReadFrequently: true });
+          ctx.drawImage(video, 0, 0, vw, vh);
+
+          const bbox = this.keyOutGreenAndMeasure(ctx, vw, vh);
+          const hPx = Math.max(1, bbox.maxY - bbox.minY + 1);
+          if (bbox.valid) heights.push(hPx);
+          rawFrames.push({ work, bbox, hPx });
+        }
+
+        // Aby w klatkach ataku uniesiony wysoko nad głowę topór nie zmniejszał samej sylwetki Wikinga,
+        // wyznaczamy bazową wysokość postaci z klatek spoczynkowych/początkowych filmu i stosujemy spójną skalę!
+        if (heights.length > 0) {
+          const sorted = [...heights].sort((a, b) => a - b);
+          medianHeight = sorted[Math.floor(sorted.length * 0.25)] || sorted[0];
+        } else {
+          medianHeight = vh * 0.6;
+        }
+
+        const uniformScale = TARGET_HERO_HEIGHT / Math.max(1, medianHeight);
+        const normalizedFrames = [];
+
+        for (const rf of rawFrames) {
+          if (isAttack) {
+            // W animacji ataku zachowujemy stałą skalę ciała Wikinga (190 px), pozwalając na wyższy zasięg topora u góry
+            const frameTargetH = Math.min(ANCHOR_Y - 6, Math.round(rf.hPx * uniformScale));
+            normalizedFrames.push(this.normalizeFrameToSpriteCanvas(rf.work, rf.bbox, frameTargetH));
+          } else {
+            normalizedFrames.push(this.normalizeFrameToSpriteCanvas(rf.work, rf.bbox, TARGET_HERO_HEIGHT));
+          }
+        }
+
+        video.src = "";
+        advanceLoadingBar(primaryFile);
+        return normalizedFrames;
+      }
+    };
+
+    // Awaryjny generator klatek z wiking_baza.jpg, gdyby któryś plik wideo nie odpowiedział z sieci
+    function createFallbackFramesFromBase(baseCanvas, count = 12) {
+      const frames = [];
+      for (let i = 0; i < count; i++) {
+        const c = document.createElement("canvas");
+        c.width = SPRITE_CANVAS_W;
+        c.height = SPRITE_CANVAS_H;
+        const ctx = c.getContext("2d");
+        const phase = (i / count) * Math.PI * 2;
+        const bobY = Math.round(Math.abs(Math.sin(phase)) * 5);
+        ctx.drawImage(baseCanvas, 0, -bobY);
+        frames.push(c);
+      }
+      return frames;
+    }
+
+    // ============================================================================
+    // PAMIĘĆ PODRĘCZNA ZASOBÓW GRY
+    // ============================================================================
+    const GAME_ASSETS = {
+      mapImg: null,
+      heroIdle: null,
+      npc: {
+        monolith: null,
+        borgar: null,
+        vorn: null
+      },
+      anims: {
+        walkUp: [],
+        walkDown: [],
+        walkRight: [],
+        attackUp: [],
+        attackDown: [],
+        attackRight: []
+      }
+    };
+
+    async function loadAllGameResources() {
+      // 1. Mapa główna mapa_przystan.jpg
+      try {
+        GAME_ASSETS.mapImg = await VideoSpriteExtractor.loadImage("mapa_przystan.jpg", 10000);
+      } catch (_) {}
+      advanceLoadingBar("mapa_przystan.jpg");
+
+      // 2. Wiking Idle (wiking_baza.jpg)
+      try {
+        GAME_ASSETS.heroIdle = await VideoSpriteExtractor.extractIdleSprite("wiking_baza.jpg");
+      } catch (_) {
+        const fallback = document.createElement("canvas");
+        fallback.width = SPRITE_CANVAS_W;
+        fallback.height = SPRITE_CANVAS_H;
+        GAME_ASSETS.heroIdle = fallback;
+        advanceLoadingBar("wiking_baza.jpg");
+      }
+
+      // 3. Arkusz obiektów i NPC (npc_zestaw.jpg)
+      try {
+        GAME_ASSETS.npc = await VideoSpriteExtractor.extractNpcSheet("npc_zestaw.jpg");
+      } catch (_) {
+        advanceLoadingBar("npc_zestaw.jpg");
+      }
+
+      // 4. Sześć filmów animacji Wikinga (.mp4) z fallbackiem dla wiking_chod_prawo.mp4 / wiking_chod_praw.mp4
+      const videoSpecs = [
+        { key: "walkUp", primary: "wiking_chod_gora.mp4", fallback: null, attack: false },
+        { key: "walkDown", primary: "wiking_chod_dol.mp4", fallback: null, attack: false },
+        { key: "walkRight", primary: "wiking_chod_prawo.mp4", fallback: "wiking_chod_praw.mp4", attack: false },
+        { key: "attackUp", primary: "wiking_atak_gora.mp4", fallback: null, attack: true },
+        { key: "attackDown", primary: "wiking_atak_dol.mp4", fallback: null, attack: true },
+        { key: "attackRight", primary: "wiking_atak_prawo.mp4", fallback: "wiking_atak_praw.mp4", attack: true }
+      ];
+
+      for (const spec of videoSpecs) {
+        try {
+          GAME_ASSETS.anims[spec.key] = await VideoSpriteExtractor.extractVideoFrames(
+            spec.primary,
+            spec.fallback,
+            12,
+            spec.attack
+          );
+        } catch (_) {
+          GAME_ASSETS.anims[spec.key] = createFallbackFramesFromBase(GAME_ASSETS.heroIdle, 12);
+          advanceLoadingBar(spec.primary);
+        }
+      }
+    }
+
+    // ============================================================================
+    // 3. GEOMETRIA ŚWIATA 2560x1440, OBIEKTY Z NPC_ZESTAW.JPG ORAZ NAVMESH [F2]
+    // ============================================================================
+    // Wielokąty dozwolonego ruchu dopasowane do izometrycznego rzutu mapa_przystan.jpg (2560x1440)
+    const WALKABLE_POLYGONS = [
+      // 1. Główny kamienny plac wokół błękitnego kręgu runicznego
+      [
+        { x: 640, y: 690 },
+        { x: 1320, y: 495 },
+        { x: 1960, y: 690 },
+        { x: 1860, y: 1120 },
+        { x: 1260, y: 1315 },
+        { x: 670, y: 1110 }
+      ],
+      // 2. Wschodnie podejście pod Kuźnię i Kowadło Kowala Borgara
+      [
+        { x: 1650, y: 580 },
+        { x: 2290, y: 670 },
+        { x: 2330, y: 1030 },
+        { x: 1750, y: 1070 }
+      ],
+      // 3. Północne szerokie kamienne schody i kamienny most u góry mapy
+      [
+        { x: 1020, y: 580 },
+        { x: 1210, y: 110 },
+        { x: 1680, y: 110 },
+        { x: 1620, y: 600 }
+      ],
+      // 4. Górny zachodni drewniany pomost
+      [
+        { x: 170, y: 650 },
+        { x: 830, y: 620 },
+        { x: 830, y: 865 },
+        { x: 170, y: 895 }
+      ],
+      // 5. Dolny zachodni drewniany pomost
+      [
+        { x: 150, y: 955 },
+        { x: 840, y: 925 },
+        { x: 840, y: 1205 },
+        { x: 150, y: 1235 }
+      ]
+    ];
+
+    // Kolizje kołowe/eliptyczne (czerwone strefy blokady: obelisk, piec kuźni, NPC)
+    const SOLID_OBSTACLES = [
+      // Kamień Filozofów w samym środku błękitnego kręgu runicznego
+      { x: 1280, y: 825, rx: 56, ry: 34, name: "Kamień Filozofów" },
+      // Rozpalony piec kuźni i kowadło po prawej stronie
+      { x: 2145, y: 745, rx: 135, ry: 85, name: "Piec Kuźni" },
+      // Kowal Borgar przy kuźni
+      { x: 1925, y: 825, rx: 44, ry: 28, name: "Kowal Borgar" },
+      // Strażnik Bastionu Vorn przy wejściu na północne schody
+      { x: 1195, y: 505, rx: 44, ry: 28, name: "Strażnik Vorn" }
+    ];
+
+    // Obiekty świata 2.5D wycięte z npc_zestaw.jpg i osadzone na mapa_przystan.jpg
+    const WORLD_OBJECTS = [
+      {
+        id: "monolith",
+        name: "KAMIEŃ FILOZOFÓW",
+        sub: "Pradawny Monolit Dusz",
+        x: 1280,
+        y: 825,
+        scale: 1.18,
+        interactRadius: 135,
+        xrayWhenBehind: true,
+        currentAlpha: 1.0,
+        dialogue: "Zimny błękit run Kamienia Filozofów rozprasza mrok Przeklętej Czarnej Twierdzy. Twoja Krew (485/485) i siły witalne zostały w pełni odnowione."
+      },
+      {
+        id: "borgar",
+        name: "KOWAL BORGAR",
+        sub: "Zbrojmistrz Popielnej Przystani",
+        x: 1925,
+        y: 825,
+        scale: 0.96,
+        interactRadius: 125,
+        xrayWhenBehind: false,
+        currentAlpha: 1.0,
+        dialogue: "Ogień w moim piecu ledwo tli się od tego przeklętego chłodu znad wody. Wykułem dla ciebie stal godną Północy — sprawdź ostrze (PPM) i ruszaj na most!"
+      },
+      {
+        id: "vorn",
+        name: "STRAŻNIK BASTIONU VORN",
+        sub: "Wartownik Północnych Schodów",
+        x: 1195,
+        y: 505,
+        scale: 0.96,
+        interactRadius: 125,
+        xrayWhenBehind: false,
+        currentAlpha: 1.0,
+        dialogue: "Te kamienne schody prowadzą prosto ku zewnętrznym murom Czarnej Twierdzy. Wciśnij [F3], jeśli chcesz przetestować pracę kroków na skosach podczas wspinaczki!"
+      }
+    ];
+
+    function isPointInPolygon(px, py, poly) {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i].x, yi = poly[i].y;
+        const xj = poly[j].x, yj = poly[j].y;
+        const intersect = ((yi > py) !== (yj > py)) &&
+          (px < (xj - xi) * (py - yi) / ((yj - yi) || 0.00001) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    function isWorldPointWalkable(x, y) {
+      if (x < 60 || x > WORLD_W - 60 || y < 75 || y > WORLD_H - 60) return false;
+
+      let inAnyPoly = false;
+      for (let i = 0; i < WALKABLE_POLYGONS.length; i++) {
+        if (isPointInPolygon(x, y, WALKABLE_POLYGONS[i])) {
+          inAnyPoly = true;
+          break;
+        }
+      }
+      if (!inAnyPoly) return false;
+
+      for (let i = 0; i < SOLID_OBSTACLES.length; i++) {
+        const ob = SOLID_OBSTACLES[i];
+        const nx = (x - ob.x) / ob.rx;
+        const ny = (y - ob.y) / ob.ry;
+        if (nx * nx + ny * ny < 1.0) return false;
+      }
+      return true;
+    }
+
+    // Płynny ślizg wzdłuż krawędzi wielokątów NavMesh i przeszkód (Wall Sliding)
+    function moveHeroWithSlide(x, y, vx, vy, dt) {
+      const nextX = x + vx * dt;
+      const nextY = y + vy * dt;
+      if (isWorldPointWalkable(nextX, nextY)) {
+        return { x: nextX, y: nextY, moved: true };
+      }
+      if (Math.abs(vx) > 0.01 && isWorldPointWalkable(nextX, y)) {
+        return { x: nextX, y, moved: true };
+      }
+      if (Math.abs(vy) > 0.01 && isWorldPointWalkable(x, nextY)) {
+        return { x, y: nextY, moved: true };
+      }
+
+      const baseAngle = Math.atan2(vy, vx);
+      const speed = Math.hypot(vx, vy) * 0.78;
+      const angles = [0.42, -0.42, 0.82, -0.82, 1.18, -1.18];
+      for (const off of angles) {
+        const tx = x + Math.cos(baseAngle + off) * speed * dt;
+        const ty = y + Math.sin(baseAngle + off) * speed * dt;
+        if (isWorldPointWalkable(tx, ty)) {
+          return { x: tx, y: ty, moved: true };
+        }
+      }
+      return { x, y, moved: false };
+    }
+
+    // ============================================================================
+    // 2. BOHATER (WIKING), 8 KIERUNKÓW RUCHU I WALKI ORAZ PRZEŁĄCZNIK [F3]
+    // ============================================================================
+    // Tryb Skosów Górnych [F3]: "BACK" = PLECY (wiking_chod_gora), "PROFILE" = PROFIL (wiking_chod_prawo + flipX)
+    let upperDiagonalMode = "BACK";
+    let showNavMesh = false;
+    let isAltPressed = false;
+    let isShiftPressed = false;
+
+    const hero = {
+      x: 1280,
+      y: 985,
+      targetX: 1280,
+      targetY: 985,
+      isMoving: false,
+      speed: 255, // px/s na świecie 2560x1440
+      state: "idle", // "idle" | "walk" | "attack" | "leap"
+      animKey: "walkDown",
+      flipX: false,
+      frameIndex: 0,
+      frameTimer: 0,
+      walkFps: 15,
+      attackFps: 22,
+      attackAngle: 0,
+      slashAlpha: 0,
+      leapTimer: 0,
+      leapDuration: 0.38,
+      leapStartX: 0,
+      leapStartY: 0,
+      leapEndX: 0,
+      leapEndY: 0,
+      leapCd: 0,
+      shockwaveRadius: 0,
+      shockwaveAlpha: 0,
+      clickMarkerX: 0,
+      clickMarkerY: 0,
+      clickMarkerAlpha: 0,
+      hp: 485,
+      maxHp: 485,
+      rage: 0,
+      maxRage: 100,
+      potions: 3,
+      stepSoundCooldown: 0
+    };
+
+    const camera = {
+      x: 0,
+      y: 0,
+      zoom: 1,
+      shake: 0
+    };
+
+    // Wyznaczanie animacji dla wszystkich 8 kierunków ruchu + obsługa przełącznika [F3] dla skosów górnych
+    function selectWalkAnimationFromVector(dx, dy) {
+      const deg = (Math.atan2(dy, dx) * 180) / Math.PI; // -180 .. +180 (0 = Prawo/Wschód, -90 = Góra/Północ, +90 = Dół/Południe)
+
+      // 1. GÓRA (Północ: -112.5° .. -67.5°)
+      if (deg >= -112.5 && deg <= -67.5) {
+        hero.animKey = "walkUp";
+        hero.flipX = false;
+        return "CHÓD: GÓRA (PÓŁNOC)";
+      }
+
+      // 2. SKOS GÓRNY-PRAWY (Północny-Wschód: -67.5° .. -22.5°)
+      if (deg > -67.5 && deg < -22.5) {
+        if (upperDiagonalMode === "BACK") {
+          hero.animKey = "walkUp";
+          hero.flipX = false;
+          return "SKOS GÓRNY-PRAWY [PLECY]";
+        } else {
+          hero.animKey = "walkRight";
+          hero.flipX = false;
+          return "SKOS GÓRNY-PRAWY [PROFIL]";
+        }
+      }
+
+      // 3. SKOS GÓRNY-LEWY (Północny-Zachód: -157.5° .. -112.5°)
+      if (deg < -112.5 && deg > -157.5) {
+        if (upperDiagonalMode === "BACK") {
+          hero.animKey = "walkUp";
+          hero.flipX = false;
+          return "SKOS GÓRNY-LEWY [PLECY]";
+        } else {
+          hero.animKey = "walkRight";
+          hero.flipX = true;
+          return "SKOS GÓRNY-LEWY [PROFIL]";
+        }
+      }
+
+      // 4. DÓŁ (Południe: +67.5° .. +112.5°)
+      if (deg >= 67.5 && deg <= 112.5) {
+        hero.animKey = "walkDown";
+        hero.flipX = false;
+        return "CHÓD: DÓŁ (POŁUDNIE)";
+      }
+
+      // 5. PRAWO (Wschód: -22.5° .. +22.5°) oraz SKOS DOLNY-PRAWY (+22.5° .. +67.5°)
+      if (deg >= -22.5 && deg < 67.5) {
+        hero.animKey = "walkRight";
+        hero.flipX = false;
+        return deg > 22.5 ? "SKOS DOLNY-PRAWY" : "CHÓD: PRAWO (WSCHÓD)";
+      }
+
+      // 6. LEWO (Zachód) oraz SKOS DOLNY-LEWY (+112.5° .. +180° lub -180° .. -157.5°)
+      hero.animKey = "walkRight";
+      hero.flipX = true;
+      return (deg > 112.5 && deg < 157.5) ? "SKOS DOLNY-LEWY" : "CHÓD: LEWO (ZACHÓD)";
+    }
+
+    // Wyznaczanie kierunku ATAKU (PPM oraz SHIFT + LPM) dokładnie wg specyfikacji
+    function triggerHeroAttack(targetWorldX, targetWorldY) {
+      if (hero.state === "leap") return;
+
+      const dx = targetWorldX - hero.x;
+      const dy = targetWorldY - hero.y;
+      hero.isMoving = false;
+      hero.state = "attack";
+      hero.frameIndex = 0;
+      hero.frameTimer = 0;
+      hero.attackAngle = Math.atan2(dy, dx);
+      hero.slashAlpha = 1.0;
+
+      if (dy < -0.5 * Math.abs(dx)) {
+        hero.animKey = "attackUp";
+        hero.flipX = false;
+        document.getElementById("current-anim-tag").textContent = "ATAK: GÓRA";
+      } else if (dy > 0.5 * Math.abs(dx)) {
+        hero.animKey = "attackDown";
+        hero.flipX = false;
+        document.getElementById("current-anim-tag").textContent = "ATAK: DÓŁ";
+      } else if (dx >= 0) {
+        hero.animKey = "attackRight";
+        hero.flipX = false;
+        document.getElementById("current-anim-tag").textContent = "ATAK: PRAWO";
+      } else {
+        hero.animKey = "attackRight";
+        hero.flipX = true;
+        document.getElementById("current-anim-tag").textContent = "ATAK: LEWO (ODBICIE)";
+      }
+
+      SoundFX.playSwing();
+      hero.rage = Math.min(hero.maxRage, hero.rage + 8);
+      updateHudOrbs();
+    }
+
+    function triggerCombatLeap(targetWorldX, targetWorldY) {
+      if (hero.leapCd > 0 || hero.state === "leap") return;
+
+      const dx = targetWorldX - hero.x;
+      const dy = targetWorldY - hero.y;
+      const rawDist = Math.hypot(dx, dy);
+      if (rawDist < 20) return;
+
+      const maxLeap = 310;
+      const dist = Math.min(maxLeap, rawDist);
+      const dirX = dx / rawDist;
+      const dirY = dy / rawDist;
+
+      selectWalkAnimationFromVector(dirX, dirY);
+
+      let landX = hero.x;
+      let landY = hero.y;
+      for (let s = dist; s >= 20; s -= 15) {
+        const tx = hero.x + dirX * s;
+        const ty = hero.y + dirY * s;
+        if (isWorldPointWalkable(tx, ty)) {
+          landX = tx;
+          landY = ty;
+          break;
+        }
+      }
+
+      hero.isMoving = false;
+      hero.state = "leap";
+      hero.leapStartX = hero.x;
+      hero.leapStartY = hero.y;
+      hero.leapEndX = landX;
+      hero.leapEndY = landY;
+      hero.leapTimer = hero.leapDuration;
+      hero.leapCd = 4.0;
+      SoundFX.playSwing();
+    }
+
+    function toggleUpperDiagonalMode() {
+      upperDiagonalMode = upperDiagonalMode === "BACK" ? "PROFILE" : "BACK";
+      const btn = document.getElementById("btn-f3-toggle");
+      if (upperDiagonalMode === "BACK") {
+        btn.textContent = "Tryb Skosów Górnych [F3]: PLECY (Góra)";
+        btn.classList.add("active");
+      } else {
+        btn.textContent = "Tryb Skosów Górnych [F3]: PROFIL (Prawo-Lewo)";
+        btn.classList.remove("active");
+      }
+      if (hero.isMoving) {
+        const tag = selectWalkAnimationFromVector(hero.targetX - hero.x, hero.targetY - hero.y);
+        document.getElementById("current-anim-tag").textContent = tag;
+      }
+    }
+
+    function toggleNavMeshOverlay() {
+      showNavMesh = !showNavMesh;
+      document.getElementById("btn-f2-toggle").classList.toggle("active", showNavMesh);
+      document.getElementById("navmesh-badge").style.display = showNavMesh ? "block" : "none";
+    }
+
+    function updateHudOrbs() {
+      const bloodPct = Math.max(0, Math.min(100, (hero.hp / hero.maxHp) * 100));
+      document.getElementById("blood-fill").style.height = bloodPct + "%";
+      document.getElementById("blood-text").textContent = `${Math.ceil(hero.hp)}/${hero.maxHp}`;
+
+      const ragePct = Math.max(0, Math.min(100, (hero.rage / hero.maxRage) * 100));
+      document.getElementById("rage-fill").style.height = ragePct + "%";
+      document.getElementById("rage-text").textContent = `${Math.floor(hero.rage)}/${hero.maxRage}`;
+      document.getElementById("potion-1-charges").textContent = String(hero.potions);
+    }
+
+    // ============================================================================
+    // EFEKTY ATMOSFERYCZNE (DESZCZ, ISKRY Z KUŹNI, BŁĘKITNE OGNIKI DUSZ)
+    // ============================================================================
+    const rainDrops = [];
+    const forgeSparks = [];
+    const soulWisps = [];
+
+    function initAtmosphereParticles() {
+      for (let i = 0; i < 240; i++) {
+        rainDrops.push({
+          x: Math.random() * WORLD_W,
+          y: Math.random() * WORLD_H,
+          len: 18 + Math.random() * 14,
+          speed: 780 + Math.random() * 260
+        });
+      }
+
+      // Iskry nad piecem kuźni (po prawej stronie)
+      for (let i = 0; i < 42; i++) {
+        forgeSparks.push({
+          x: 2130 + (Math.random() - 0.5) * 150,
+          y: 710 + (Math.random() - 0.5) * 90,
+          vy: -35 - Math.random() * 55,
+          vx: (Math.random() - 0.5) * 28,
+          size: 1.8 + Math.random() * 2.4,
+          alpha: 0.4 + Math.random() * 0.6
+        });
+      }
+
+      // Zimne błękitne ogniki dusz przy koksownikach, kręgu runicznym i moście
+      const brazierSpots = [
+        { x: 1280, y: 825, r: 165 }, // Krąg runiczny wokół Kamienia Filozofów
+        { x: 1055, y: 540, r: 45 },  // Lewy koksownik przy schodach
+        { x: 1475, y: 540, r: 45 },  // Prawy koksownik przy schodach
+        { x: 810, y: 740, r: 45 },   // Koksownik przy górnym pomoście
+        { x: 810, y: 1060, r: 45 }   // Koksownik przy dolnym pomoście
+      ];
+
+      for (const spot of brazierSpots) {
+        const count = spot.r > 100 ? 22 : 9;
+        for (let i = 0; i < count; i++) {
+          const ang = Math.random() * Math.PI * 2;
+          const dist = Math.random() * spot.r;
+          soulWisps.push({
+            baseX: spot.x + Math.cos(ang) * dist,
+            baseY: spot.y + Math.sin(ang) * dist * 0.65,
+            x: spot.x,
+            y: spot.y,
+            phase: Math.random() * Math.PI * 2,
+            speed: 1.5 + Math.random() * 1.8,
+            radius: 2.2 + Math.random() * 3.0
+          });
+        }
+      }
+    }
+
+    // ============================================================================
+    // OBSŁUGA MYSZY I KLAWIATURY
+    // ============================================================================
+    const canvas = document.getElementById("game-canvas");
+    const ctx = canvas.getContext("2d");
+
+    let mouseScreenX = window.innerWidth * 0.5;
+    let mouseScreenY = window.innerHeight * 0.5;
+    let mouseWorldX = hero.x;
+    let mouseWorldY = hero.y;
+    let isLeftDown = false;
+    let isRightDown = false;
+    let hoveredObject = null;
+    let pendingInteractionObj = null;
+
+    function screenToWorld(sx, sy) {
+      return {
+        x: camera.x + sx / camera.zoom,
+        y: camera.y + sy / camera.zoom
+      };
+    }
+
+    function updateMouseCoordinates(clientX, clientY) {
+      mouseScreenX = clientX;
+      mouseScreenY = clientY;
+      const wPt = screenToWorld(clientX, clientY);
+      mouseWorldX = wPt.x;
+      mouseWorldY = wPt.y;
+
+      hoveredObject = null;
+      for (const obj of WORLD_OBJECTS) {
+        const sprite = GAME_ASSETS.npc[obj.id];
+        const w = (sprite ? sprite.width : 120) * obj.scale;
+        const h = (sprite ? sprite.height : 190) * obj.scale;
+        if (
+          mouseWorldX >= obj.x - w * 0.42 &&
+          mouseWorldX <= obj.x + w * 0.42 &&
+          mouseWorldY >= obj.y - h * 0.92 &&
+          mouseWorldY <= obj.y + 15
+        ) {
+          hoveredObject = obj;
+          break;
+        }
+      }
+      canvas.style.cursor = hoveredObject ? "pointer" : "crosshair";
+    }
+
+    window.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    canvas.addEventListener("mousedown", (e) => {
+      SoundFX.init();
+      isAltPressed = !!e.altKey;
+      isShiftPressed = !!e.shiftKey;
+      updateMouseCoordinates(e.clientX, e.clientY);
+
+      if (e.button === 2 || (e.button === 0 && e.shiftKey)) {
+        isRightDown = true;
+        triggerHeroAttack(mouseWorldX, mouseWorldY);
+        return;
+      }
+
+      if (e.button === 0) {
+        isLeftDown = true;
+        if (hoveredObject) {
+          pendingInteractionObj = hoveredObject;
+          hero.targetX = hoveredObject.x;
+          hero.targetY = hoveredObject.y + 72;
+          hero.isMoving = true;
+        } else {
+          pendingInteractionObj = null;
+          hero.targetX = mouseWorldX;
+          hero.targetY = mouseWorldY;
+          hero.isMoving = true;
+          hero.clickMarkerX = mouseWorldX;
+          hero.clickMarkerY = mouseWorldY;
+          hero.clickMarkerAlpha = 1.0;
+        }
+      }
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      isAltPressed = !!e.altKey;
+      isShiftPressed = !!e.shiftKey;
+      updateMouseCoordinates(e.clientX, e.clientY);
+
+      if (isRightDown || (isLeftDown && isShiftPressed)) {
+        if (hero.state !== "attack") {
+          triggerHeroAttack(mouseWorldX, mouseWorldY);
+        }
+      } else if (isLeftDown && !pendingInteractionObj && hero.state !== "leap") {
+        hero.targetX = mouseWorldX;
+        hero.targetY = mouseWorldY;
+        hero.isMoving = true;
+      }
+    });
+
+    window.addEventListener("mouseup", (e) => {
+      if (e.button === 0) isLeftDown = false;
+      if (e.button === 2) isRightDown = false;
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Alt") {
+        e.preventDefault();
+        isAltPressed = true;
+      }
+      if (e.key === "Shift") isShiftPressed = true;
+
+      if (e.key === "F2") {
+        e.preventDefault();
+        toggleNavMeshOverlay();
+      }
+      if (e.key === "F3") {
+        e.preventDefault();
+        toggleUpperDiagonalMode();
+      }
+      if (e.code === "Space") {
+        e.preventDefault();
+        triggerCombatLeap(mouseWorldX, mouseWorldY);
+      }
+      if (e.key === "1") {
+        if (hero.potions > 0) {
+          hero.potions--;
+          hero.hp = hero.maxHp;
+          updateHudOrbs();
+        }
+      }
+      if (e.key === "Escape") {
+        document.getElementById("dialogue-modal").style.display = "none";
+      }
+      if (["q", "w", "e", "r"].includes(e.key.toLowerCase())) {
+        triggerHeroAttack(mouseWorldX, mouseWorldY);
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (e.key === "Alt") isAltPressed = false;
+      if (e.key === "Shift") isShiftPressed = false;
+    });
+
+    window.addEventListener("blur", () => {
+      isAltPressed = false;
+      isShiftPressed = false;
+      isLeftDown = false;
+      isRightDown = false;
+    });
+
+    document.getElementById("btn-f3-toggle").addEventListener("click", toggleUpperDiagonalMode);
+    document.getElementById("btn-f2-toggle").addEventListener("click", toggleNavMeshOverlay);
+    document.getElementById("dialogue-close").addEventListener("click", () => {
+      document.getElementById("dialogue-modal").style.display = "none";
+    });
+    document.getElementById("slot-space").addEventListener("click", () => {
+      triggerCombatLeap(mouseWorldX, mouseWorldY);
+    });
+
+    function openObjectDialogue(obj) {
+      if (obj.id === "monolith") document.getElementById("q-monolith").classList.add("done");
+      if (obj.id === "borgar") document.getElementById("q-borgar").classList.add("done");
+      if (obj.id === "vorn") document.getElementById("q-vorn").classList.add("done");
+
+      document.getElementById("dialogue-speaker").textContent = obj.name;
+      document.getElementById("dialogue-text").textContent = obj.dialogue;
+      document.getElementById("dialogue-modal").style.display = "block";
+    }
+
+    // ============================================================================
+    // AKTUALIZACJA LOGIKI GRY I KAMERY
+    // ============================================================================
+    function updateGame(dt, elapsed) {
+      // Cooldown przeskoku bojowego
+      if (hero.leapCd > 0) {
+        hero.leapCd = Math.max(0, hero.leapCd - dt);
+        const cdEl = document.getElementById("cd-SPACE");
+        if (hero.leapCd > 0) {
+          cdEl.style.height = (hero.leapCd / 4.0) * 100 + "%";
+          cdEl.textContent = hero.leapCd.toFixed(1);
+        } else {
+          cdEl.style.height = "0%";
+          cdEl.textContent = "";
+        }
+      }
+
+      // 1. Stan Przeskoku Bojowego (SPACJA)
+      if (hero.state === "leap") {
+        hero.leapTimer -= dt;
+        const t = 1 - Math.max(0, hero.leapTimer) / hero.leapDuration;
+        hero.x = hero.leapStartX + (hero.leapEndX - hero.leapStartX) * t;
+        hero.y = hero.leapStartY + (hero.leapEndY - hero.leapStartY) * t;
+
+        if (hero.leapTimer <= 0) {
+          hero.state = "idle";
+          camera.shake = 10;
+          hero.shockwaveRadius = 18;
+          hero.shockwaveAlpha = 1.0;
+          SoundFX.playLeapImpact();
+        }
+      }
+      // 2. Stan Ataku (jednokrotne szybkie odtworzenie 12 klatek ataku)
+      else if (hero.state === "attack") {
+        const frames = GAME_ASSETS.anims[hero.animKey] || [];
+        hero.frameTimer += dt;
+        if (hero.frameTimer >= 1 / hero.attackFps) {
+          hero.frameTimer = 0;
+          hero.frameIndex++;
+          if (hero.frameIndex >= frames.length) {
+            hero.frameIndex = 0;
+            if (isRightDown || (isLeftDown && isShiftPressed)) {
+              triggerHeroAttack(mouseWorldX, mouseWorldY);
+            } else {
+              hero.state = hero.isMoving ? "walk" : "idle";
+            }
+          }
+        }
+      }
+      // 3. Stan Ruchu i Chodzenia w 8 kierunkach
+      else if (hero.isMoving) {
+        const dx = hero.targetX - hero.x;
+        const dy = hero.targetY - hero.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (
+          pendingInteractionObj &&
+          Math.hypot(pendingInteractionObj.x - hero.x, pendingInteractionObj.y - hero.y) <= pendingInteractionObj.interactRadius
+        ) {
+          hero.isMoving = false;
+          hero.state = "idle";
+          openObjectDialogue(pendingInteractionObj);
+          pendingInteractionObj = null;
+        } else if (dist > 6) {
+          const dirX = dx / dist;
+          const dirY = dy / dist;
+          const dirTag = selectWalkAnimationFromVector(dirX, dirY);
+          document.getElementById("current-anim-tag").textContent = dirTag;
+
+          const res = moveHeroWithSlide(hero.x, hero.y, dirX * hero.speed, dirY * hero.speed, dt);
+          hero.x = res.x;
+          hero.y = res.y;
+
+          if (res.moved) {
+            hero.state = "walk";
+            const frames = GAME_ASSETS.anims[hero.animKey] || [];
+            hero.frameTimer += dt;
+            if (hero.frameTimer >= 1 / hero.walkFps) {
+              hero.frameTimer = 0;
+              hero.frameIndex = frames.length ? (hero.frameIndex + 1) % frames.length : 0;
+            }
+            hero.stepSoundCooldown -= dt;
+            if (hero.stepSoundCooldown <= 0) {
+              hero.stepSoundCooldown = 0.31;
+              SoundFX.playStep();
+            }
+          } else {
+            hero.isMoving = false;
+            hero.state = "idle";
+          }
+        } else {
+          hero.isMoving = false;
+          hero.state = "idle";
+          document.getElementById("current-anim-tag").textContent = "IDLE (STOJĄCY)";
+        }
+      } else {
+        hero.state = "idle";
+      }
+
+      // Zaliczanie zadania wejścia po północnych schodach na most
+      if (hero.y < 360) {
+        document.getElementById("q-stairs").classList.add("done");
+      }
+
+      // Aktualizacja nazwy strefy w prawym górnym rogu
+      const banner = document.getElementById("zone-name-banner");
+      if (hero.y < 430) banner.textContent = "PÓŁNOCNE SCHODY I MOST BASTIONU";
+      else if (hero.x > 1720) banner.textContent = "KUŹNIA BORGARA";
+      else if (hero.x < 850) banner.textContent = "ZACHODNIE POMOSTY PRZYSTANI";
+      else banner.textContent = "KRĄG RUNICZNY — POPIELNA PRZYSTAŃ";
+
+      // Przezroczystość 42% X-Ray, gdy Wiking wejdzie za Kamień Filozofów
+      for (const obj of WORLD_OBJECTS) {
+        if (!obj.xrayWhenBehind) continue;
+        const sprite = GAME_ASSETS.npc[obj.id];
+        const w = (sprite ? sprite.width : 140) * obj.scale;
+        const h = (sprite ? sprite.height : 280) * obj.scale;
+
+        const isBehind =
+          hero.y < obj.y - 4 &&
+          hero.y > obj.y - h * 0.92 &&
+          Math.abs(hero.x - obj.x) < w * 0.48;
+
+        const targetAlpha = isBehind ? 0.42 : 1.0;
+        obj.currentAlpha += (targetAlpha - obj.currentAlpha) * Math.min(1, dt * 10);
+      }
+
+      // Zanikanie efektów cięcia, znacznika kliknięcia i fali uderzeniowej
+      if (hero.slashAlpha > 0) hero.slashAlpha = Math.max(0, hero.slashAlpha - dt * 3.4);
+      if (hero.clickMarkerAlpha > 0) hero.clickMarkerAlpha = Math.max(0, hero.clickMarkerAlpha - dt * 2.2);
+      if (hero.shockwaveAlpha > 0) {
+        hero.shockwaveRadius += dt * 420;
+        hero.shockwaveAlpha = Math.max(0, hero.shockwaveAlpha - dt * 2.4);
+      }
+
+      // Kamera płynnie podążająca za Wikingiem i zablokowana na krawędziach mapy (zero czarnych pasów!)
+      const minZoomX = window.innerWidth / WORLD_W;
+      const minZoomY = window.innerHeight / WORLD_H;
+      camera.zoom = Math.max(1.0, minZoomX, minZoomY);
+
+      const viewW = window.innerWidth / camera.zoom;
+      const viewH = window.innerHeight / camera.zoom;
+
+      const desiredCamX = hero.x - viewW * 0.5;
+      const desiredCamY = hero.y - viewH * 0.54;
+
+      const clampedCamX = Math.max(0, Math.min(WORLD_W - viewW, desiredCamX));
+      const clampedCamY = Math.max(0, Math.min(WORLD_H - viewH, desiredCamY));
+
+      camera.x += (clampedCamX - camera.x) * Math.min(1, dt * 12);
+      camera.y += (clampedCamY - camera.y) * Math.min(1, dt * 12);
+
+      if (camera.shake > 0) {
+        camera.shake = Math.max(0, camera.shake - dt * 28);
+      }
+
+      // Aktualizacja deszczu, iskier z kuźni i błękitnych ogników
+      for (const r of rainDrops) {
+        r.x -= dt * 190;
+        r.y += dt * r.speed;
+        if (r.y > WORLD_H) {
+          r.y = -20;
+          r.x = Math.random() * WORLD_W;
+        }
+        if (r.x < 0) r.x = WORLD_W;
+      }
+
+      for (const sp of forgeSparks) {
+        sp.x += sp.vx * dt;
+        sp.y += sp.vy * dt;
+        if (sp.y < 560) {
+          sp.x = 2130 + (Math.random() - 0.5) * 140;
+          sp.y = 740 + Math.random() * 30;
+        }
+      }
+
+      for (const w of soulWisps) {
+        w.x = w.baseX + Math.sin(elapsed * w.speed + w.phase) * 12;
+        w.y = w.baseY - Math.abs(Math.cos(elapsed * w.speed * 0.8 + w.phase)) * 18;
+      }
+    }
+
+    // ============================================================================
+    // RENDEROWANIE ŚWIATA 2.5D (Y-SORTING, CIENIE KONTAKTOWE, SMUGA CIĘCIA, NAVMESH)
+    // ============================================================================
+    function drawContactShadow(ctx, x, y, rx, ry, alpha = 0.72) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(1, ry / rx);
+      const grad = ctx.createRadialGradient(0, 0, rx * 0.1, 0, 0, rx);
+      grad.addColorStop(0, `rgba(0, 0, 0, ${alpha})`);
+      grad.addColorStop(0.55, `rgba(0, 0, 0, ${alpha * 0.45})`);
+      grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, rx, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawNavMeshOverlay(ctx) {
+      ctx.save();
+      // Zielone wielokąty dozwolonego ruchu
+      for (const poly of WALKABLE_POLYGONS) {
+        ctx.beginPath();
+        poly.forEach((pt, idx) => {
+          if (idx === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.closePath();
+        ctx.fillStyle = "rgba(32, 210, 105, 0.24)";
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "rgba(85, 255, 150, 0.85)";
+        ctx.stroke();
+      }
+
+      // Czerwone elipsy przeszkód (obelisk, piec, NPC)
+      for (const ob of SOLID_OBSTACLES) {
+        ctx.save();
+        ctx.translate(ob.x, ob.y);
+        ctx.scale(1, ob.ry / ob.rx);
+        ctx.beginPath();
+        ctx.arc(0, 0, ob.rx, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(225, 40, 55, 0.38)";
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "rgba(255, 95, 95, 0.92)";
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    function renderWorld(elapsed) {
+      if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const shakeX = camera.shake > 0 ? (Math.random() - 0.5) * camera.shake : 0;
+      const shakeY = camera.shake > 0 ? (Math.random() - 0.5) * camera.shake : 0;
+
+      ctx.save();
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(-camera.x + shakeX, -camera.y + shakeY);
+
+      // 1. Tło mapy: mapa_przystan.jpg w ostrej rozdzielczości 2560x1440
+      if (GAME_ASSETS.mapImg) {
+        ctx.drawImage(GAME_ASSETS.mapImg, 0, 0, WORLD_W, WORLD_H);
+      } else {
+        ctx.fillStyle = "#0a1017";
+        ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+      }
+
+      // Pulsująca zimno-błękitna poświata kręgu runicznego pod Kamieniem Filozofów
+      const runePulse = 0.24 + Math.sin(elapsed * 2.6) * 0.08;
+      const runeGlow = ctx.createRadialGradient(1280, 825, 18, 1280, 825, 185);
+      runeGlow.addColorStop(0, `rgba(72, 195, 255, ${runePulse})`);
+      runeGlow.addColorStop(0.6, `rgba(40, 130, 220, ${runePulse * 0.45})`);
+      runeGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = runeGlow;
+      ctx.beginPath();
+      ctx.ellipse(1280, 825, 185, 115, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ciepła poświata ognia przed piecem Kuźni Borgara
+      const forgePulse = 0.22 + Math.sin(elapsed * 11.0) * 0.05;
+      const forgeGlow = ctx.createRadialGradient(2080, 775, 15, 2080, 775, 210);
+      forgeGlow.addColorStop(0, `rgba(255, 120, 30, ${forgePulse})`);
+      forgeGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = forgeGlow;
+      ctx.beginPath();
+      ctx.ellipse(2080, 775, 210, 130, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Opcjonalny podgląd siatki NavMesh pod klawiszem [F2]
+      if (showNavMesh) {
+        drawNavMeshOverlay(ctx);
+      }
+
+      // 3. Znacznik kliknięcia LPM na ziemi
+      if (hero.clickMarkerAlpha > 0) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(72, 195, 255, ${hero.clickMarkerAlpha})`;
+        ctx.lineWidth = 2.5;
+        const r = 18 + (1 - hero.clickMarkerAlpha) * 16;
+        ctx.beginPath();
+        ctx.ellipse(hero.clickMarkerX, hero.clickMarkerY, r, r * 0.58, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 4. Fala uderzeniowa po Przeskoku Bojowym (SPACJA)
+      if (hero.shockwaveAlpha > 0) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(124, 232, 255, ${hero.shockwaveAlpha})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(hero.x, hero.y, hero.shockwaveRadius, hero.shockwaveRadius * 0.58, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 5. Kolejka głębokości Y-Sorting (Obiekty z npc_zestaw.jpg + Wiking)
+      const renderQueue = [];
+
+      for (const obj of WORLD_OBJECTS) {
+        renderQueue.push({
+          type: "npc_object",
+          sortY: obj.y,
+          obj
+        });
+      }
+
+      renderQueue.push({
+        type: "hero",
+        sortY: hero.y
+      });
+
+      renderQueue.sort((a, b) => a.sortY - b.sortY);
+
+      for (const item of renderQueue) {
+        if (item.type === "npc_object") {
+          const obj = item.obj;
+          const sprite = GAME_ASSETS.npc[obj.id];
+          if (!sprite) continue;
+
+          const drawW = sprite.width * obj.scale;
+          const drawH = sprite.height * obj.scale;
+
+          // Miękki cień kontaktowy u podstawy obiektu
+          drawContactShadow(
+            ctx,
+            obj.x,
+            obj.y,
+            obj.id === "monolith" ? 72 : 44,
+            obj.id === "monolith" ? 42 : 26,
+            0.78
+          );
+
+          // Subtelny ruch oddechowy/pracy młota dla Kowala Borgara i Strażnika Vorna
+          const idleBob = obj.id === "borgar"
+            ? Math.sin(elapsed * 4.5) * 2.2
+            : obj.id === "vorn"
+              ? Math.sin(elapsed * 2.4) * 1.2
+              : 0;
+
+          ctx.save();
+          ctx.globalAlpha = obj.currentAlpha;
+          ctx.drawImage(
+            sprite,
+            Math.round(obj.x - drawW * 0.5),
+            Math.round(obj.y - drawH + idleBob),
+            Math.round(drawW),
+            Math.round(drawH)
+          );
+          ctx.restore();
+        } else if (item.type === "hero") {
+          // Cień kontaktowy pod stopami Wikinga
+          drawContactShadow(ctx, hero.x, hero.y, 44, 25, 0.80);
+
+          let currentFrame = GAME_ASSETS.heroIdle;
+          if (hero.state === "walk" || hero.state === "attack" || hero.state === "leap") {
+            const list = GAME_ASSETS.anims[hero.animKey];
+            if (list && list.length > 0) {
+              currentFrame = list[hero.frameIndex % list.length];
+            }
+          }
+
+          // Wysokość skoku podczas SPACJI
+          let jumpOffsetY = 0;
+          if (hero.state === "leap") {
+            const t = 1 - Math.max(0, hero.leapTimer) / hero.leapDuration;
+            jumpOffsetY = -Math.sin(t * Math.PI) * 95;
+          }
+
+          if (currentFrame) {
+            ctx.save();
+            ctx.translate(Math.round(hero.x), Math.round(hero.y + jumpOffsetY));
+            if (hero.flipX) {
+              ctx.scale(-1, 1);
+            }
+            // Rysowanie tak, aby punkt kotwiczenia stóp (ANCHOR_X, ANCHOR_Y) leżał dokładnie na (0, 0) pozycji Wikinga
+            ctx.drawImage(currentFrame, -ANCHOR_X, -ANCHOR_Y);
+            ctx.restore();
+          }
+
+          // Widmowo-błękitna smuga cięcia (Styl C) podczas ataku
+          if (hero.slashAlpha > 0) {
+            ctx.save();
+            ctx.translate(hero.x, hero.y - 72);
+            ctx.rotate(hero.attackAngle);
+            ctx.strokeStyle = `rgba(110, 225, 255, ${hero.slashAlpha})`;
+            ctx.shadowColor = "#48b8ff";
+            ctx.shadowBlur = 16;
+            ctx.lineWidth = 10 * hero.slashAlpha;
+            ctx.beginPath();
+            ctx.arc(0, 0, 86, -0.85, 0.85);
+            ctx.stroke();
+
+            ctx.strokeStyle = `rgba(230, 250, 255, ${hero.slashAlpha})`;
+            ctx.lineWidth = 4 * hero.slashAlpha;
+            ctx.beginPath();
+            ctx.arc(0, 0, 92, -0.72, 0.72);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+
+      // 6. Błękitne ogniki dusz i iskry z kuźni
+      ctx.save();
+      for (const w of soulWisps) {
+        const alpha = 0.45 + Math.sin(elapsed * 3.5 + w.phase) * 0.35;
+        ctx.fillStyle = `rgba(110, 220, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(w.x, w.y, w.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (const sp of forgeSparks) {
+        ctx.fillStyle = `rgba(255, 175, 65, ${sp.alpha})`;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // 7. Dynamiczny ukośny deszcz
+      ctx.save();
+      ctx.strokeStyle = "rgba(155, 195, 230, 0.28)";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      for (const r of rainDrops) {
+        ctx.moveTo(r.x, r.y);
+        ctx.lineTo(r.x - 5, r.y + r.len);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // 8. Etykiety nad obiektami (tylko po najechaniu myszką lub wciśnięciu [ALT])
+      for (const obj of WORLD_OBJECTS) {
+        if (!isAltPressed && hoveredObject !== obj) continue;
+        const sprite = GAME_ASSETS.npc[obj.id];
+        const drawH = (sprite ? sprite.height : 200) * obj.scale;
+        const labelX = obj.x;
+        const labelY = obj.y - drawH - 14;
+
+        ctx.save();
+        ctx.font = "700 13px 'Cinzel', serif";
+        const textW = Math.max(ctx.measureText(obj.name).width, ctx.measureText(obj.sub).width * 0.85) + 24;
+        const boxH = 38;
+
+        ctx.fillStyle = "rgba(7, 10, 15, 0.92)";
+        ctx.strokeStyle = "#48b8ff";
+        ctx.lineWidth = 1.4;
+        ctx.fillRect(labelX - textW * 0.5, labelY - boxH, textW, boxH);
+        ctx.strokeRect(labelX - textW * 0.5, labelY - boxH, textW, boxH);
+
+        ctx.fillStyle = "#eaf4ff";
+        ctx.textAlign = "center";
+        ctx.fillText(obj.name, labelX, labelY - 21);
+
+        ctx.font = "600 12px 'Cormorant Garamond', serif";
+        ctx.fillStyle = "#7ce8ff";
+        ctx.fillText(obj.sub, labelX, labelY - 6);
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    // ============================================================================
+    // OKRĄGŁA MINIMAPA W PRAWYM GÓRNYM ROGU
+    // ============================================================================
+    const minimapCanvas = document.getElementById("minimap-canvas");
+    const mCtx = minimapCanvas.getContext("2d");
+
+    function renderMinimap() {
+      const W = minimapCanvas.width;
+      const H = minimapCanvas.height;
+      mCtx.clearRect(0, 0, W, H);
+
+      mCtx.fillStyle = "#05080d";
+      mCtx.fillRect(0, 0, W, H);
+
+      const scale = 0.11;
+      const cx = W * 0.5;
+      const cy = H * 0.5;
+
+      mCtx.save();
+      mCtx.translate(cx - hero.x * scale, cy - hero.y * scale);
+
+      if (GAME_ASSETS.mapImg) {
+        mCtx.globalAlpha = 0.65;
+        mCtx.drawImage(GAME_ASSETS.mapImg, 0, 0, WORLD_W * scale, WORLD_H * scale);
+        mCtx.globalAlpha = 1.0;
+      }
+
+      // Obrys stref NavMesh na minimapie
+      mCtx.strokeStyle = "rgba(72, 184, 255, 0.45)";
+      mCtx.lineWidth = 1;
+      for (const poly of WALKABLE_POLYGONS) {
+        mCtx.beginPath();
+        poly.forEach((pt, idx) => {
+          if (idx === 0) mCtx.moveTo(pt.x * scale, pt.y * scale);
+          else mCtx.lineTo(pt.x * scale, pt.y * scale);
+        });
+        mCtx.closePath();
+        mCtx.stroke();
+      }
+
+      // Znaczniki NPC i Kamienia Filozofów
+      for (const obj of WORLD_OBJECTS) {
+        mCtx.fillStyle = obj.id === "monolith" ? "#48b8ff" : "#48e89a";
+        mCtx.beginPath();
+        mCtx.arc(obj.x * scale, obj.y * scale, obj.id === "monolith" ? 4.5 : 3.5, 0, Math.PI * 2);
+        mCtx.fill();
+      }
+
+      mCtx.restore();
+
+      // Pozycja Wikinga w środku minimapy
+      mCtx.fillStyle = "#ffffff";
+      mCtx.beginPath();
+      mCtx.arc(cx, cy, 4, 0, Math.PI * 2);
+      mCtx.fill();
+      mCtx.strokeStyle = "#e8c97a";
+      mCtx.lineWidth = 1.5;
+      mCtx.stroke();
+    }
+
+    // ============================================================================
+    // PĘTLA GŁÓWNA I INICJALIZACJA
+    // ============================================================================
+    let lastTime = performance.now();
+    let elapsedTime = 0;
+
+    function mainLoop(now) {
+      requestAnimationFrame(mainLoop);
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+      elapsedTime += dt;
+
+      updateGame(dt, elapsedTime);
+      renderWorld(elapsedTime);
+      renderMinimap();
+    }
+
+    (async function bootstrap() {
+      initAtmosphereParticles();
+      await loadAllGameResources();
+      updateHudOrbs();
+
+      const loadingScreen = document.getElementById("loading-screen");
+      loadingScreen.classList.add("hidden");
+      setTimeout(() => {
+        loadingScreen.style.display = "none";
+      }, 600);
+
+      lastTime = performance.now();
+      requestAnimationFrame(mainLoop);
+    })();
+  </script>
+</body>
+</html>
