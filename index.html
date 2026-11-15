@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Akt I: Popielna Przystań — Przeklęta Czarna Twierdza i Zimny Błękit Dusz</title>
+  <title>Akt I: Popielna Przystań — Aktualizacja 2.0 (Pełny System Walki QWER)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
   <style>
     :root {
       --gold: #b89650;
-      --gold-bright: #e8c97a;
+      --gold-bright: #f0d48a;
       --soul-blue: #48b8ff;
-      --soul-cyan: #7ce8ff;
-      --obsidian: rgba(8, 11, 16, 0.92);
+      --soul-cyan: #8ceeff;
+      --blood: #c91e24;
+      --obsidian: rgba(8, 11, 17, 0.94);
       --iron-border: #3a4659;
     }
 
@@ -72,7 +73,7 @@
 
     .loading-subtitle {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 18px;
+      font-size: 19px;
       color: #9ab0c4;
       margin-bottom: 26px;
       letter-spacing: 1px;
@@ -101,31 +102,56 @@
       letter-spacing: 1.4px;
     }
 
-    /* LEWY GÓRNY PANEL: TRYB SKOSÓW [F3], NAVMESH [F2] I STEROWANIE */
+    /* LEWY GÓRNY RÓG: DYSKRETNY PRZYCISK DEBUG ORAZ UKRYTY DOMYŚLNIE PANEL */
     #top-left-hud {
       position: fixed;
-      top: 16px;
-      left: 16px;
+      top: 14px;
+      left: 14px;
       z-index: 30;
       display: flex;
       flex-direction: column;
+      align-items: flex-start;
       gap: 8px;
     }
 
-    .control-panel {
+    #debug-toggle-btn {
+      background: rgba(8, 12, 18, 0.85);
+      border: 1px solid #3c526e;
+      color: #9ab4cc;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 10px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+      transition: all 0.15s ease;
+    }
+
+    #debug-toggle-btn:hover {
+      border-color: var(--soul-cyan);
+      color: #fff;
+    }
+
+    #debug-drawer {
+      display: none;
       background: var(--obsidian);
       border: 1px solid var(--soul-blue);
-      padding: 9px 13px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.9), inset 0 0 14px rgba(72, 184, 255, 0.12);
-      display: flex;
+      padding: 10px 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.95);
       flex-direction: column;
-      gap: 7px;
+      gap: 8px;
+      min-width: 340px;
+    }
+
+    #debug-drawer.open {
+      display: flex;
     }
 
     .panel-title {
       font-size: 11px;
       color: var(--soul-cyan);
-      letter-spacing: 1.5px;
+      letter-spacing: 1.4px;
       font-weight: 700;
       display: flex;
       justify-content: space-between;
@@ -146,9 +172,9 @@
       font-family: 'Cinzel', serif;
       font-size: 11px;
       font-weight: 700;
-      padding: 6px 11px;
+      padding: 6px 10px;
       cursor: pointer;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.7px;
       transition: all 0.15s ease;
     }
 
@@ -166,13 +192,12 @@
     }
 
     .controls-hint {
-      background: rgba(7, 10, 15, 0.86);
-      border: 1px solid var(--iron-border);
-      padding: 7px 11px;
       font-family: 'Cormorant Garamond', serif;
       font-size: 14px;
       color: #b4c4d4;
-      line-height: 1.42;
+      line-height: 1.4;
+      border-top: 1px solid rgba(72, 184, 255, 0.2);
+      padding-top: 6px;
     }
 
     .controls-hint b {
@@ -181,14 +206,14 @@
       color: var(--soul-cyan);
     }
 
-    #navmesh-badge {
+    #editor-badge {
       display: none;
-      background: rgba(14, 62, 42, 0.92);
-      border: 1px solid #48e89a;
-      color: #e2fff0;
+      background: rgba(85, 58, 12, 0.94);
+      border: 1px solid var(--gold-bright);
+      color: #fff2cc;
       padding: 6px 11px;
       font-size: 11px;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
     }
 
     /* PRAWY GÓRNY RÓG: MINIMAPA I DZIENNIK ZADAŃ */
@@ -252,11 +277,11 @@
     .minimap-compass .e { right: 6px; top: 50%; transform: translateY(-50%); }
 
     .quest-box {
-      width: 276px;
-      background: linear-gradient(180deg, rgba(12, 16, 24, 0.92), rgba(7, 9, 14, 0.94));
+      width: 305px;
+      background: linear-gradient(180deg, rgba(12, 16, 24, 0.93), rgba(7, 9, 14, 0.95));
       border: 1px solid #3c5470;
       border-top: 2px solid var(--soul-blue);
-      padding: 10px 14px;
+      padding: 11px 15px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
       pointer-events: auto;
     }
@@ -268,15 +293,17 @@
       letter-spacing: 1.5px;
       border-bottom: 1px solid rgba(72, 184, 255, 0.28);
       padding-bottom: 5px;
-      margin-bottom: 7px;
+      margin-bottom: 8px;
     }
 
     .quest-item {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 14px;
-      color: #cad6e2;
-      line-height: 1.35;
+      font-size: 15px;
+      font-weight: 600;
+      color: #d6e2ee;
+      line-height: 1.4;
       margin-bottom: 5px;
+      word-spacing: 1.5px;
     }
 
     .quest-item.done {
@@ -284,51 +311,141 @@
       text-decoration: line-through;
     }
 
-    /* OKNO DIALOGOWE NPC */
-    #dialogue-modal {
+    /* OKNO DIALOGOWE ORAZ KUŹNIA (HARTOWANIE W CZYNACH) */
+    .gothic-modal {
       position: fixed;
-      top: 20%;
+      top: 18%;
       left: 50%;
       transform: translateX(-50%);
-      width: 490px;
+      width: 520px;
       background: linear-gradient(180deg, rgba(14, 19, 28, 0.97), rgba(7, 10, 16, 0.98));
-      border: 2px solid var(--soul-blue);
-      box-shadow: 0 14px 44px rgba(0, 0, 0, 0.96), 0 0 26px rgba(72, 184, 255, 0.22);
-      padding: 18px 22px;
-      z-index: 45;
+      border: 2px solid var(--gold);
+      box-shadow: 0 14px 48px rgba(0, 0, 0, 0.96), 0 0 28px rgba(72, 184, 255, 0.22);
+      padding: 20px 24px;
+      z-index: 50;
       display: none;
     }
 
-    #dialogue-speaker {
+    .modal-speaker {
       font-size: 16px;
-      font-weight: 700;
-      color: var(--soul-cyan);
-      letter-spacing: 1.5px;
-      margin-bottom: 8px;
-      border-bottom: 1px solid rgba(72, 184, 255, 0.3);
+      font-weight: 900;
+      color: var(--gold-bright);
+      letter-spacing: 1.6px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(184, 150, 80, 0.35);
       padding-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    #dialogue-text {
+    .modal-text {
       font-family: 'Cormorant Garamond', serif;
       font-size: 18px;
-      line-height: 1.45;
-      color: #e0eaf4;
+      line-height: 1.48;
+      color: #e2ecf6;
+      margin-bottom: 16px;
+    }
+
+    .forge-card {
+      background: rgba(16, 22, 32, 0.9);
+      border: 1px solid #594a30;
+      padding: 12px 15px;
       margin-bottom: 14px;
     }
 
-    #dialogue-close {
-      background: #102236;
-      border: 1px solid var(--soul-blue);
+    .forge-weapon-title {
+      font-size: 14px;
+      font-weight: 700;
       color: var(--soul-cyan);
-      font-family: 'Cinzel', serif;
-      font-size: 11px;
-      padding: 6px 14px;
-      cursor: pointer;
-      float: right;
+      margin-bottom: 4px;
     }
 
-    /* DOLNY GOTYCKI HUD (KULA KRWI, KULA SZAŁU, KUTY ORNAMENT BEZ PASKÓW HP) */
+    .forge-stats {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      color: #d8c89e;
+      margin-bottom: 8px;
+    }
+
+    .forge-deed-bar {
+      width: 100%;
+      height: 10px;
+      background: #0a0d12;
+      border: 1px solid #4d5d73;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    #forge-deed-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #b8621b, #f0c265);
+      transition: width 0.2s ease;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* DYNAMICZNY TOOLTIP UMIEJĘTNOŚCI (NAD HUDEM) */
+    #skill-tooltip {
+      position: fixed;
+      bottom: 118px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 390px;
+      background: linear-gradient(180deg, rgba(11, 15, 23, 0.97), rgba(6, 8, 13, 0.98));
+      border: 1.5px solid var(--gold);
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.95), 0 0 18px rgba(72, 184, 255, 0.2);
+      padding: 12px 16px;
+      z-index: 48;
+      pointer-events: none;
+      display: none;
+    }
+
+    .tt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid rgba(184, 150, 80, 0.35);
+      padding-bottom: 5px;
+      margin-bottom: 7px;
+    }
+
+    .tt-title {
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--gold-bright);
+      letter-spacing: 1px;
+    }
+
+    .tt-cost {
+      font-size: 11px;
+      color: var(--soul-cyan);
+      font-weight: 700;
+    }
+
+    .tt-desc {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      line-height: 1.38;
+      color: #dce6f0;
+      margin-bottom: 8px;
+    }
+
+    .tt-math {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px;
+      color: #9ab4cc;
+      background: rgba(18, 26, 38, 0.85);
+      border-left: 2px solid var(--soul-blue);
+      padding: 4px 8px;
+    }
+
+    /* DOLNY GOTYCKI HUD */
     #bottom-hud {
       position: fixed;
       bottom: 0;
@@ -428,9 +545,9 @@
       z-index: 2;
     }
 
-    /* KUTY GOTYCKI ORNAMENT NAD PASKIEM SKILLI (CAŁKOWITY BRAK POZIOMYCH PASKÓW HP) */
+    /* KUTY GOTYCKI ORNAMENT NAD PASKIEM SKILLI (ZERO CZERWONYCH PASKÓW!) */
     .gothic-ornament-crest {
-      width: 540px;
+      width: 560px;
       height: 44px;
       display: flex;
       align-items: flex-end;
@@ -481,8 +598,8 @@
 
     .skill-slot, .potion-slot {
       position: relative;
-      width: 50px;
-      height: 50px;
+      width: 52px;
+      height: 52px;
       background: radial-gradient(circle at center, #1c2533 0%, #0d1118 100%);
       border: 1px solid #6b5839;
       box-shadow: inset 0 0 10px #000, 0 2px 6px rgba(0, 0, 0, 0.8);
@@ -491,16 +608,21 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: border-color 0.15s ease, transform 0.1s ease;
+      transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+    }
+
+    .skill-slot.ready-recast {
+      border-color: var(--soul-cyan);
+      box-shadow: 0 0 14px rgba(72, 184, 255, 0.75), inset 0 0 10px rgba(72, 184, 255, 0.4);
     }
 
     .potion-slot {
-      width: 44px;
-      height: 44px;
+      width: 46px;
+      height: 46px;
     }
 
     .skill-slot:hover, .potion-slot:hover {
-      border-color: var(--soul-cyan);
+      border-color: var(--gold-bright);
     }
 
     .skill-slot:active, .potion-slot:active {
@@ -539,8 +661,8 @@
 
     .slot-sub {
       font-size: 8px;
-      color: #9eb0c2;
-      letter-spacing: 0.5px;
+      color: #b8c6d4;
+      letter-spacing: 0.4px;
       margin-top: 3px;
       z-index: 2;
     }
@@ -551,7 +673,7 @@
       left: 0;
       right: 0;
       height: 0%;
-      background: rgba(5, 7, 11, 0.84);
+      background: rgba(5, 7, 11, 0.86);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -565,10 +687,10 @@
 </head>
 <body>
 
-  <!-- EKRAN ŁADOWANIA I EKSTRAKCJI KLATEK WIDEO MP4 -->
+  <!-- EKRAN ŁADOWANIA I EKSTRAKCJI 16 PŁYNNYCH KLATEK MP4 -->
   <div id="loading-screen">
     <div class="loading-title">AKT I: POPIELNA PRZYSTAŃ</div>
-    <div class="loading-subtitle">Styl C: Przeklęta Czarna Twierdza i Zimny Błękit Dusz — Ekstrakcja Klatek Wideo MP4...</div>
+    <div class="loading-subtitle">Aktualizacja 2.0 — Ekstrakcja 16 wygładzonych klatek MP4 i kalibracja świata...</div>
     <div class="loading-frame">
       <div id="loading-bar"></div>
     </div>
@@ -578,31 +700,29 @@
   <!-- GŁÓWNY CANVAS ŚWIATA 2.5D -->
   <canvas id="game-canvas"></canvas>
 
-  <!-- LEWY GÓRNY PANEL: PRZEŁĄCZNIK SKOSÓW GÓRNYCH [F3] ORAZ SIATKI NAVMESH [F2] -->
+  <!-- LEWY GÓRNY RÓG: MAŁY PRZYCISK DEBUG [F3] ORAZ UKRYTY DOMYŚLNIE PANEL -->
   <div id="top-left-hud">
-    <div class="control-panel">
+    <button id="debug-toggle-btn" title="Otwórz/zamknij narzędzia diagnostyczne i edytor NavMesh">⚙️ Debug [F3]</button>
+    <div id="debug-drawer">
       <div class="panel-title">
-        <span>KONFIGURACJA ANIMACJI WIKINGA</span>
-        <span id="current-anim-tag" style="color:#fff;">IDLE</span>
+        <span>DIAGNOSTYKA I KALIBRACJA ŚWIATA</span>
+        <span id="current-anim-tag" style="color:#fff;">IDLE: DÓŁ</span>
       </div>
       <div class="btn-row">
-        <button class="gothic-btn active" id="btn-f3-toggle" title="Przełącz animację chodzenia na skosach górnych (np. schody na most)">
-          Tryb Skosów Górnych [F3]: PLECY (Góra)
-        </button>
-        <button class="gothic-btn" id="btn-f2-toggle" title="Pokaż/ukryj wielokąty kolizji NavMesh">
-          Siatka NavMesh [F2]
-        </button>
+        <button class="gothic-btn" id="btn-f2-toggle">Siatka NavMesh [F2]</button>
+        <button class="gothic-btn" id="btn-f4-toggle">Edytor Kalibracji [F4]</button>
+        <button class="gothic-btn" id="btn-reset-calib">Reset Kalibracji</button>
+      </div>
+      <div class="controls-hint">
+        <b>LPM</b> Ruch / Interakcja &nbsp;|&nbsp; <b>PPM</b> / <b>SHIFT+LPM</b> Atak Podstawowy<br>
+        <b>Q</b> Rozprucie Bruku (2 fazy) &nbsp;|&nbsp; <b>W</b> Dług Krwi &nbsp;|&nbsp; <b>E</b> Taran Północy<br>
+        <b>R</b> Krąg Pojedynku &nbsp;|&nbsp; <b>SPACJA</b> Przeskok &nbsp;|&nbsp; <b>[ALT]</b> Wzory / Nazwy
       </div>
     </div>
-    <div class="controls-hint">
-      <b>LPM</b> Ruch (8 kierunków) / Interakcja &nbsp;|&nbsp; <b>PPM</b> lub <b>SHIFT+LPM</b> Atak<br>
-      <b>[F3]</b> Skosy Górne: Plecy / Profil &nbsp;|&nbsp; <b>SPACJA</b> Przeskok Bojowy<br>
-      <b>[F2]</b> Podgląd NavMesh &nbsp;|&nbsp; <b>[ALT]</b> Pokaż nazwy obiektów
-    </div>
-    <div id="navmesh-badge">TRYB NAVMESH [F2] AKTYWNY — ZIELONY: RUCH DOZWOLONY | CZERWONY: PRZESZKODA</div>
+    <div id="editor-badge">TRYB EDYTORA [F4]: PRZECIĄGAJ MYSZKĄ ŻÓŁTE PUNKTY NAVMESH LUB NPC (AUTO-ZAPIS W LOCALSTORAGE)</div>
   </div>
 
-  <!-- PRAWY GÓRNY PANEL: MINIMAPA I ZADANIA -->
+  <!-- PRAWY GÓRNY PANEL: MINIMAPA I DZIENNIK ZADAŃ (Z POPRAWNYMI SPACJAMI) -->
   <div id="top-right-hud">
     <div class="zone-banner" id="zone-name-banner">NABRZEŻE POPIELNEJ PRZYSTANI</div>
     <div class="minimap-wrapper">
@@ -617,17 +737,54 @@
     <div class="quest-box">
       <div class="quest-header">DZIENNIK ZADAŃ — AKT I</div>
       <div class="quest-item" id="q-monolith">• Zbadaj Kamień Filozofów w kręgu runicznym</div>
-      <div class="quest-item" id="q-borgar">• Porozmawiaj z Kowalem Borgarem przy kuźni</div>
-      <div class="quest-item" id="q-vorn">• Zamelduj się Strażnikowi Vornowi przy schodach</div>
-      <div class="quest-item" id="q-stairs">• Przetestuj wejście na most północny [F3]</div>
+      <div class="quest-item" id="q-dummy">• Przetestuj umiejętności Q, W, E, R na Kukle Bojowej (<span id="q-dummy-hits">0</span>/5)</div>
+      <div class="quest-item" id="q-borgar">• Zahartuj Topór u Kowala Borgara w Kuźni</div>
+      <div class="quest-item" id="q-north">• Pokonaj Upadłych Strażników na północnym moście (<span id="q-enemy-kills">0</span>/3)</div>
     </div>
   </div>
 
-  <!-- OKNO DIALOGOWE NPC -->
-  <div id="dialogue-modal">
-    <div id="dialogue-speaker">KOWAL BORGAR</div>
-    <div id="dialogue-text">...</div>
-    <button id="dialogue-close">ZAMKNIJ [ESC]</button>
+  <!-- MODAL DIALOGOWY NPC -->
+  <div class="gothic-modal" id="dialogue-modal">
+    <div class="modal-speaker">
+      <span id="dialogue-speaker">STRAŻNIK BASTIONU VORN</span>
+    </div>
+    <div class="modal-text" id="dialogue-text">...</div>
+    <div class="modal-actions">
+      <button class="gothic-btn" id="dialogue-close">ZAMKNIJ [ESC]</button>
+    </div>
+  </div>
+
+  <!-- MODAL KUŹNI BORGARA (HARTOWANIE W CZYNACH) -->
+  <div class="gothic-modal" id="forge-modal">
+    <div class="modal-speaker">
+      <span>KUŹNIA BORGARA — HARTOWANIE W CZYNACH</span>
+      <span style="font-size:12px; color:var(--soul-cyan);">STAL PÓŁNOCY</span>
+    </div>
+    <div class="modal-text">
+      „Prawdziwa stal nie pije złota, wojowniku — pije posokę i pot z pola bitwy. Udowodnij wartość swojego ramienia, a rozpalę runy na twoim ostrzu!”
+    </div>
+    <div class="forge-card">
+      <div class="forge-weapon-title" id="forge-weapon-name">Topór Popielnej Przystani (+0)</div>
+      <div class="forge-stats" id="forge-weapon-stats">Obrażenia Bazowe: 38 | Szansa na Krytyk: 15% (200% obrażeń)</div>
+      <div style="font-size:12px; color:#b8c6d4;" id="forge-deed-label">Czyn Bojowy: Zadaj 5 trafień wrogom lub Kukle Bojowej (0 / 5)</div>
+      <div class="forge-deed-bar">
+        <div id="forge-deed-fill"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="gothic-btn active" id="btn-forge-upgrade">ZAHARTUJ TOPÓR (+12 OBRAŻEŃ, +8% KRYT)</button>
+      <button class="gothic-btn" id="forge-close">ZAMKNIJ [ESC]</button>
+    </div>
+  </div>
+
+  <!-- DYNAMICZNY TOOLTIP UMIEJĘTNOŚCI -->
+  <div id="skill-tooltip">
+    <div class="tt-header">
+      <span class="tt-title" id="tt-title">ROZPRUCIE BRUKU [Q]</span>
+      <span class="tt-cost" id="tt-cost">Czas odnowienia: 6.0s</span>
+    </div>
+    <div class="tt-desc" id="tt-desc">...</div>
+    <div class="tt-math" id="tt-math">...</div>
   </div>
 
   <!-- DOLNY GOTYCKI HUD -->
@@ -647,73 +804,78 @@
     <!-- CENTRALNY PANEL Z KUTYM ORNAMENTEM -->
     <div class="center-console">
       <div class="gothic-ornament-crest">
-        <svg width="540" height="44" viewBox="0 0 540 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M10 42 L65 24 L155 24 L195 8 L345 8 L385 24 L475 24 L530 42" stroke="#b89650" stroke-width="2" fill="rgba(11,15,22,0.94)"/>
-          <path d="M40 42 L85 29 L170 29 L208 15 L332 15 L370 29 L455 29 L500 42" stroke="#48b8ff" stroke-width="1.1" stroke-opacity="0.65" fill="none"/>
-          <circle cx="95" cy="29" r="3.5" fill="#48b8ff"/>
-          <circle cx="150" cy="26" r="3" fill="#b89650"/>
-          <circle cx="390" cy="26" r="3" fill="#b89650"/>
-          <circle cx="445" cy="29" r="3.5" fill="#48b8ff"/>
-          <path d="M120 35 L140 28 L160 35 M380 35 L400 28 L420 35" stroke="#b89650" stroke-width="1.3"/>
+        <svg width="560" height="44" viewBox="0 0 560 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 42 L68 24 L162 24 L202 8 L358 8 L398 24 L492 24 L550 42" stroke="#b89650" stroke-width="2" fill="rgba(11,15,22,0.95)"/>
+          <path d="M42 42 L88 29 L175 29 L214 15 L346 15 L385 29 L472 29 L518 42" stroke="#48b8ff" stroke-width="1.1" stroke-opacity="0.65" fill="none"/>
+          <circle cx="98" cy="29" r="3.5" fill="#48b8ff"/>
+          <circle cx="155" cy="26" r="3" fill="#b89650"/>
+          <circle cx="405" cy="26" r="3" fill="#b89650"/>
+          <circle cx="462" cy="29" r="3.5" fill="#48b8ff"/>
+          <path d="M122 35 L142 28 L162 35 M398 35 L418 28 L438 35" stroke="#b89650" stroke-width="1.3"/>
         </svg>
-        <div class="level-medallion">POZIOM 1 — WIKING POPOŁÓW</div>
+        <div class="level-medallion" id="hud-weapon-badge">POZIOM 1 — WIKING POPIOŁÓW</div>
       </div>
 
       <div class="console-body">
         <div class="slots-group">
-          <div class="potion-slot" id="potion-1" title="Mikstura Krwi [1]">
+          <div class="potion-slot" id="potion-1" data-tt="POTION1">
             <span class="slot-key">1</span>
             <span class="slot-icon" style="color:#e33b3f;">♦</span>
             <span class="slot-sub">KREW</span>
             <span class="slot-charges" id="potion-1-charges">3</span>
           </div>
-          <div class="potion-slot" id="potion-2" title="Eliksir Dusz [2]">
+          <div class="potion-slot" id="potion-2" data-tt="POTION2">
             <span class="slot-key">2</span>
             <span class="slot-icon" style="color:#48b8ff;">◊</span>
             <span class="slot-sub">DUSZA</span>
-            <span class="slot-charges">2</span>
+            <span class="slot-charges" id="potion-2-charges">2</span>
           </div>
         </div>
 
         <div class="hud-divider"></div>
 
+        <!-- SLOTY UMIEJĘTNOŚCI Q, W, E, R -->
         <div class="slots-group">
-          <div class="skill-slot" data-skill="Q" title="Rozpłatanie Dusz [Q]">
+          <div class="skill-slot" id="slot-Q" data-tt="Q">
             <span class="slot-key">Q</span>
-            <span class="slot-icon">⚔</span>
-            <span class="slot-sub">CIĘCIE</span>
+            <span class="slot-icon">⛏</span>
+            <span class="slot-sub" id="sub-Q">ROZPRUCIE</span>
+            <div class="cd-overlay" id="cd-Q"></div>
           </div>
-          <div class="skill-slot" data-skill="W" title="Zew Twierdzy [W]">
+          <div class="skill-slot" id="slot-W" data-tt="W">
             <span class="slot-key">W</span>
-            <span class="slot-icon">❖</span>
-            <span class="slot-sub">ZEW</span>
+            <span class="slot-icon" style="color:#ff5258;">🩸</span>
+            <span class="slot-sub">DŁUG KRWI</span>
+            <div class="cd-overlay" id="cd-W"></div>
           </div>
-          <div class="skill-slot" data-skill="E" title="Gniew Runiczny [E]">
+          <div class="skill-slot" id="slot-E" data-tt="E">
             <span class="slot-key">E</span>
-            <span class="slot-icon">✹</span>
-            <span class="slot-sub">GNIEW</span>
+            <span class="slot-icon">🐗</span>
+            <span class="slot-sub">TARAN</span>
+            <div class="cd-overlay" id="cd-E"></div>
           </div>
-          <div class="skill-slot" data-skill="R" title="Furia Przodków [R]">
+          <div class="skill-slot" id="slot-R" data-tt="R">
             <span class="slot-key">R</span>
-            <span class="slot-icon">♛</span>
-            <span class="slot-sub">FURIA</span>
+            <span class="slot-icon" style="color:#f0c869;">⛓</span>
+            <span class="slot-sub">ARENA</span>
+            <div class="cd-overlay" id="cd-R"></div>
           </div>
         </div>
 
         <div class="hud-divider"></div>
 
         <div class="slots-group">
-          <div class="skill-slot" id="slot-lpm" title="LPM: Ruch i Interakcja">
+          <div class="skill-slot" id="slot-lpm" data-tt="LPM">
             <span class="slot-key">LPM</span>
             <span class="slot-icon">👣</span>
             <span class="slot-sub">RUCH</span>
           </div>
-          <div class="skill-slot" id="slot-ppm" title="PPM / SHIFT+LPM: Atak w stronę kursora">
+          <div class="skill-slot" id="slot-ppm" data-tt="PPM">
             <span class="slot-key">PPM</span>
-            <span class="slot-icon">🗡</span>
-            <span class="slot-sub">ATAK</span>
+            <span class="slot-icon">🪓</span>
+            <span class="slot-sub">ROZPŁATANIE</span>
           </div>
-          <div class="skill-slot" id="slot-space" title="SPACJA: Przeskok Bojowy (CD 4.0s)">
+          <div class="skill-slot" id="slot-space" data-tt="SPACE">
             <span class="slot-key">SPC</span>
             <span class="slot-icon">☄</span>
             <span class="slot-sub">SKOK</span>
@@ -738,18 +900,18 @@
 
   <script>
     // ============================================================================
-    // KONFIGURACJA BAZY ZASOBÓW GITHUB ORAZ WYMIARÓW ŚWIATA 2560x1440
+    // BAZA ZASOBÓW GITHUB ORAZ PARAMETRY ŚWIATA 2560x1440
     // ============================================================================
     const BASE_URL = "https://raw.githubusercontent.com/franekimono2026/DiabelZzz/main/";
     const WORLD_W = 2560;
     const WORLD_H = 1440;
 
-    // Standaryzowane płótno dla każdej wyciętej klatki Wikinga (zero pływania i stała wysokość 190 px)
+    // Standaryzowane płótno dla każdej klatki Wikinga (stała wysokość 190 px i kotwica stóp)
     const SPRITE_CANVAS_W = 340;
     const SPRITE_CANVAS_H = 310;
     const TARGET_HERO_HEIGHT = 190;
     const ANCHOR_X = Math.floor(SPRITE_CANVAS_W / 2); // 170
-    const ANCHOR_Y = 278; // Dokładna linia podeszwy butów we wszystkich animacjach
+    const ANCHOR_Y = 278;
 
     let totalTasks = 9;
     let completedTasks = 0;
@@ -764,7 +926,7 @@
     }
 
     // ============================================================================
-    // GENERATOR DŹWIĘKÓW WEB AUDIO API (ZAMACH, UDERZENIE, KROKI, SKOK)
+    // SYNTEZATOR DŹWIĘKÓW WEB AUDIO API (ZAMACH, KRYTYK, ROZPRUCIE, TARAN, ARENA)
     // ============================================================================
     const SoundFX = {
       ctx: null,
@@ -777,65 +939,77 @@
           this.ctx.resume();
         }
       },
-      playSwing() {
+      playSwing(pitch = 290) {
         this.init();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
-
-        // Szum przecinanego powietrza (whoosh)
-        const bufferSize = this.ctx.sampleRate * 0.22;
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.20);
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
           data[i] = (Math.random() * 2 - 1) * Math.sin((i / bufferSize) * Math.PI);
         }
-
         const noise = this.ctx.createBufferSource();
         noise.buffer = buffer;
 
         const filter = this.ctx.createBiquadFilter();
         filter.type = "bandpass";
-        filter.frequency.setValueAtTime(520, now);
-        filter.frequency.exponentialRampToValueAtTime(140, now + 0.21);
-        filter.Q.value = 1.8;
+        filter.frequency.setValueAtTime(540, now);
+        filter.frequency.exponentialRampToValueAtTime(130, now + 0.19);
+        filter.Q.value = 1.7;
 
         const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.28, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.21);
+        gain.gain.setValueAtTime(0.26, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.19);
 
         noise.connect(filter);
         filter.connect(gain);
         gain.connect(this.ctx.destination);
         noise.start(now);
 
-        // Metaliczny pogłos ostrza
         const osc = this.ctx.createOscillator();
         const oscGain = this.ctx.createGain();
         osc.type = "triangle";
-        osc.frequency.setValueAtTime(290, now);
-        osc.frequency.exponentialRampToValueAtTime(95, now + 0.18);
+        osc.frequency.setValueAtTime(pitch, now);
+        osc.frequency.exponentialRampToValueAtTime(85, now + 0.17);
         oscGain.gain.setValueAtTime(0.14, now);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
         osc.connect(oscGain);
         oscGain.connect(this.ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.19);
+        osc.stop(now + 0.18);
       },
-      playLeapImpact() {
+      playHit(isCrit = false) {
         this.init();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(120, now);
-        osc.frequency.exponentialRampToValueAtTime(28, now + 0.35);
-        gain.gain.setValueAtTime(0.35, now);
-        gain.gain.exponentialRampToValueAtTime(0.005, now + 0.36);
+        osc.type = isCrit ? "sawtooth" : "square";
+        osc.frequency.setValueAtTime(isCrit ? 220 : 145, now);
+        osc.frequency.exponentialRampToValueAtTime(42, now + (isCrit ? 0.24 : 0.14));
+        gain.gain.setValueAtTime(isCrit ? 0.28 : 0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.002, now + (isCrit ? 0.25 : 0.15));
         osc.connect(gain);
         gain.connect(this.ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.37);
+        osc.stop(now + (isCrit ? 0.26 : 0.16));
+      },
+      playEarthCrack() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(98, now);
+        osc.frequency.exponentialRampToValueAtTime(24, now + 0.38);
+        gain.gain.setValueAtTime(0.34, now);
+        gain.gain.exponentialRampToValueAtTime(0.004, now + 0.39);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.40);
       },
       playStep() {
         this.init();
@@ -844,22 +1018,22 @@
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = "sine";
-        osc.frequency.setValueAtTime(75 + Math.random() * 20, now);
-        osc.frequency.exponentialRampToValueAtTime(32, now + 0.055);
-        gain.gain.setValueAtTime(0.05, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.frequency.setValueAtTime(72 + Math.random() * 18, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.05);
+        gain.gain.setValueAtTime(0.045, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.065);
+        osc.stop(now + 0.06);
       }
     };
 
     // ============================================================================
-    // 1. EKSTRAKTOR KLATEK Z WIDEO .MP4 + HARD-EDGE INK RESTORER + AUTO-CENTROWANIE
+    // 1. EKSTRAKTOR 16 PŁYNNYCH KLATEK Z WIDEO + BOX-CENTER SMOOTHING + KIERUNKOWY IDLE
     // ============================================================================
     const VideoSpriteExtractor = {
-      loadImage(filename, timeoutMs = 8000) {
+      loadImage(filename, timeoutMs = 8500) {
         return new Promise((resolve, reject) => {
           const img = new Image();
           img.crossOrigin = "anonymous";
@@ -879,8 +1053,6 @@
         });
       },
 
-      // Wycinanie zielonego tła #00FF00 z naprawą czarnego konturu tuszu (Hard-Edge Ink Restorer)
-      // oraz wyznaczaniem dokładnego Bounding Boxa nieprzezroczystych pikseli
       keyOutGreenAndMeasure(ctx, w, h) {
         const imgData = ctx.getImageData(0, 0, w, h);
         const data = imgData.data;
@@ -892,21 +1064,19 @@
           let g = data[i4 + 1];
           let b = data[i4 + 2];
 
-          // a) Usunięcie pikseli zielonego tła #00FF00 (z uwzględnieniem kompresji MP4)
           if (
-            (g > 95 && g > r * 1.18 && g > b * 1.15) ||
-            (g > 135 && g - Math.max(r, b) > 32)
+            (g > 92 && g > r * 1.16 && g > b * 1.14) ||
+            (g > 130 && g - Math.max(r, b) > 28)
           ) {
             data[i4 + 3] = 0;
             continue;
           }
 
-          // b) Hard-Edge Ink Restorer: dla pikseli brzegowych z zielonym zafarbem (green spill)
-          // wyzeruj nasycenie zieleni i przyciemnij je do kruczoczarnego tuszu
+          // Hard-Edge Ink Restorer (likwidacja zielonej obwódki MP4 do kruczoczarnego konturu tuszu)
           if (g > r && g > b) {
-            r = Math.round(r * 0.25);
-            g = Math.round(g * 0.20);
-            b = Math.round(b * 0.30);
+            r = Math.round(r * 0.24);
+            g = Math.round(g * 0.18);
+            b = Math.round(b * 0.28);
             data[i4] = r;
             data[i4 + 1] = g;
             data[i4 + 2] = b;
@@ -916,7 +1086,6 @@
           }
         }
 
-        // Oczyszczenie pojedynczych pikseli szumu kompresji MP4 wiszących w powietrzu
         const alphaCopy = new Uint8Array(total);
         for (let i = 0; i < total; i++) alphaCopy[i] = data[i * 4 + 3];
 
@@ -938,14 +1107,11 @@
 
         ctx.putImageData(imgData, 0, 0);
 
-        // Wyznaczenie dokładnego Bounding Boxa sylwetki (z pominięciem 2px marginesu ramki wideo)
         const marginX = Math.max(2, Math.floor(w * 0.02));
         const marginY = Math.max(2, Math.floor(h * 0.02));
 
         let minX = w, maxX = 0, minY = h, maxY = 0;
         let foundPixels = 0;
-
-        // Zliczanie gęstości w wierszach i kolumnach, aby pojedynczy artefakt nie przekłamał rozmiaru butów/hełmu
         const rowCounts = new Int32Array(h);
         const colCounts = new Int32Array(w);
 
@@ -976,11 +1142,10 @@
           if (colCounts[x] >= 2) { maxX = x; break; }
         }
 
-        // Wyznaczenie środka ciężkości tułowia (między 30% a 78% wysokości sylwetki),
-        // aby wystawiony w bok topór nie przesuwał osi kręgosłupa postaci!
+        // Środek ciężkości tułowia (32% .. 76% wysokości sylwetki)
         const charH = Math.max(10, maxY - minY);
-        const torsoStartY = Math.floor(minY + charH * 0.30);
-        const torsoEndY = Math.floor(minY + charH * 0.78);
+        const torsoStartY = Math.floor(minY + charH * 0.32);
+        const torsoEndY = Math.floor(minY + charH * 0.76);
         let sumX = 0, countX = 0;
 
         for (let y = torsoStartY; y <= torsoEndY; y++) {
@@ -996,9 +1161,7 @@
         return { minX, maxX, minY, maxY, coreCenterX, valid: true };
       },
 
-      // Przeskalowanie i zakotwiczenie wyciętej klatki tak, by wysokość wynosiła TARGET_HERO_HEIGHT (190 px),
-      // środek ciężkości tułowia leżał na X = ANCHOR_X, a podeszwy butów na Y = ANCHOR_Y
-      normalizeFrameToSpriteCanvas(workCanvas, bbox, customTargetHeight = TARGET_HERO_HEIGHT) {
+      normalizeFrameToSpriteCanvas(workCanvas, bbox, targetHeight = TARGET_HERO_HEIGHT, smoothedCenterX = null, smoothedSrcH = null) {
         const out = document.createElement("canvas");
         out.width = SPRITE_CANVAS_W;
         out.height = SPRITE_CANVAS_H;
@@ -1007,20 +1170,21 @@
         if (!bbox.valid) return out;
 
         const srcW = Math.max(1, bbox.maxX - bbox.minX + 1);
-        const srcH = Math.max(1, bbox.maxY - bbox.minY + 1);
+        const rawSrcH = Math.max(1, bbox.maxY - bbox.minY + 1);
+        const effectiveSrcH = smoothedSrcH || rawSrcH;
 
-        const scale = customTargetHeight / srcH;
+        const scale = targetHeight / effectiveSrcH;
         const drawW = srcW * scale;
-        const drawH = srcH * scale;
+        const drawH = rawSrcH * scale;
 
-        // Odległość środka ciężkości tułowia od lewej krawędzi wycinka
-        const coreOffsetFromLeft = (bbox.coreCenterX - bbox.minX) * scale;
+        const centerRef = smoothedCenterX !== null ? smoothedCenterX : bbox.coreCenterX;
+        const coreOffsetFromLeft = (centerRef - bbox.minX) * scale;
         const destX = Math.round(ANCHOR_X - coreOffsetFromLeft);
         const destY = Math.round(ANCHOR_Y - drawH);
 
         oCtx.drawImage(
           workCanvas,
-          bbox.minX, bbox.minY, srcW, srcH,
+          bbox.minX, bbox.minY, srcW, rawSrcH,
           destX, destY, Math.round(drawW), Math.round(drawH)
         );
 
@@ -1041,7 +1205,6 @@
         return normalized;
       },
 
-      // Wycięcie 3 osobnych obiektów z arkusza npc_zestaw.jpg (Kamień Filozofów, Kowal Borgar, Strażnik Vorn)
       async extractNpcSheet(filename) {
         const img = await this.loadImage(filename);
         const W = img.width;
@@ -1069,17 +1232,17 @@
           const scale = s.targetH / srcH;
 
           const outW = Math.max(64, Math.ceil(srcW * scale) + 16);
-          const outH = Math.max(64, Math.ceil(srcH * scale) + 12);
+          const outH = Math.max(64, Math.ceil(srcH * scale) + 8);
           const out = document.createElement("canvas");
           out.width = outW;
           out.height = outH;
           const oCtx = out.getContext("2d");
 
-          // Kotwiczenie podstawy dokładnie na samym dole canvasu (outH - 2)
+          // Dokładne osadzenie spodu butów / podstawy monolitu na samym dole tekstury (outH - 1)
           const drawW = Math.round(srcW * scale);
           const drawH = Math.round(srcH * scale);
           const dx = Math.round((outW - drawW) * 0.5);
-          const dy = outH - 2 - drawH;
+          const dy = outH - 1 - drawH;
 
           oCtx.drawImage(work, bbox.minX, bbox.minY, srcW, srcH, dx, dy, drawW, drawH);
           result[s.key] = out;
@@ -1089,8 +1252,9 @@
         return result;
       },
 
-      // Ekstrakcja 12 równomiernych klatek z pliku .mp4 (całkowicie wyciszony dźwięk!)
-      async extractVideoFrames(primaryFile, fallbackFile, frameCount = 12, isAttack = false) {
+      // Ekstrakcja 16 płynnych klatek ze środkowej części wideo (pomijając pierwsze i ostatnie 0.25s!)
+      // + Box-Center Smoothing eliminujący drgania między klatkami
+      async extractVideoFrames(primaryFile, fallbackFile, frameCount = 16, isAttack = false) {
         const video = document.createElement("video");
         video.crossOrigin = "anonymous";
         video.muted = true;
@@ -1103,7 +1267,7 @@
 
         const loadVideoSource = (file) => new Promise((resolve, reject) => {
           const timer = setTimeout(() => {
-            reject(new Error("Video load timeout: " + file));
+            reject(new Error("Video timeout: " + file));
           }, 9500);
 
           video.onloadedmetadata = () => {
@@ -1118,7 +1282,7 @@
           };
           video.onerror = () => {
             clearTimeout(timer);
-            reject(new Error("Video 404/error: " + file));
+            reject(new Error("Video 404: " + file));
           };
           video.src = BASE_URL + file;
           video.load();
@@ -1138,15 +1302,16 @@
         video.volume = 0;
         video.pause();
 
-        const duration = Number.isFinite(video.duration) && video.duration > 0.4 ? video.duration : 1.5;
-        const startT = Math.min(0.15, duration * 0.1);
-        const endT = Math.max(startT + 0.1, duration - 0.15);
+        const duration = Number.isFinite(video.duration) && video.duration > 0.65 ? video.duration : 1.6;
+        // Pomijamy pierwsze i ostatnie 0.25s filmu, gdzie postać rusza z miejsca lub hamuje
+        const trimMargin = isAttack ? 0.12 : 0.25;
+        const startT = Math.min(trimMargin, duration * 0.18);
+        const endT = Math.max(startT + 0.15, duration - trimMargin);
 
         const vw = Math.max(128, video.videoWidth || 480);
         const vh = Math.max(128, video.videoHeight || 480);
 
         const rawFrames = [];
-        let medianHeight = 0;
         const heights = [];
 
         for (let i = 0; i < frameCount; i++) {
@@ -1180,25 +1345,29 @@
           rawFrames.push({ work, bbox, hPx });
         }
 
-        // Aby w klatkach ataku uniesiony wysoko nad głowę topór nie zmniejszał samej sylwetki Wikinga,
-        // wyznaczamy bazową wysokość postaci z klatek spoczynkowych/początkowych filmu i stosujemy spójną skalę!
+        let medianHeight = vh * 0.6;
         if (heights.length > 0) {
           const sorted = [...heights].sort((a, b) => a - b);
-          medianHeight = sorted[Math.floor(sorted.length * 0.25)] || sorted[0];
-        } else {
-          medianHeight = vh * 0.6;
+          medianHeight = sorted[Math.floor(sorted.length * 0.35)] || sorted[0];
         }
 
         const uniformScale = TARGET_HERO_HEIGHT / Math.max(1, medianHeight);
         const normalizedFrames = [];
 
-        for (const rf of rawFrames) {
+        // Box-Center Smoothing: wygładzanie środka ciężkości i wysokości między sąsiednimi klatkami
+        for (let i = 0; i < rawFrames.length; i++) {
+          const prev = rawFrames[(i - 1 + rawFrames.length) % rawFrames.length];
+          const curr = rawFrames[i];
+          const next = rawFrames[(i + 1) % rawFrames.length];
+
+          const smoothCenterX = (prev.bbox.coreCenterX * 0.25) + (curr.bbox.coreCenterX * 0.50) + (next.bbox.coreCenterX * 0.25);
+          const smoothSrcH = (prev.hPx * 0.25) + (curr.hPx * 0.50) + (next.hPx * 0.25);
+
           if (isAttack) {
-            // W animacji ataku zachowujemy stałą skalę ciała Wikinga (190 px), pozwalając na wyższy zasięg topora u góry
-            const frameTargetH = Math.min(ANCHOR_Y - 6, Math.round(rf.hPx * uniformScale));
-            normalizedFrames.push(this.normalizeFrameToSpriteCanvas(rf.work, rf.bbox, frameTargetH));
+            const frameTargetH = Math.min(ANCHOR_Y - 6, Math.round(curr.hPx * uniformScale));
+            normalizedFrames.push(this.normalizeFrameToSpriteCanvas(curr.work, curr.bbox, frameTargetH, smoothCenterX, curr.hPx));
           } else {
-            normalizedFrames.push(this.normalizeFrameToSpriteCanvas(rf.work, rf.bbox, TARGET_HERO_HEIGHT));
+            normalizedFrames.push(this.normalizeFrameToSpriteCanvas(curr.work, curr.bbox, TARGET_HERO_HEIGHT, smoothCenterX, smoothSrcH));
           }
         }
 
@@ -1208,8 +1377,7 @@
       }
     };
 
-    // Awaryjny generator klatek z wiking_baza.jpg, gdyby któryś plik wideo nie odpowiedział z sieci
-    function createFallbackFramesFromBase(baseCanvas, count = 12) {
+    function createFallbackFramesFromBase(baseCanvas, count = 16) {
       const frames = [];
       for (let i = 0; i < count; i++) {
         const c = document.createElement("canvas");
@@ -1217,7 +1385,7 @@
         c.height = SPRITE_CANVAS_H;
         const ctx = c.getContext("2d");
         const phase = (i / count) * Math.PI * 2;
-        const bobY = Math.round(Math.abs(Math.sin(phase)) * 5);
+        const bobY = Math.round(Math.abs(Math.sin(phase)) * 4);
         ctx.drawImage(baseCanvas, 0, -bobY);
         frames.push(c);
       }
@@ -1225,11 +1393,16 @@
     }
 
     // ============================================================================
-    // PAMIĘĆ PODRĘCZNA ZASOBÓW GRY
+    // PAMIĘĆ PODRĘCZNA ZASOBÓW + KIERUNKOWE KLATKI IDLE (GÓRA, DÓŁ, PRAWO)
     // ============================================================================
     const GAME_ASSETS = {
       mapImg: null,
-      heroIdle: null,
+      heroBaseIdle: null,
+      idleDirectional: {
+        up: null,
+        down: null,
+        right: null
+      },
       npc: {
         monolith: null,
         borgar: null,
@@ -1246,38 +1419,34 @@
     };
 
     async function loadAllGameResources() {
-      // 1. Mapa główna mapa_przystan.jpg
       try {
         GAME_ASSETS.mapImg = await VideoSpriteExtractor.loadImage("mapa_przystan.jpg", 10000);
       } catch (_) {}
       advanceLoadingBar("mapa_przystan.jpg");
 
-      // 2. Wiking Idle (wiking_baza.jpg)
       try {
-        GAME_ASSETS.heroIdle = await VideoSpriteExtractor.extractIdleSprite("wiking_baza.jpg");
+        GAME_ASSETS.heroBaseIdle = await VideoSpriteExtractor.extractIdleSprite("wiking_baza.jpg");
       } catch (_) {
         const fallback = document.createElement("canvas");
         fallback.width = SPRITE_CANVAS_W;
         fallback.height = SPRITE_CANVAS_H;
-        GAME_ASSETS.heroIdle = fallback;
+        GAME_ASSETS.heroBaseIdle = fallback;
         advanceLoadingBar("wiking_baza.jpg");
       }
 
-      // 3. Arkusz obiektów i NPC (npc_zestaw.jpg)
       try {
         GAME_ASSETS.npc = await VideoSpriteExtractor.extractNpcSheet("npc_zestaw.jpg");
       } catch (_) {
         advanceLoadingBar("npc_zestaw.jpg");
       }
 
-      // 4. Sześć filmów animacji Wikinga (.mp4) z fallbackiem dla wiking_chod_prawo.mp4 / wiking_chod_praw.mp4
       const videoSpecs = [
-        { key: "walkUp", primary: "wiking_chod_gora.mp4", fallback: null, attack: false },
-        { key: "walkDown", primary: "wiking_chod_dol.mp4", fallback: null, attack: false },
-        { key: "walkRight", primary: "wiking_chod_prawo.mp4", fallback: "wiking_chod_praw.mp4", attack: false },
-        { key: "attackUp", primary: "wiking_atak_gora.mp4", fallback: null, attack: true },
-        { key: "attackDown", primary: "wiking_atak_dol.mp4", fallback: null, attack: true },
-        { key: "attackRight", primary: "wiking_atak_prawo.mp4", fallback: "wiking_atak_praw.mp4", attack: true }
+        { key: "walkUp", primary: "wiking_chod_gora.mp4", fallback: null, count: 16, attack: false },
+        { key: "walkDown", primary: "wiking_chod_dol.mp4", fallback: null, count: 16, attack: false },
+        { key: "walkRight", primary: "wiking_chod_prawo.mp4", fallback: "wiking_chod_praw.mp4", count: 16, attack: false },
+        { key: "attackUp", primary: "wiking_atak_gora.mp4", fallback: null, count: 12, attack: true },
+        { key: "attackDown", primary: "wiking_atak_dol.mp4", fallback: null, count: 12, attack: true },
+        { key: "attackRight", primary: "wiking_atak_prawo.mp4", fallback: "wiking_atak_praw.mp4", count: 12, attack: true }
       ];
 
       for (const spec of videoSpecs) {
@@ -1285,111 +1454,183 @@
           GAME_ASSETS.anims[spec.key] = await VideoSpriteExtractor.extractVideoFrames(
             spec.primary,
             spec.fallback,
-            12,
+            spec.count,
             spec.attack
           );
         } catch (_) {
-          GAME_ASSETS.anims[spec.key] = createFallbackFramesFromBase(GAME_ASSETS.heroIdle, 12);
+          GAME_ASSETS.anims[spec.key] = createFallbackFramesFromBase(GAME_ASSETS.heroBaseIdle, spec.count);
           advanceLoadingBar(spec.primary);
         }
       }
+
+      // Budowa Kierunkowego Idle (najbardziej stabilna, wyprostowana środkowa klatka z każdego kierunku chodu)
+      const pickStableFrame = (arr) => (arr && arr.length > 0) ? arr[Math.floor(arr.length * 0.45)] : GAME_ASSETS.heroBaseIdle;
+      GAME_ASSETS.idleDirectional.up = pickStableFrame(GAME_ASSETS.anims.walkUp);
+      GAME_ASSETS.idleDirectional.down = pickStableFrame(GAME_ASSETS.anims.walkDown);
+      GAME_ASSETS.idleDirectional.right = pickStableFrame(GAME_ASSETS.anims.walkRight);
     }
 
     // ============================================================================
-    // 3. GEOMETRIA ŚWIATA 2560x1440, OBIEKTY Z NPC_ZESTAW.JPG ORAZ NAVMESH [F2]
+    // 2. DOKŁADNA KALIBRACJA SIATKI NAVMESH [F2] DO MAPA_PRZYSTAN.JPG + EDYTOR [F4]
     // ============================================================================
-    // Wielokąty dozwolonego ruchu dopasowane do izometrycznego rzutu mapa_przystan.jpg (2560x1440)
-    const WALKABLE_POLYGONS = [
-      // 1. Główny kamienny plac wokół błękitnego kręgu runicznego
-      [
-        { x: 640, y: 690 },
-        { x: 1320, y: 495 },
-        { x: 1960, y: 690 },
-        { x: 1860, y: 1120 },
-        { x: 1260, y: 1315 },
-        { x: 670, y: 1110 }
-      ],
-      // 2. Wschodnie podejście pod Kuźnię i Kowadło Kowala Borgara
-      [
-        { x: 1650, y: 580 },
-        { x: 2290, y: 670 },
-        { x: 2330, y: 1030 },
-        { x: 1750, y: 1070 }
-      ],
-      // 3. Północne szerokie kamienne schody i kamienny most u góry mapy
-      [
-        { x: 1020, y: 580 },
-        { x: 1210, y: 110 },
-        { x: 1680, y: 110 },
-        { x: 1620, y: 600 }
-      ],
-      // 4. Górny zachodni drewniany pomost
-      [
-        { x: 170, y: 650 },
-        { x: 830, y: 620 },
-        { x: 830, y: 865 },
-        { x: 170, y: 895 }
-      ],
-      // 5. Dolny zachodni drewniany pomost
-      [
-        { x: 150, y: 955 },
-        { x: 840, y: 925 },
-        { x: 840, y: 1205 },
-        { x: 150, y: 1235 }
-      ]
-    ];
+    const STORAGE_KEY_CALIB = "popielna_przystan_calib_v2_0";
 
-    // Kolizje kołowe/eliptyczne (czerwone strefy blokady: obelisk, piec kuźni, NPC)
-    const SOLID_OBSTACLES = [
-      // Kamień Filozofów w samym środku błękitnego kręgu runicznego
-      { x: 1280, y: 825, rx: 56, ry: 34, name: "Kamień Filozofów" },
-      // Rozpalony piec kuźni i kowadło po prawej stronie
-      { x: 2145, y: 745, rx: 135, ry: 85, name: "Piec Kuźni" },
-      // Kowal Borgar przy kuźni
-      { x: 1925, y: 825, rx: 44, ry: 28, name: "Kowal Borgar" },
-      // Strażnik Bastionu Vorn przy wejściu na północne schody
-      { x: 1195, y: 505, rx: 44, ry: 28, name: "Strażnik Vorn" }
-    ];
+    function createDefaultWalkablePolygons() {
+      const pt = (nx, ny) => ({ x: Math.round(nx * WORLD_W), y: Math.round(ny * WORLD_H) });
+      return [
+        // 1. Centralny Plac Przystani wokół błękitnego kręgu runicznego (0.485, 0.50)
+        [
+          pt(0.28, 0.42),
+          pt(0.50, 0.31),
+          pt(0.58, 0.28),
+          pt(0.74, 0.43),
+          pt(0.82, 0.54),
+          pt(0.73, 0.70),
+          pt(0.55, 0.86),
+          pt(0.38, 0.76),
+          pt(0.30, 0.72),
+          pt(0.26, 0.56)
+        ],
+        // 2. Północne Schody (biegnące od (0.53, 0.34) pod kątem w górę-lewo do (0.42, 0.14))
+        [
+          pt(0.47, 0.36),
+          pt(0.56, 0.33),
+          pt(0.47, 0.13),
+          pt(0.38, 0.16)
+        ],
+        // 3. Górny Kamienny Dziedziniec / Most Bastionu (0.36, 0.04) .. (0.64, 0.18)
+        [
+          pt(0.36, 0.04),
+          pt(0.64, 0.04),
+          pt(0.64, 0.18),
+          pt(0.36, 0.18)
+        ],
+        // 4. Górny Drewniany Pomost (Zachodni 1: od (0.29, 0.47) w dół-lewo po deskach do (0.11, 0.58))
+        [
+          pt(0.29, 0.435),
+          pt(0.31, 0.505),
+          pt(0.12, 0.615),
+          pt(0.09, 0.545)
+        ],
+        // 5. Dolny Drewniany Pomost (Zachodni 2: od (0.38, 0.73) w dół-lewo po deskach do (0.21, 0.87))
+        [
+          pt(0.37, 0.695),
+          pt(0.40, 0.765),
+          pt(0.22, 0.905),
+          pt(0.19, 0.835)
+        ],
+        // 6. Wnęka Kuźni Borgara (Wschód: (0.70, 0.44) .. (0.86, 0.62))
+        [
+          pt(0.70, 0.44),
+          pt(0.86, 0.45),
+          pt(0.86, 0.62),
+          pt(0.70, 0.63)
+        ]
+      ];
+    }
 
-    // Obiekty świata 2.5D wycięte z npc_zestaw.jpg i osadzone na mapa_przystan.jpg
-    const WORLD_OBJECTS = [
-      {
-        id: "monolith",
-        name: "KAMIEŃ FILOZOFÓW",
-        sub: "Pradawny Monolit Dusz",
-        x: 1280,
-        y: 825,
-        scale: 1.18,
-        interactRadius: 135,
-        xrayWhenBehind: true,
-        currentAlpha: 1.0,
-        dialogue: "Zimny błękit run Kamienia Filozofów rozprasza mrok Przeklętej Czarnej Twierdzy. Twoja Krew (485/485) i siły witalne zostały w pełni odnowione."
-      },
-      {
-        id: "borgar",
-        name: "KOWAL BORGAR",
-        sub: "Zbrojmistrz Popielnej Przystani",
-        x: 1925,
-        y: 825,
-        scale: 0.96,
-        interactRadius: 125,
-        xrayWhenBehind: false,
-        currentAlpha: 1.0,
-        dialogue: "Ogień w moim piecu ledwo tli się od tego przeklętego chłodu znad wody. Wykułem dla ciebie stal godną Północy — sprawdź ostrze (PPM) i ruszaj na most!"
-      },
-      {
-        id: "vorn",
-        name: "STRAŻNIK BASTIONU VORN",
-        sub: "Wartownik Północnych Schodów",
-        x: 1195,
-        y: 505,
-        scale: 0.96,
-        interactRadius: 125,
-        xrayWhenBehind: false,
-        currentAlpha: 1.0,
-        dialogue: "Te kamienne schody prowadzą prosto ku zewnętrznym murom Czarnej Twierdzy. Wciśnij [F3], jeśli chcesz przetestować pracę kroków na skosach podczas wspinaczki!"
+    function createDefaultWorldObjects() {
+      return [
+        {
+          id: "monolith",
+          name: "KAMIEŃ FILOZOFÓW",
+          sub: "Pradawny Monolit Dusz",
+          x: Math.round(0.485 * WORLD_W),
+          y: Math.round(0.505 * WORLD_H),
+          scale: 1.16,
+          interactRadius: 130,
+          xrayWhenBehind: true,
+          currentAlpha: 1.0,
+          dialogue: "Zimny błękit run Kamienia Filozofów rozprasza mrok Przeklętej Czarnej Twierdzy. Twoja Krew (485/485) oraz Szał zostały nasycone mocą pradawnych."
+        },
+        {
+          id: "borgar",
+          name: "KOWAL BORGAR",
+          sub: "Zbrojmistrz Popielnej Przystani (Kuźnia)",
+          x: Math.round(0.79 * WORLD_W),
+          y: Math.round(0.55 * WORLD_H),
+          scale: 0.96,
+          interactRadius: 120,
+          xrayWhenBehind: false,
+          currentAlpha: 1.0,
+          isForgeNpc: true
+        },
+        {
+          id: "vorn",
+          name: "STRAŻNIK BASTIONU VORN",
+          sub: "Wartownik Północnych Schodów",
+          x: Math.round(0.50 * WORLD_W),
+          y: Math.round(0.33 * WORLD_H),
+          scale: 0.96,
+          interactRadius: 120,
+          xrayWhenBehind: false,
+          currentAlpha: 1.0,
+          dialogue: "Kamienne schody za moimi plecami wiodą na górny dziedziniec Bastionu. Zalęgły się tam Upadłe Straże — rozbij ich szyk Taranem [E] o mury twierdzy!"
+        }
+      ];
+    }
+
+    let WALKABLE_POLYGONS = createDefaultWalkablePolygons();
+    let WORLD_OBJECTS = createDefaultWorldObjects();
+
+    // Wczytanie ewentualnej kalibracji użytkownika z localStorage
+    function loadSavedCalibration() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_CALIB);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.polygons) && parsed.polygons.length === WALKABLE_POLYGONS.length) {
+          WALKABLE_POLYGONS = parsed.polygons;
+        }
+        if (Array.isArray(parsed.objects) && parsed.objects.length === WORLD_OBJECTS.length) {
+          for (let i = 0; i < WORLD_OBJECTS.length; i++) {
+            WORLD_OBJECTS[i].x = parsed.objects[i].x;
+            WORLD_OBJECTS[i].y = parsed.objects[i].y;
+          }
+        }
+      } catch (_) {}
+    }
+
+    function saveCalibrationToStorage() {
+      try {
+        const data = {
+          polygons: WALKABLE_POLYGONS,
+          objects: WORLD_OBJECTS.map((o) => ({ id: o.id, x: o.x, y: o.y }))
+        };
+        localStorage.setItem(STORAGE_KEY_CALIB, JSON.stringify(data));
+      } catch (_) {}
+    }
+
+    function resetCalibration() {
+      localStorage.removeItem(STORAGE_KEY_CALIB);
+      WALKABLE_POLYGONS = createDefaultWalkablePolygons();
+      const defObjs = createDefaultWorldObjects();
+      for (let i = 0; i < WORLD_OBJECTS.length; i++) {
+        WORLD_OBJECTS[i].x = defObjs[i].x;
+        WORLD_OBJECTS[i].y = defObjs[i].y;
       }
-    ];
+    }
+
+    loadSavedCalibration();
+
+    // Twarde kolizje kołowe/eliptyczne powiązane z pozycjami obiektów i architektury
+    function getSolidObstacles() {
+      const monolith = WORLD_OBJECTS[0];
+      const borgar = WORLD_OBJECTS[1];
+      const vorn = WORLD_OBJECTS[2];
+      return [
+        // Okrągła blokada Kamienia Filozofów w samym środku kręgu (r = 48px)
+        { x: monolith.x, y: monolith.y - 10, rx: 48, ry: 34, name: "Kamień Filozofów" },
+        // Kowadło i palenisko przed piecem (0.83, 0.56, r = 45px)
+        { x: Math.round(0.83 * WORLD_W), y: Math.round(0.56 * WORLD_H), rx: 45, ry: 32, name: "Kowadło Kuźni" },
+        // Kowal Borgar
+        { x: borgar.x, y: borgar.y, rx: 34, ry: 23, name: "Kowal Borgar" },
+        // Strażnik Vorn
+        { x: vorn.x, y: vorn.y, rx: 34, ry: 23, name: "Strażnik Vorn" },
+        // Kukła Bojowa Zbrojmistrza
+        { x: Math.round(0.73 * WORLD_W), y: Math.round(0.62 * WORLD_H), rx: 28, ry: 20, name: "Kukła Bojowa" }
+      ];
+    }
 
     function isPointInPolygon(px, py, poly) {
       let inside = false;
@@ -1403,8 +1644,12 @@
       return inside;
     }
 
-    function isWorldPointWalkable(x, y) {
-      if (x < 60 || x > WORLD_W - 60 || y < 75 || y > WORLD_H - 60) return false;
+    function isWorldPointWalkable(x, y, ignoreEntities = false) {
+      if (x < 50 || x > WORLD_W - 50 || y < 45 || y > WORLD_H - 50) return false;
+
+      // Twarda blokada czarnego muru zamkowego na prawo od schodów (x > 0.58, y < 0.36) oraz pieca kuźni (x > 0.86)
+      if (x > 0.58 * WORLD_W && y < 0.36 * WORLD_H && y > 0.18 * WORLD_H) return false;
+      if (x > 0.86 * WORLD_W) return false;
 
       let inAnyPoly = false;
       for (let i = 0; i < WALKABLE_POLYGONS.length; i++) {
@@ -1415,192 +1660,593 @@
       }
       if (!inAnyPoly) return false;
 
-      for (let i = 0; i < SOLID_OBSTACLES.length; i++) {
-        const ob = SOLID_OBSTACLES[i];
-        const nx = (x - ob.x) / ob.rx;
-        const ny = (y - ob.y) / ob.ry;
-        if (nx * nx + ny * ny < 1.0) return false;
+      // Jeśli aktywna jest Arena Łańcuchów [R], nie pozwól wyjść poza jej promień
+      if (activeChainArena && activeChainArena.timer > 0) {
+        const dArena = Math.hypot(x - activeChainArena.x, y - activeChainArena.y);
+        if (dArena > activeChainArena.radius - 10) return false;
+      }
+
+      if (!ignoreEntities) {
+        const obstacles = getSolidObstacles();
+        for (let i = 0; i < obstacles.length; i++) {
+          const ob = obstacles[i];
+          const nx = (x - ob.x) / ob.rx;
+          const ny = (y - ob.y) / ob.ry;
+          if (nx * nx + ny * ny < 1.0) return false;
+        }
       }
       return true;
     }
 
-    // Płynny ślizg wzdłuż krawędzi wielokątów NavMesh i przeszkód (Wall Sliding)
-    function moveHeroWithSlide(x, y, vx, vy, dt) {
+    function moveEntityWithSlide(x, y, vx, vy, dt, ignoreEntities = false) {
       const nextX = x + vx * dt;
       const nextY = y + vy * dt;
-      if (isWorldPointWalkable(nextX, nextY)) {
-        return { x: nextX, y: nextY, moved: true };
+      if (isWorldPointWalkable(nextX, nextY, ignoreEntities)) {
+        return { x: nextX, y: nextY, moved: true, hitWall: false };
       }
-      if (Math.abs(vx) > 0.01 && isWorldPointWalkable(nextX, y)) {
-        return { x: nextX, y, moved: true };
+      if (Math.abs(vx) > 0.01 && isWorldPointWalkable(nextX, y, ignoreEntities)) {
+        return { x: nextX, y, moved: true, hitWall: true };
       }
-      if (Math.abs(vy) > 0.01 && isWorldPointWalkable(x, nextY)) {
-        return { x, y: nextY, moved: true };
+      if (Math.abs(vy) > 0.01 && isWorldPointWalkable(x, nextY, ignoreEntities)) {
+        return { x, y: nextY, moved: true, hitWall: true };
       }
 
       const baseAngle = Math.atan2(vy, vx);
-      const speed = Math.hypot(vx, vy) * 0.78;
-      const angles = [0.42, -0.42, 0.82, -0.82, 1.18, -1.18];
+      const speed = Math.hypot(vx, vy) * 0.76;
+      const angles = [0.40, -0.40, 0.78, -0.78, 1.15, -1.15];
       for (const off of angles) {
         const tx = x + Math.cos(baseAngle + off) * speed * dt;
         const ty = y + Math.sin(baseAngle + off) * speed * dt;
-        if (isWorldPointWalkable(tx, ty)) {
-          return { x: tx, y: ty, moved: true };
+        if (isWorldPointWalkable(tx, ty, ignoreEntities)) {
+          return { x: tx, y: ty, moved: true, hitWall: true };
         }
       }
-      return { x, y, moved: false };
+      return { x, y, moved: false, hitWall: true };
     }
 
     // ============================================================================
-    // 2. BOHATER (WIKING), 8 KIERUNKÓW RUCHU I WALKI ORAZ PRZEŁĄCZNIK [F3]
+    // 1b. PERFEKCYJNY 8-KIERUNKOWY SYSTEM SKOSÓW Z HISTEREZĄ 15° I KIERUNKOWYM IDLE
     // ============================================================================
-    // Tryb Skosów Górnych [F3]: "BACK" = PLECY (wiking_chod_gora), "PROFILE" = PROFIL (wiking_chod_prawo + flipX)
-    let upperDiagonalMode = "BACK";
-    let showNavMesh = false;
-    let isAltPressed = false;
-    let isShiftPressed = false;
+    // 8 sektorów koła (co 45°):
+    // 0: E (0°), 1: SE (45°), 2: S (90°), 3: SW (135°), 4: W (180°/-180°), 5: NW (-135°), 6: N (-90°), 7: NE (-45°)
+    const SECTOR_CENTERS = [0, 45, 90, 135, 180, -135, -90, -45];
+    const SECTOR_CONFIG = [
+      { name: "PRAWO (E)", walkKey: "walkRight", idleKey: "right", flipX: false, leanDeg: 0 },
+      { name: "SKOS DOLNY-PRAWY (SE)", walkKey: "walkRight", idleKey: "right", flipX: false, leanDeg: 3 },
+      { name: "DÓŁ (S)", walkKey: "walkDown", idleKey: "down", flipX: false, leanDeg: 0 },
+      { name: "SKOS DOLNY-LEWY (SW)", walkKey: "walkRight", idleKey: "right", flipX: true, leanDeg: -3 },
+      { name: "LEWO (W)", walkKey: "walkRight", idleKey: "right", flipX: true, leanDeg: 0 },
+      // b) SKOS GÓRNY-LEWY (NW: -157° do -112° — główny kierunek wchodzenia po schodach!): wiking_chod_gora (flipX = false, lekko zwrócony w lewo)
+      { name: "SKOS GÓRNY-LEWY (NW)", walkKey: "walkUp", idleKey: "up", flipX: false, leanDeg: -4 },
+      // a) GÓRA (N: -112° do -68°): wiking_chod_gora (flipX = false)
+      { name: "GÓRA (N)", walkKey: "walkUp", idleKey: "up", flipX: false, leanDeg: 0 },
+      // c) SKOS GÓRNY-PRAWY (NE: -68° do -22°): wiking_chod_gora ODBITY LUSTRZANIE (flipX = true!)
+      { name: "SKOS GÓRNY-PRAWY (NE)", walkKey: "walkUp", idleKey: "up", flipX: true, leanDeg: 4 }
+    ];
 
+    function shortestAngleDistDeg(a, b) {
+      let diff = ((a - b + 540) % 360) - 180;
+      return Math.abs(diff);
+    }
+
+    function resolveSectorWithHysteresis(dx, dy, currentSector, forceImmediate = false) {
+      const deg = (Math.atan2(dy, dx) * 180) / Math.PI;
+
+      // Jeśli utrzymujemy ruch i kąt mieści się w bieżącym sektorze + 15° bufora histerezy (22.5° + 15° = 37.5°),
+      // nie zmieniaj sektora, aby uniknąć migotania na granicach kątów!
+      if (!forceImmediate && currentSector >= 0 && currentSector < 8) {
+        const distToCurrent = shortestAngleDistDeg(deg, SECTOR_CENTERS[currentSector]);
+        if (distToCurrent <= 37.5) {
+          return currentSector;
+        }
+      }
+
+      // Wybierz najbliższy z 8 sektorów wg dokładnych granic z kontraktu
+      if (deg >= -112 && deg <= -68) return 6;       // N (Góra)
+      if (deg >= -157 && deg < -112) return 5;       // NW (Skos Górny-Lewy)
+      if (deg > -68 && deg <= -22) return 7;         // NE (Skos Górny-Prawy — flipX = true)
+      if (deg > -22 && deg <= 22) return 0;          // E (Prawo)
+      if (deg > 22 && deg < 68) return 1;            // SE (Skos Dolny-Prawy)
+      if (deg >= 68 && deg <= 112) return 2;         // S (Dół)
+      if (deg > 112 && deg <= 157) return 3;         // SW (Skos Dolny-Lewy)
+      return 4;                                      // W (Lewo)
+    }
+
+    // ============================================================================
+    // 5. BOHATER, STATYSTYKI, UMIEJĘTNOŚCI QWER, KUKŁA BOJOWA I PRZECIWNICY
+    // ============================================================================
     const hero = {
-      x: 1280,
-      y: 985,
-      targetX: 1280,
-      targetY: 985,
+      x: Math.round(0.485 * WORLD_W),
+      y: Math.round(0.62 * WORLD_H),
+      targetX: Math.round(0.485 * WORLD_W),
+      targetY: Math.round(0.62 * WORLD_H),
       isMoving: false,
-      speed: 255, // px/s na świecie 2560x1440
-      state: "idle", // "idle" | "walk" | "attack" | "leap"
+      speed: 255,
+      state: "idle", // "idle" | "walk" | "attack" | "leap" | "charge"
+      sector: 2,     // Domyślnie patrzy w Dół (S)
       animKey: "walkDown",
+      idleKey: "down",
       flipX: false,
+      leanDeg: 0,
+      walkCyclePos: 0,   // Płynny kursor klatek Ping-Pong / Cross-Blend
+      walkDirSign: 1,
+      walkTimer: 0,
       frameIndex: 0,
       frameTimer: 0,
-      walkFps: 15,
-      attackFps: 22,
+      walkFps: 18,
+      attackFps: 24,
       attackAngle: 0,
       slashAlpha: 0,
+      // Statystyki Bojowe 2.0
+      baseDamage: 38,
+      critChance: 0.15,
+      critMultiplier: 2.0,
+      weaponUpgradeLevel: 0,
+      deedHitsCount: 0,
+      hp: 485,
+      maxHp: 485,
+      rage: 30,
+      maxRage: 100,
+      bloodPotions: 3,
+      soulPotions: 2,
+      // Cooldowny i stany umiejętności Q, W, E, R, SPACJA
+      cd: { Q: 0, W: 0, E: 0, R: 0, SPACE: 0 },
+      qRecastTimer: 0,
+      wActiveTimer: 0,
+      wStoredDamage: 0,
+      chargeTimer: 0,
+      chargeDirX: 0,
+      chargeDirY: 0,
       leapTimer: 0,
       leapDuration: 0.38,
       leapStartX: 0,
       leapStartY: 0,
       leapEndX: 0,
       leapEndY: 0,
-      leapCd: 0,
       shockwaveRadius: 0,
       shockwaveAlpha: 0,
+      shockwaveColor: "124, 232, 255",
       clickMarkerX: 0,
       clickMarkerY: 0,
       clickMarkerAlpha: 0,
-      hp: 485,
-      maxHp: 485,
-      rage: 0,
-      maxRage: 100,
-      potions: 3,
       stepSoundCooldown: 0
     };
 
-    const camera = {
-      x: 0,
-      y: 0,
-      zoom: 1,
-      shake: 0
-    };
+    // Efekty VFX umiejętności na świecie
+    let activeFissures = [];     // Szczeliny z Q (Rozprucie Bruku)
+    let activeChainArena = null; // Arena Łańcuchów z R (Krąg Pojedynku)
+    let pendingHammers = [];     // Widmowe młoty przodków spadające 0.4s po uderzeniu w R
+    let floatingTexts = [];      // Latające cyfry obrażeń i złote krytyki 200%!
+    let hitStopTimer = 0;        // Hit-Stop (0.05s zamrożenia przy mięsistym trafieniu)
 
-    // Wyznaczanie animacji dla wszystkich 8 kierunków ruchu + obsługa przełącznika [F3] dla skosów górnych
-    function selectWalkAnimationFromVector(dx, dy) {
-      const deg = (Math.atan2(dy, dx) * 180) / Math.PI; // -180 .. +180 (0 = Prawo/Wschód, -90 = Góra/Północ, +90 = Dół/Południe)
-
-      // 1. GÓRA (Północ: -112.5° .. -67.5°)
-      if (deg >= -112.5 && deg <= -67.5) {
-        hero.animKey = "walkUp";
-        hero.flipX = false;
-        return "CHÓD: GÓRA (PÓŁNOC)";
+    // Interaktywna Kukła Bojowa Zbrojmistrza obok Kuźni (0.73 * WORLD_W, 0.62 * WORLD_H)
+    // oraz grupa Upadłych Strażników na północnym moście/dziedzińcu (0.45 * WORLD_W, 0.12 * WORLD_H)
+    const COMBAT_ENTITIES = [
+      {
+        id: "dummy",
+        name: "KUKŁA BOJOWA ZBROJMISTRZA",
+        sub: "Cel Ćwiczebny Kuźni",
+        isDummy: true,
+        x: Math.round(0.73 * WORLD_W),
+        y: Math.round(0.62 * WORLD_H),
+        homeX: Math.round(0.73 * WORLD_W),
+        homeY: Math.round(0.62 * WORLD_H),
+        hp: 1500,
+        maxHp: 1500,
+        stagger: 0,
+        maxStagger: 100,
+        stunTimer: 0,
+        slowTimer: 0,
+        hitFlash: 0,
+        tiltAngle: 0,
+        alive: true,
+        radius: 42
+      },
+      {
+        id: "guard1",
+        name: "UPADŁY STRAŻNIK BASTIONU",
+        sub: "Przeklęty Wartownik",
+        isDummy: false,
+        x: Math.round(0.43 * WORLD_W),
+        y: Math.round(0.13 * WORLD_H),
+        homeX: Math.round(0.43 * WORLD_W),
+        homeY: Math.round(0.13 * WORLD_H),
+        hp: 260,
+        maxHp: 260,
+        stagger: 0,
+        maxStagger: 100,
+        stunTimer: 0,
+        slowTimer: 0,
+        hitFlash: 0,
+        tiltAngle: 0,
+        speed: 125,
+        damage: 18,
+        attackCd: 0,
+        walkPhase: 0,
+        alive: true,
+        radius: 40
+      },
+      {
+        id: "guard2",
+        name: "PRZEKLĘTY HALABARDNIK",
+        sub: "Straż Czarnej Twierdzy",
+        isDummy: false,
+        x: Math.round(0.49 * WORLD_W),
+        y: Math.round(0.10 * WORLD_H),
+        homeX: Math.round(0.49 * WORLD_W),
+        homeY: Math.round(0.10 * WORLD_H),
+        hp: 310,
+        maxHp: 310,
+        stagger: 0,
+        maxStagger: 100,
+        stunTimer: 0,
+        slowTimer: 0,
+        hitFlash: 0,
+        tiltAngle: 0,
+        speed: 118,
+        damage: 22,
+        attackCd: 0,
+        walkPhase: 2.1,
+        alive: true,
+        radius: 42
+      },
+      {
+        id: "guard3",
+        name: "UPADŁY TARCZOWNIK",
+        sub: "Straż Czarnej Twierdzy",
+        isDummy: false,
+        x: Math.round(0.55 * WORLD_W),
+        y: Math.round(0.14 * WORLD_H),
+        homeX: Math.round(0.55 * WORLD_W),
+        homeY: Math.round(0.14 * WORLD_H),
+        hp: 290,
+        maxHp: 290,
+        stagger: 0,
+        maxStagger: 100,
+        stunTimer: 0,
+        slowTimer: 0,
+        hitFlash: 0,
+        tiltAngle: 0,
+        speed: 115,
+        damage: 19,
+        attackCd: 0,
+        walkPhase: 4.2,
+        alive: true,
+        radius: 40
       }
+    ];
 
-      // 2. SKOS GÓRNY-PRAWY (Północny-Wschód: -67.5° .. -22.5°)
-      if (deg > -67.5 && deg < -22.5) {
-        if (upperDiagonalMode === "BACK") {
-          hero.animKey = "walkUp";
-          hero.flipX = false;
-          return "SKOS GÓRNY-PRAWY [PLECY]";
-        } else {
-          hero.animKey = "walkRight";
-          hero.flipX = false;
-          return "SKOS GÓRNY-PRAWY [PROFIL]";
-        }
-      }
-
-      // 3. SKOS GÓRNY-LEWY (Północny-Zachód: -157.5° .. -112.5°)
-      if (deg < -112.5 && deg > -157.5) {
-        if (upperDiagonalMode === "BACK") {
-          hero.animKey = "walkUp";
-          hero.flipX = false;
-          return "SKOS GÓRNY-LEWY [PLECY]";
-        } else {
-          hero.animKey = "walkRight";
-          hero.flipX = true;
-          return "SKOS GÓRNY-LEWY [PROFIL]";
-        }
-      }
-
-      // 4. DÓŁ (Południe: +67.5° .. +112.5°)
-      if (deg >= 67.5 && deg <= 112.5) {
-        hero.animKey = "walkDown";
-        hero.flipX = false;
-        return "CHÓD: DÓŁ (POŁUDNIE)";
-      }
-
-      // 5. PRAWO (Wschód: -22.5° .. +22.5°) oraz SKOS DOLNY-PRAWY (+22.5° .. +67.5°)
-      if (deg >= -22.5 && deg < 67.5) {
-        hero.animKey = "walkRight";
-        hero.flipX = false;
-        return deg > 22.5 ? "SKOS DOLNY-PRAWY" : "CHÓD: PRAWO (WSCHÓD)";
-      }
-
-      // 6. LEWO (Zachód) oraz SKOS DOLNY-LEWY (+112.5° .. +180° lub -180° .. -157.5°)
-      hero.animKey = "walkRight";
-      hero.flipX = true;
-      return (deg > 112.5 && deg < 157.5) ? "SKOS DOLNY-LEWY" : "CHÓD: LEWO (ZACHÓD)";
+    function spawnFloatingText(x, y, text, color = "#ffffff", size = 18, isCrit = false) {
+      floatingTexts.push({
+        x: x + (Math.random() - 0.5) * 26,
+        y,
+        vy: isCrit ? -95 : -68,
+        text,
+        color,
+        size: isCrit ? size + 6 : size,
+        alpha: 1.0,
+        scale: isCrit ? 1.35 : 1.0
+      });
     }
 
-    // Wyznaczanie kierunku ATAKU (PPM oraz SHIFT + LPM) dokładnie wg specyfikacji
-    function triggerHeroAttack(targetWorldX, targetWorldY) {
-      if (hero.state === "leap") return;
+    function dealDamageToEntity(entity, rawDamage, staggerAdd = 22, sourceTag = "") {
+      if (!entity.alive) return;
 
-      const dx = targetWorldX - hero.x;
-      const dy = targetWorldY - hero.y;
+      const isCrit = Math.random() < hero.critChance;
+      let finalDmg = Math.round(rawDamage * (isCrit ? hero.critMultiplier : 1.0));
+      if (entity.stunTimer > 0) {
+        finalDmg = Math.round(finalDmg * 1.25); // +25% obrażeń na ogłuszonych celach
+      }
+
+      entity.hp = Math.max(0, entity.hp - finalDmg);
+      entity.hitFlash = 0.18;
+      entity.tiltAngle = (Math.random() > 0.5 ? 1 : -1) * 0.24;
+      entity.stagger = Math.min(entity.maxStagger, entity.stagger + staggerAdd);
+
+      if (entity.stagger >= entity.maxStagger) {
+        entity.stagger = 0;
+        entity.stunTimer = Math.max(entity.stunTimer, 2.5);
+        spawnFloatingText(entity.x, entity.y - 145, "PRZEŁAMANIE!", "#7ce8ff", 17, true);
+      }
+
+      // Hit-Stop 0.05s przy trafieniu
+      hitStopTimer = 0.05;
+      SoundFX.playHit(isCrit);
+
+      if (isCrit) {
+        spawnFloatingText(entity.x, entity.y - 120, `${finalDmg}! (200% KRYTYK!)`, "#ffd866", 20, true);
+      } else {
+        spawnFloatingText(entity.x, entity.y - 115, `${finalDmg}${sourceTag ? " " + sourceTag : ""}`, "#f0f4f8", 17, false);
+      }
+
+      // Postęp Czynu Bojowego dla Kuźni i Dziennika Zadań
+      hero.deedHitsCount++;
+      const cappedHits = Math.min(5, hero.deedHitsCount);
+      document.getElementById("q-dummy-hits").textContent = String(cappedHits);
+      if (cappedHits >= 5) {
+        document.getElementById("q-dummy").classList.add("done");
+      }
+      updateForgeModalUI();
+
+      // Jeśli trafienie nastąpiło wewnątrz Areny Łańcuchów [R], przywołaj widmowy młot przodków 0.4s później!
+      if (activeChainArena && activeChainArena.timer > 0 && sourceTag !== "[MŁOT PRZODKÓW]") {
+        const d = Math.hypot(entity.x - activeChainArena.x, entity.y - activeChainArena.y);
+        if (d <= activeChainArena.radius) {
+          pendingHammers.push({
+            x: entity.x,
+            y: entity.y,
+            delay: 0.40,
+            maxDelay: 0.40,
+            targetEntity: entity
+          });
+        }
+      }
+
+      if (entity.isDummy && entity.hp < 150) {
+        entity.hp = entity.maxHp; // Kukła ćwiczebna nie ginie na stałe
+      } else if (!entity.isDummy && entity.hp <= 0) {
+        entity.alive = false;
+        spawnFloatingText(entity.x, entity.y - 95, "POKONANY!", "#ff6666", 19, true);
+        const deadCount = COMBAT_ENTITIES.filter((e) => !e.isDummy && !e.alive).length;
+        document.getElementById("q-enemy-kills").textContent = String(deadCount);
+        if (deadCount >= 3) {
+          document.getElementById("q-north").classList.add("done");
+        }
+      }
+    }
+
+    // ============================================================================
+    // IMPLEMENTACJA 4 UMIEJĘTNOŚCI WIKINGA (Q, W, E, R) + ATAK PODSTAWOWY + SPACJA
+    // ============================================================================
+    function orientHeroTowardsPoint(tx, ty) {
+      const dx = tx - hero.x;
+      const dy = ty - hero.y;
+      hero.sector = resolveSectorWithHysteresis(dx, dy, hero.sector, true);
+      const cfg = SECTOR_CONFIG[hero.sector];
+      hero.animKey = cfg.walkKey;
+      hero.idleKey = cfg.idleKey;
+      hero.flipX = cfg.flipX;
+      hero.leanDeg = cfg.leanDeg;
+      return { dx, dy, angle: Math.atan2(dy, dx) };
+    }
+
+    // PPM / SHIFT + LPM: Rozpłatanie (Atak podstawowy generujący Szał)
+    function triggerBasicAttack(targetWorldX, targetWorldY) {
+      if (hero.state === "leap" || hero.state === "charge") return;
+
+      const { dx, dy, angle } = orientHeroTowardsPoint(targetWorldX, targetWorldY);
       hero.isMoving = false;
       hero.state = "attack";
       hero.frameIndex = 0;
       hero.frameTimer = 0;
-      hero.attackAngle = Math.atan2(dy, dx);
+      hero.attackAngle = angle;
       hero.slashAlpha = 1.0;
 
       if (dy < -0.5 * Math.abs(dx)) {
         hero.animKey = "attackUp";
         hero.flipX = false;
-        document.getElementById("current-anim-tag").textContent = "ATAK: GÓRA";
       } else if (dy > 0.5 * Math.abs(dx)) {
         hero.animKey = "attackDown";
         hero.flipX = false;
-        document.getElementById("current-anim-tag").textContent = "ATAK: DÓŁ";
       } else if (dx >= 0) {
         hero.animKey = "attackRight";
         hero.flipX = false;
-        document.getElementById("current-anim-tag").textContent = "ATAK: PRAWO";
       } else {
         hero.animKey = "attackRight";
         hero.flipX = true;
-        document.getElementById("current-anim-tag").textContent = "ATAK: LEWO (ODBICIE)";
       }
 
-      SoundFX.playSwing();
-      hero.rage = Math.min(hero.maxRage, hero.rage + 8);
+      document.getElementById("current-anim-tag").textContent = `ATAK: ${SECTOR_CONFIG[hero.sector].name}`;
+      SoundFX.playSwing(290);
+
+      let hitCount = 0;
+      for (const ent of COMBAT_ENTITIES) {
+        if (!ent.alive) continue;
+        const d = Math.hypot(ent.x - hero.x, ent.y - hero.y);
+        if (d <= 155) {
+          const angToEnt = Math.atan2(ent.y - hero.y, ent.x - hero.x);
+          const diff = shortestAngleDistDeg((angToEnt * 180) / Math.PI, (angle * 180) / Math.PI);
+          if (diff <= 85 || d <= 75) {
+            dealDamageToEntity(ent, hero.baseDamage, 20);
+            hitCount++;
+          }
+        }
+      }
+
+      hero.rage = Math.min(hero.maxRage, hero.rage + (hitCount > 0 ? 14 : 6));
       updateHudOrbs();
     }
 
-    function triggerCombatLeap(targetWorldX, targetWorldY) {
-      if (hero.leapCd > 0 || hero.state === "leap") return;
+    // [Q] ROZPRUCIE BRUKU (2 FAZY: Faza 1 Szczelina + Spowolnienie 40%, Faza 2 Szarpnięcie Ziemi za 20 Szału)
+    function castSkillQ(targetWorldX, targetWorldY) {
+      // FAZA 2: Szarpnięcie Ziemi (przyciągnięcie trafionych wrogów pod nogi Wikinga)
+      if (hero.qRecastTimer > 0 && activeFissures.length > 0) {
+        if (hero.rage < 20) {
+          spawnFloatingText(hero.x, hero.y - 150, "BRAK SZAŁU (20)!", "#ff8833", 16, false);
+          return;
+        }
+        hero.rage -= 20;
+        hero.qRecastTimer = 0;
+        hero.cd.Q = 6.0;
+        document.getElementById("slot-Q").classList.remove("ready-recast");
+        document.getElementById("sub-Q").textContent = "ROZPRUCIE";
 
-      const dx = targetWorldX - hero.x;
-      const dy = targetWorldY - hero.y;
+        const fissure = activeFissures[activeFissures.length - 1];
+        fissure.erupted = true;
+        camera.shake = 12;
+        SoundFX.playEarthCrack();
+
+        const pullDmg = Math.round(hero.baseDamage * 1.15 + 18);
+        for (const ent of COMBAT_ENTITIES) {
+          if (!ent.alive) continue;
+          // Sprawdź odległość od linii szczeliny
+          const d = Math.hypot(ent.x - fissure.endX, ent.y - fissure.endY);
+          const dMid = Math.hypot(ent.x - fissure.midX, ent.y - fissure.midY);
+          if (d <= 165 || dMid <= 145 || ent.slowTimer > 0) {
+            // Przyciągnij wroga pod stopy Wikinga
+            const angleToHero = Math.atan2(hero.y - ent.y, hero.x - ent.x);
+            const pullTargetX = hero.x - Math.cos(angleToHero) * 58;
+            const pullTargetY = hero.y - Math.sin(angleToHero) * 42;
+            if (isWorldPointWalkable(pullTargetX, pullTargetY, true)) {
+              ent.x = pullTargetX;
+              ent.y = pullTargetY;
+            }
+            dealDamageToEntity(ent, pullDmg, 35, "[PRZYCIĄGNIĘCIE!]");
+          }
+        }
+        updateHudOrbs();
+        return;
+      }
+
+      // FAZA 1: Rozprucie Bruku przed Wikingiem
+      if (hero.cd.Q > 0) return;
+
+      const { angle } = orientHeroTowardsPoint(targetWorldX, targetWorldY);
+      hero.isMoving = false;
+      hero.state = "attack";
+      hero.frameIndex = 0;
+      hero.frameTimer = 0;
+      hero.animKey = "attackDown";
+
+      const length = 265;
+      const endX = hero.x + Math.cos(angle) * length;
+      const endY = hero.y + Math.sin(angle) * length;
+      const midX = hero.x + Math.cos(angle) * (length * 0.55);
+      const midY = hero.y + Math.sin(angle) * (length * 0.55);
+
+      activeFissures.push({
+        startX: hero.x,
+        startY: hero.y,
+        midX,
+        midY,
+        endX,
+        endY,
+        angle,
+        timer: 3.2,
+        erupted: false
+      });
+
+      hero.qRecastTimer = 3.0;
+      document.getElementById("slot-Q").classList.add("ready-recast");
+      document.getElementById("sub-Q").textContent = "SZARPNIĘCIE";
+      camera.shake = 8;
+      SoundFX.playEarthCrack();
+
+      const qDmg = Math.round(hero.baseDamage * 1.35 + 15);
+      for (const ent of COMBAT_ENTITIES) {
+        if (!ent.alive) continue;
+        // Odległość od odcinka szczeliny
+        const d1 = Math.hypot(ent.x - midX, ent.y - midY);
+        const d2 = Math.hypot(ent.x - endX, ent.y - endY);
+        if (d1 <= 115 || d2 <= 115) {
+          ent.slowTimer = 3.5; // Spowolnienie 40%
+          dealDamageToEntity(ent, qDmg, 28, "[SPOWOLNIENIE 40%]");
+        }
+      }
+
+      hero.rage = Math.min(hero.maxRage, hero.rage + 12);
+      updateHudOrbs();
+    }
+
+    // [W] DŁUG KRWI (CD: 10s — Krwawa aura na 4s redukująca obrażenia i wybuchająca falą leczącą Krew)
+    function castSkillW() {
+      // Jeśli aura jest już aktywna, ponowne W detonuje ją natychmiast!
+      if (hero.wActiveTimer > 0) {
+        detonateBloodDebt();
+        return;
+      }
+      if (hero.cd.W > 0) return;
+
+      hero.wActiveTimer = 4.0;
+      hero.wStoredDamage = 0;
+      hero.cd.W = 10.0;
+      SoundFX.playSwing(160);
+      spawnFloatingText(hero.x, hero.y - 160, "DŁUG KRWI AKTYWNY!", "#ff4d58", 17, false);
+    }
+
+    function detonateBloodDebt() {
+      hero.wActiveTimer = 0;
+      hero.shockwaveRadius = 22;
+      hero.shockwaveAlpha = 1.0;
+      hero.shockwaveColor = "235, 45, 55";
+      camera.shake = 11;
+      SoundFX.playEarthCrack();
+
+      const explosionDmg = Math.round(hero.baseDamage * 1.40 + hero.wStoredDamage * 1.5 + 22);
+      let hitTargets = 0;
+      for (const ent of COMBAT_ENTITIES) {
+        if (!ent.alive) continue;
+        if (Math.hypot(ent.x - hero.x, ent.y - hero.y) <= 210) {
+          dealDamageToEntity(ent, explosionDmg, 30, "[WYBUCH KRWI]");
+          hitTargets++;
+        }
+      }
+
+      const healAmount = Math.round(65 + hitTargets * 35 + hero.wStoredDamage * 0.6);
+      hero.hp = Math.min(hero.maxHp, hero.hp + healAmount);
+      spawnFloatingText(hero.x, hero.y - 140, `+${healAmount} KRWI`, "#55ef88", 19, true);
+      updateHudOrbs();
+    }
+
+    // [E] TARAN PÓŁNOCY (Koszt: 25 Szału, CD: 8s — Szarża spychająca wrogów; wbity w mur = WALL SLAM! +50% obrażeń i Stun 2s)
+    function castSkillE(targetWorldX, targetWorldY) {
+      if (hero.cd.E > 0 || hero.state === "charge") return;
+      if (hero.rage < 25) {
+        spawnFloatingText(hero.x, hero.y - 150, "BRAK SZAŁU (25)!", "#ff8833", 16, false);
+        return;
+      }
+
+      const { dx, dy } = orientHeroTowardsPoint(targetWorldX, targetWorldY);
+      const dist = Math.max(1, Math.hypot(dx, dy));
+      hero.rage -= 25;
+      hero.cd.E = 8.0;
+      hero.isMoving = false;
+      hero.state = "charge";
+      hero.chargeTimer = 0.36;
+      hero.chargeDirX = dx / dist;
+      hero.chargeDirY = dy / dist;
+
+      SoundFX.playSwing(190);
+      updateHudOrbs();
+    }
+
+    // [R] KRĄG POJEDYNKU / ARENA ŁAŃCUCHÓW (Koszt: 50 Szału, CD: 18s — 7s arena łańcuchów + widmowe młoty przodków 0.4s po uderzeniu)
+    function castSkillR() {
+      if (hero.cd.R > 0) return;
+      if (hero.rage < 50) {
+        spawnFloatingText(hero.x, hero.y - 150, "BRAK SZAŁU (50)!", "#ff8833", 16, false);
+        return;
+      }
+
+      hero.rage -= 50;
+      hero.cd.R = 18.0;
+      activeChainArena = {
+        x: hero.x,
+        y: hero.y,
+        radius: 235,
+        timer: 7.0
+      };
+
+      camera.shake = 14;
+      SoundFX.playEarthCrack();
+      spawnFloatingText(hero.x, hero.y - 165, "ARENA ŁAŃCUCHÓW!", "#ffd866", 20, true);
+
+      // Inicjalne uderzenie proporca w ziemię
+      const bannerDmg = Math.round(hero.baseDamage * 1.50 + 30);
+      for (const ent of COMBAT_ENTITIES) {
+        if (!ent.alive) continue;
+        if (Math.hypot(ent.x - hero.x, ent.y - hero.y) <= 235) {
+          dealDamageToEntity(ent, bannerDmg, 35, "[PROPORZEC R]");
+        }
+      }
+      updateHudOrbs();
+    }
+
+    // [SPACJA] Ciężki Przeskok Bojowy
+    function triggerCombatLeap(targetWorldX, targetWorldY) {
+      if (hero.cd.SPACE > 0 || hero.state === "leap") return;
+
+      const { dx, dy } = orientHeroTowardsPoint(targetWorldX, targetWorldY);
       const rawDist = Math.hypot(dx, dy);
       if (rawDist < 20) return;
 
@@ -1608,8 +2254,6 @@
       const dist = Math.min(maxLeap, rawDist);
       const dirX = dx / rawDist;
       const dirY = dy / rawDist;
-
-      selectWalkAnimationFromVector(dirX, dirY);
 
       let landX = hero.x;
       let landY = hero.y;
@@ -1630,30 +2274,8 @@
       hero.leapEndX = landX;
       hero.leapEndY = landY;
       hero.leapTimer = hero.leapDuration;
-      hero.leapCd = 4.0;
-      SoundFX.playSwing();
-    }
-
-    function toggleUpperDiagonalMode() {
-      upperDiagonalMode = upperDiagonalMode === "BACK" ? "PROFILE" : "BACK";
-      const btn = document.getElementById("btn-f3-toggle");
-      if (upperDiagonalMode === "BACK") {
-        btn.textContent = "Tryb Skosów Górnych [F3]: PLECY (Góra)";
-        btn.classList.add("active");
-      } else {
-        btn.textContent = "Tryb Skosów Górnych [F3]: PROFIL (Prawo-Lewo)";
-        btn.classList.remove("active");
-      }
-      if (hero.isMoving) {
-        const tag = selectWalkAnimationFromVector(hero.targetX - hero.x, hero.targetY - hero.y);
-        document.getElementById("current-anim-tag").textContent = tag;
-      }
-    }
-
-    function toggleNavMeshOverlay() {
-      showNavMesh = !showNavMesh;
-      document.getElementById("btn-f2-toggle").classList.toggle("active", showNavMesh);
-      document.getElementById("navmesh-badge").style.display = showNavMesh ? "block" : "none";
+      hero.cd.SPACE = 4.5;
+      SoundFX.playSwing(230);
     }
 
     function updateHudOrbs() {
@@ -1664,8 +2286,163 @@
       const ragePct = Math.max(0, Math.min(100, (hero.rage / hero.maxRage) * 100));
       document.getElementById("rage-fill").style.height = ragePct + "%";
       document.getElementById("rage-text").textContent = `${Math.floor(hero.rage)}/${hero.maxRage}`;
-      document.getElementById("potion-1-charges").textContent = String(hero.potions);
+
+      document.getElementById("potion-1-charges").textContent = String(hero.bloodPotions);
+      document.getElementById("potion-2-charges").textContent = String(hero.soulPotions);
     }
+
+    // ============================================================================
+    // DYNAMICZNE TOOLTIPY UMIEJĘTNOŚCI (Z WZORAMI PO PRZYTRZYMANIU [ALT])
+    // ============================================================================
+    let hoveredSlotKey = null;
+
+    function updateSkillTooltipContent() {
+      const tt = document.getElementById("skill-tooltip");
+      if (!hoveredSlotKey) {
+        tt.style.display = "none";
+        return;
+      }
+
+      const atk = hero.baseDamage;
+      const q1Val = Math.round(atk * 1.35 + 15);
+      const q2Val = Math.round(atk * 1.15 + 18);
+      const wVal = Math.round(atk * 1.40 + 22);
+      const eVal = Math.round(atk * 1.30 + 20);
+      const eWallVal = Math.round(eVal * 1.50);
+      const rVal = Math.round(atk * 1.50 + 30);
+      const rHammerVal = Math.round(atk * 0.85 + 14);
+      const leapVal = Math.round(atk * 1.20 + 16);
+
+      const specs = {
+        Q: {
+          title: "ROZPRUCIE BRUKU [Q]",
+          cost: "CD: 6.0s | Faza 2: 20 Szału",
+          desc: `<b>Faza 1:</b> Rozpruwa kamienny bruk przed Wikingiem, zadając <b>${q1Val}</b> obrażeń i spowalniając wrogów o 40% na 3.5s.<br><b>Faza 2 (Szarpnięcie):</b> Ponowne użycie w ciągu 3s wyrywa głazy i przyciąga trafionych wrogów pod stopy Wikinga, zadając <b>${q2Val}</b> obrażeń.`,
+          math: isAltPressed
+            ? `Wzór [ALT]: Faza 1 = (1.35 × ${atk} + 15) = ${q1Val} | Faza 2 = (1.15 × ${atk} + 18) = ${q2Val}`
+            : `Przytrzymaj [ALT], aby wyświetlić dokładne przeliczniki matematyczne.`
+        },
+        W: {
+          title: "DŁUG KRWI [W]",
+          cost: "Czas odnowienia: 10.0s",
+          desc: `Otacza Wikinga krwawą aurą runiczną na 4s (redukcja obrażeń o 55%). Po 4s lub ponownym wciśnięciu [W] aura wybucha, zadając <b>${wVal}</b> (+150% zatrzymanych obrażeń) i lecząc Krew.`,
+          math: isAltPressed
+            ? `Wzór [ALT]: Wybuch = (1.40 × ${atk} + 22 + 1.5 × ZatrzymaneObrażenia)`
+            : `Przytrzymaj [ALT], aby wyświetlić dokładne przeliczniki matematyczne.`
+        },
+        E: {
+          title: "TARAN PÓŁNOCY [E]",
+          cost: "Koszt: 25 Szału | CD: 8.0s",
+          desc: `Wiking szarżuje przed siebie, spychając wrogów na swojej drodze i zadając <b>${eVal}</b> obrażeń. Wbicie wroga w mur lub przeszkodę wywołuje <b>WALL SLAM!</b> (<b>${eWallVal}</b> obrażeń oraz ogłuszenie na 2.0s).`,
+          math: isAltPressed
+            ? `Wzór [ALT]: Szarża = (1.30 × ${atk} + 20) = ${eVal} | Wall Slam (+50%) = ${eWallVal}`
+            : `Przytrzymaj [ALT], aby wyświetlić dokładne przeliczniki matematyczne.`
+        },
+        R: {
+          title: "KRĄG POJEDYNKU — ARENA ŁAŃCUCHÓW [R]",
+          cost: "Koszt: 50 Szału | CD: 18.0s",
+          desc: `Wbija proporzec Przodków, zamykając okolicę na 7s kręgiem runicznych łańcuchów (<b>${rVal}</b> obrażeń). Każde trafienie wroga wewnątrz kręgu przywołuje z nieba widmowy młot uderzający 0.4s później za <b>${rHammerVal}</b> obrażeń!`,
+          math: isAltPressed
+            ? `Wzór [ALT]: Proporzec = (1.50 × ${atk} + 30) = ${rVal} | Młot Przodków = (0.85 × ${atk} + 14) = ${rHammerVal}`
+            : `Przytrzymaj [ALT], aby wyświetlić dokładne przeliczniki matematyczne.`
+        },
+        PPM: {
+          title: "ROZPŁATANIE TOPOREM [PPM / SHIFT+LPM]",
+          cost: "Generuje: +14 Szału przy trafieniu",
+          desc: `Szeroki, mięsisty zamach toporem w kierunku kursora zadający <b>${atk}</b> obrażeń fizycznych (Szansa na Krytyk 200%: <b>${Math.round(hero.critChance * 100)}%</b>).`,
+          math: isAltPressed
+            ? `Wzór [ALT]: Obrażenia = 1.00 × ${atk} (Krytyk = 2.00 × ${atk} = ${atk * 2})`
+            : `Przytrzymaj [ALT], aby wyświetlić dokładne przeliczniki matematyczne.`
+        },
+        SPACE: {
+          title: "PRZESKOK BOJOWY [SPACJA]",
+          cost: "Czas odnowienia: 4.5s",
+          desc: `Ciężki skok nad przeszkodami w stronę kursora. Lądowanie wstrząsa ziemią i zadaje <b>${leapVal}</b> obrażeń okolicznym wrogom.`,
+          math: isAltPressed
+            ? `Wzór [ALT]: Wstrząs = (1.20 × ${atk} + 16) = ${leapVal}`
+            : `Przytrzymaj [ALT], aby wyświetlić dokładne przeliczniki matematyczne.`
+        },
+        LPM: {
+          title: "RUCH I INTERAKCJA [LPM]",
+          cost: "8 Kierunków + Ślizg po NavMesh",
+          desc: `Przemieszcza Wikinga w wybrane miejsce lub rozpoczyna rozmowę z Kowalem Borgarem, Strażnikiem Vornem oraz Kamieniem Filozofów.`,
+          math: `Wskazówka: Zatrzymaj się i wciśnij SHIFT + LPM, aby zaatakować w miejscu.`
+        },
+        POTION1: {
+          title: "MIKSTURA KRWI [1]",
+          cost: `Pozostałe ładunki: ${hero.bloodPotions}/3`,
+          desc: `Natychmiastowo przywraca <b>220</b> punktów Krwi.`,
+          math: `Odnawia się przy Kamieniu Filozofów w centrum placu.`
+        },
+        POTION2: {
+          title: "ELIKSIR DUSZ [2]",
+          cost: `Pozostałe ładunki: ${hero.soulPotions}/2`,
+          desc: `Błyskawicznie nasyca Wikinga zimnym płomieniem dusz, przywracając <b>+50 Szału</b>.`,
+          math: `Pozwala natychmiast wykonać kombinację Rozprucia [Q] lub Areny [R].`
+        }
+      };
+
+      const info = specs[hoveredSlotKey];
+      if (!info) {
+        tt.style.display = "none";
+        return;
+      }
+
+      document.getElementById("tt-title").textContent = info.title;
+      document.getElementById("tt-cost").textContent = info.cost;
+      document.getElementById("tt-desc").innerHTML = info.desc;
+      document.getElementById("tt-math").textContent = info.math;
+      tt.style.display = "block";
+    }
+
+    document.querySelectorAll("[data-tt]").forEach((el) => {
+      el.addEventListener("mouseenter", () => {
+        hoveredSlotKey = el.getAttribute("data-tt");
+        updateSkillTooltipContent();
+      });
+      el.addEventListener("mouseleave", () => {
+        hoveredSlotKey = null;
+        updateSkillTooltipContent();
+      });
+    });
+
+    // ============================================================================
+    // KUŹNIA BORGARA (HARTOWANIE W CZYNACH)
+    // ============================================================================
+    function updateForgeModalUI() {
+      const capped = Math.min(5, hero.deedHitsCount);
+      document.getElementById("forge-weapon-name").textContent = `Topór Popielnej Przystani (+${hero.weaponUpgradeLevel})`;
+      document.getElementById("forge-weapon-stats").textContent =
+        `Obrażenia Bazowe: ${hero.baseDamage} | Szansa na Krytyk: ${Math.round(hero.critChance * 100)}% (200% obrażeń)`;
+      document.getElementById("forge-deed-label").textContent =
+        hero.weaponUpgradeLevel > 0
+          ? `Topór został już zahartowany w posoce! (${capped} / 5 trafień)`
+          : `Czyn Bojowy: Zadaj 5 trafień wrogom lub Kukle Bojowej (${capped} / 5)`;
+      document.getElementById("forge-deed-fill").style.width = `${(capped / 5) * 100}%`;
+    }
+
+    document.getElementById("btn-forge-upgrade").addEventListener("click", () => {
+      if (hero.weaponUpgradeLevel >= 1) {
+        spawnFloatingText(hero.x, hero.y - 150, "TOPÓR JUŻ ZAHARTOWANY!", "#ffd866", 17, false);
+        return;
+      }
+      if (hero.deedHitsCount < 5) {
+        spawnFloatingText(hero.x, hero.y - 150, `WYMAGANE 5 TRAFIEŃ (${hero.deedHitsCount}/5)!`, "#ff6666", 17, false);
+        return;
+      }
+      hero.weaponUpgradeLevel = 1;
+      hero.baseDamage += 12;
+      hero.critChance = Math.min(0.65, hero.critChance + 0.08);
+      document.getElementById("q-borgar").classList.add("done");
+      document.getElementById("hud-weapon-badge").textContent = "POZIOM 1 — WIKING (TOPÓR +1)";
+      SoundFX.playHit(true);
+      spawnFloatingText(hero.x, hero.y - 165, "TOPÓR ZAHARTOWANY (+12 ATK)!", "#ffd866", 20, true);
+      updateForgeModalUI();
+    });
+
+    document.getElementById("forge-close").addEventListener("click", () => {
+      document.getElementById("forge-modal").style.display = "none";
+    });
 
     // ============================================================================
     // EFEKTY ATMOSFERYCZNE (DESZCZ, ISKRY Z KUŹNI, BŁĘKITNE OGNIKI DUSZ)
@@ -1675,7 +2452,7 @@
     const soulWisps = [];
 
     function initAtmosphereParticles() {
-      for (let i = 0; i < 240; i++) {
+      for (let i = 0; i < 230; i++) {
         rainDrops.push({
           x: Math.random() * WORLD_W,
           y: Math.random() * WORLD_H,
@@ -1684,25 +2461,23 @@
         });
       }
 
-      // Iskry nad piecem kuźni (po prawej stronie)
       for (let i = 0; i < 42; i++) {
         forgeSparks.push({
-          x: 2130 + (Math.random() - 0.5) * 150,
-          y: 710 + (Math.random() - 0.5) * 90,
-          vy: -35 - Math.random() * 55,
+          x: 0.83 * WORLD_W + (Math.random() - 0.5) * 130,
+          y: 0.54 * WORLD_H + (Math.random() - 0.5) * 80,
+          vy: -38 - Math.random() * 55,
           vx: (Math.random() - 0.5) * 28,
           size: 1.8 + Math.random() * 2.4,
           alpha: 0.4 + Math.random() * 0.6
         });
       }
 
-      // Zimne błękitne ogniki dusz przy koksownikach, kręgu runicznym i moście
       const brazierSpots = [
-        { x: 1280, y: 825, r: 165 }, // Krąg runiczny wokół Kamienia Filozofów
-        { x: 1055, y: 540, r: 45 },  // Lewy koksownik przy schodach
-        { x: 1475, y: 540, r: 45 },  // Prawy koksownik przy schodach
-        { x: 810, y: 740, r: 45 },   // Koksownik przy górnym pomoście
-        { x: 810, y: 1060, r: 45 }   // Koksownik przy dolnym pomoście
+        { x: 0.485 * WORLD_W, y: 0.505 * WORLD_H, r: 155 },
+        { x: 0.46 * WORLD_W, y: 0.34 * WORLD_H, r: 42 },
+        { x: 0.55 * WORLD_W, y: 0.31 * WORLD_H, r: 42 },
+        { x: 0.29 * WORLD_W, y: 0.47 * WORLD_H, r: 42 },
+        { x: 0.38 * WORLD_W, y: 0.73 * WORLD_H, r: 42 }
       ];
 
       for (const spot of brazierSpots) {
@@ -1724,18 +2499,24 @@
     }
 
     // ============================================================================
-    // OBSŁUGA MYSZY I KLAWIATURY
+    // OBSŁUGA MYSZY, KLAWIATURY ORAZ EDYTORA KALIBRACJI [F4]
     // ============================================================================
     const canvas = document.getElementById("game-canvas");
     const ctx = canvas.getContext("2d");
 
-    let mouseScreenX = window.innerWidth * 0.5;
-    let mouseScreenY = window.innerHeight * 0.5;
-    let mouseWorldX = hero.x;
-    let mouseWorldY = hero.y;
+    const camera = { x: 0, y: 0, zoom: 1, shake: 0 };
+
+    let showNavMesh = false;
+    let editorMode = false;
+    let draggedHandle = null;
+    let isAltPressed = false;
+    let isShiftPressed = false;
     let isLeftDown = false;
     let isRightDown = false;
+    let mouseWorldX = hero.x;
+    let mouseWorldY = hero.y;
     let hoveredObject = null;
+    let hoveredEnemy = null;
     let pendingInteractionObj = null;
 
     function screenToWorld(sx, sy) {
@@ -1746,11 +2527,22 @@
     }
 
     function updateMouseCoordinates(clientX, clientY) {
-      mouseScreenX = clientX;
-      mouseScreenY = clientY;
       const wPt = screenToWorld(clientX, clientY);
       mouseWorldX = wPt.x;
       mouseWorldY = wPt.y;
+
+      // Jeśli przeciągamy wierzchołek NavMesh lub NPC w trybie Edytora [F4]
+      if (editorMode && draggedHandle) {
+        if (draggedHandle.type === "vertex") {
+          WALKABLE_POLYGONS[draggedHandle.polyIdx][draggedHandle.ptIdx].x = Math.round(mouseWorldX);
+          WALKABLE_POLYGONS[draggedHandle.polyIdx][draggedHandle.ptIdx].y = Math.round(mouseWorldY);
+        } else if (draggedHandle.type === "npc") {
+          WORLD_OBJECTS[draggedHandle.objIdx].x = Math.round(mouseWorldX);
+          WORLD_OBJECTS[draggedHandle.objIdx].y = Math.round(mouseWorldY);
+        }
+        saveCalibrationToStorage();
+        return;
+      }
 
       hoveredObject = null;
       for (const obj of WORLD_OBJECTS) {
@@ -1758,16 +2550,26 @@
         const w = (sprite ? sprite.width : 120) * obj.scale;
         const h = (sprite ? sprite.height : 190) * obj.scale;
         if (
-          mouseWorldX >= obj.x - w * 0.42 &&
-          mouseWorldX <= obj.x + w * 0.42 &&
-          mouseWorldY >= obj.y - h * 0.92 &&
-          mouseWorldY <= obj.y + 15
+          mouseWorldX >= obj.x - w * 0.44 &&
+          mouseWorldX <= obj.x + w * 0.44 &&
+          mouseWorldY >= obj.y - h * 0.94 &&
+          mouseWorldY <= obj.y + 18
         ) {
           hoveredObject = obj;
           break;
         }
       }
-      canvas.style.cursor = hoveredObject ? "pointer" : "crosshair";
+
+      hoveredEnemy = null;
+      for (const ent of COMBAT_ENTITIES) {
+        if (!ent.alive) continue;
+        if (Math.hypot(mouseWorldX - ent.x, mouseWorldY - (ent.y - 65)) <= 65) {
+          hoveredEnemy = ent;
+          break;
+        }
+      }
+
+      canvas.style.cursor = (hoveredObject || hoveredEnemy) ? "pointer" : "crosshair";
     }
 
     window.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -1778,18 +2580,50 @@
       isShiftPressed = !!e.shiftKey;
       updateMouseCoordinates(e.clientX, e.clientY);
 
+      // Obsługa Edytora Kalibracji na żywo [F4]
+      if (editorMode && e.button === 0) {
+        for (let i = 0; i < WORLD_OBJECTS.length; i++) {
+          const o = WORLD_OBJECTS[i];
+          if (Math.hypot(mouseWorldX - o.x, mouseWorldY - o.y) <= 28) {
+            draggedHandle = { type: "npc", objIdx: i };
+            return;
+          }
+        }
+        for (let p = 0; p < WALKABLE_POLYGONS.length; p++) {
+          for (let v = 0; v < WALKABLE_POLYGONS[p].length; v++) {
+            const pt = WALKABLE_POLYGONS[p][v];
+            if (Math.hypot(mouseWorldX - pt.x, mouseWorldY - pt.y) <= 22) {
+              draggedHandle = { type: "vertex", polyIdx: p, ptIdx: v };
+              return;
+            }
+          }
+        }
+      }
+
       if (e.button === 2 || (e.button === 0 && e.shiftKey)) {
         isRightDown = true;
-        triggerHeroAttack(mouseWorldX, mouseWorldY);
+        triggerBasicAttack(mouseWorldX, mouseWorldY);
         return;
       }
 
       if (e.button === 0) {
         isLeftDown = true;
+        if (hoveredEnemy) {
+          const d = Math.hypot(hoveredEnemy.x - hero.x, hoveredEnemy.y - hero.y);
+          if (d <= 145) {
+            triggerBasicAttack(hoveredEnemy.x, hoveredEnemy.y);
+          } else {
+            hero.targetX = hoveredEnemy.x;
+            hero.targetY = hoveredEnemy.y + 40;
+            hero.isMoving = true;
+          }
+          return;
+        }
+
         if (hoveredObject) {
           pendingInteractionObj = hoveredObject;
           hero.targetX = hoveredObject.x;
-          hero.targetY = hoveredObject.y + 72;
+          hero.targetY = hoveredObject.y + 62;
           hero.isMoving = true;
         } else {
           pendingInteractionObj = null;
@@ -1808,11 +2642,13 @@
       isShiftPressed = !!e.shiftKey;
       updateMouseCoordinates(e.clientX, e.clientY);
 
+      if (draggedHandle) return;
+
       if (isRightDown || (isLeftDown && isShiftPressed)) {
         if (hero.state !== "attack") {
-          triggerHeroAttack(mouseWorldX, mouseWorldY);
+          triggerBasicAttack(mouseWorldX, mouseWorldY);
         }
-      } else if (isLeftDown && !pendingInteractionObj && hero.state !== "leap") {
+      } else if (isLeftDown && !pendingInteractionObj && hero.state !== "leap" && hero.state !== "charge") {
         hero.targetX = mouseWorldX;
         hero.targetY = mouseWorldY;
         hero.isMoving = true;
@@ -1820,14 +2656,36 @@
     });
 
     window.addEventListener("mouseup", (e) => {
-      if (e.button === 0) isLeftDown = false;
+      if (e.button === 0) {
+        isLeftDown = false;
+        draggedHandle = null;
+      }
       if (e.button === 2) isRightDown = false;
     });
+
+    function toggleDebugDrawer() {
+      const drawer = document.getElementById("debug-drawer");
+      drawer.classList.toggle("open");
+    }
+
+    function toggleNavMeshOverlay() {
+      showNavMesh = !showNavMesh;
+      document.getElementById("btn-f2-toggle").classList.toggle("active", showNavMesh);
+    }
+
+    function toggleEditorMode() {
+      editorMode = !editorMode;
+      if (editorMode) showNavMesh = true;
+      document.getElementById("btn-f2-toggle").classList.toggle("active", showNavMesh);
+      document.getElementById("btn-f4-toggle").classList.toggle("active", editorMode);
+      document.getElementById("editor-badge").style.display = editorMode ? "block" : "none";
+    }
 
     window.addEventListener("keydown", (e) => {
       if (e.key === "Alt") {
         e.preventDefault();
         isAltPressed = true;
+        updateSkillTooltipContent();
       }
       if (e.key === "Shift") isShiftPressed = true;
 
@@ -1837,77 +2695,211 @@
       }
       if (e.key === "F3") {
         e.preventDefault();
-        toggleUpperDiagonalMode();
+        toggleDebugDrawer();
+      }
+      if (e.key === "F4") {
+        e.preventDefault();
+        toggleEditorMode();
       }
       if (e.code === "Space") {
         e.preventDefault();
         triggerCombatLeap(mouseWorldX, mouseWorldY);
       }
+
+      const lower = e.key.toLowerCase();
+      if (lower === "q") castSkillQ(mouseWorldX, mouseWorldY);
+      if (lower === "w") castSkillW();
+      if (lower === "e") castSkillE(mouseWorldX, mouseWorldY);
+      if (lower === "r") castSkillR();
+
       if (e.key === "1") {
-        if (hero.potions > 0) {
-          hero.potions--;
-          hero.hp = hero.maxHp;
+        if (hero.bloodPotions > 0 && hero.hp < hero.maxHp) {
+          hero.bloodPotions--;
+          hero.hp = Math.min(hero.maxHp, hero.hp + 220);
+          spawnFloatingText(hero.x, hero.y - 140, "+220 KRWI", "#55ef88", 18, false);
+          updateHudOrbs();
+        }
+      }
+      if (e.key === "2") {
+        if (hero.soulPotions > 0 && hero.rage < hero.maxRage) {
+          hero.soulPotions--;
+          hero.rage = Math.min(hero.maxRage, hero.rage + 50);
+          spawnFloatingText(hero.x, hero.y - 140, "+50 SZAŁU", "#7ce8ff", 18, false);
           updateHudOrbs();
         }
       }
       if (e.key === "Escape") {
         document.getElementById("dialogue-modal").style.display = "none";
-      }
-      if (["q", "w", "e", "r"].includes(e.key.toLowerCase())) {
-        triggerHeroAttack(mouseWorldX, mouseWorldY);
+        document.getElementById("forge-modal").style.display = "none";
       }
     });
 
     window.addEventListener("keyup", (e) => {
-      if (e.key === "Alt") isAltPressed = false;
+      if (e.key === "Alt") {
+        isAltPressed = false;
+        updateSkillTooltipContent();
+      }
       if (e.key === "Shift") isShiftPressed = false;
     });
 
-    window.addEventListener("blur", () => {
-      isAltPressed = false;
-      isShiftPressed = false;
-      isLeftDown = false;
-      isRightDown = false;
-    });
-
-    document.getElementById("btn-f3-toggle").addEventListener("click", toggleUpperDiagonalMode);
+    document.getElementById("debug-toggle-btn").addEventListener("click", toggleDebugDrawer);
     document.getElementById("btn-f2-toggle").addEventListener("click", toggleNavMeshOverlay);
+    document.getElementById("btn-f4-toggle").addEventListener("click", toggleEditorMode);
+    document.getElementById("btn-reset-calib").addEventListener("click", resetCalibration);
+
+    document.getElementById("slot-Q").addEventListener("click", () => castSkillQ(mouseWorldX, mouseWorldY));
+    document.getElementById("slot-W").addEventListener("click", () => castSkillW());
+    document.getElementById("slot-E").addEventListener("click", () => castSkillE(mouseWorldX, mouseWorldY));
+    document.getElementById("slot-R").addEventListener("click", () => castSkillR());
+    document.getElementById("slot-ppm").addEventListener("click", () => triggerBasicAttack(mouseWorldX, mouseWorldY));
+    document.getElementById("slot-space").addEventListener("click", () => triggerCombatLeap(mouseWorldX, mouseWorldY));
+
     document.getElementById("dialogue-close").addEventListener("click", () => {
       document.getElementById("dialogue-modal").style.display = "none";
     });
-    document.getElementById("slot-space").addEventListener("click", () => {
-      triggerCombatLeap(mouseWorldX, mouseWorldY);
-    });
 
-    function openObjectDialogue(obj) {
-      if (obj.id === "monolith") document.getElementById("q-monolith").classList.add("done");
-      if (obj.id === "borgar") document.getElementById("q-borgar").classList.add("done");
-      if (obj.id === "vorn") document.getElementById("q-vorn").classList.add("done");
-
+    function openObjectInteraction(obj) {
+      if (obj.id === "monolith") {
+        document.getElementById("q-monolith").classList.add("done");
+        hero.hp = hero.maxHp;
+        hero.bloodPotions = 3;
+        hero.soulPotions = 2;
+        updateHudOrbs();
+      }
+      if (obj.isForgeNpc) {
+        updateForgeModalUI();
+        document.getElementById("forge-modal").style.display = "block";
+        return;
+      }
       document.getElementById("dialogue-speaker").textContent = obj.name;
       document.getElementById("dialogue-text").textContent = obj.dialogue;
       document.getElementById("dialogue-modal").style.display = "block";
     }
 
     // ============================================================================
-    // AKTUALIZACJA LOGIKI GRY I KAMERY
+    // GŁÓWNA AKTUALIZACJA LOGIKI GRY, FIZYKI I AI
     // ============================================================================
+    function updateCooldownUI(key, maxCd) {
+      const val = hero.cd[key];
+      const el = document.getElementById("cd-" + key);
+      if (!el) return;
+      if (val > 0) {
+        el.style.height = Math.min(100, (val / maxCd) * 100) + "%";
+        el.textContent = val.toFixed(1);
+      } else {
+        el.style.height = "0%";
+        el.textContent = "";
+      }
+    }
+
     function updateGame(dt, elapsed) {
-      // Cooldown przeskoku bojowego
-      if (hero.leapCd > 0) {
-        hero.leapCd = Math.max(0, hero.leapCd - dt);
-        const cdEl = document.getElementById("cd-SPACE");
-        if (hero.leapCd > 0) {
-          cdEl.style.height = (hero.leapCd / 4.0) * 100 + "%";
-          cdEl.textContent = hero.leapCd.toFixed(1);
-        } else {
-          cdEl.style.height = "0%";
-          cdEl.textContent = "";
+      if (hitStopTimer > 0) {
+        hitStopTimer = Math.max(0, hitStopTimer - dt);
+        return;
+      }
+
+      // 1. Aktualizacja Cooldownów i czasów trwania umiejętności
+      for (const k of ["Q", "W", "E", "R", "SPACE"]) {
+        if (hero.cd[k] > 0) hero.cd[k] = Math.max(0, hero.cd[k] - dt);
+      }
+      updateCooldownUI("Q", 6.0);
+      updateCooldownUI("W", 10.0);
+      updateCooldownUI("E", 8.0);
+      updateCooldownUI("R", 18.0);
+      updateCooldownUI("SPACE", 4.5);
+
+      if (hero.qRecastTimer > 0) {
+        hero.qRecastTimer = Math.max(0, hero.qRecastTimer - dt);
+        if (hero.qRecastTimer <= 0) {
+          hero.cd.Q = 5.0;
+          document.getElementById("slot-Q").classList.remove("ready-recast");
+          document.getElementById("sub-Q").textContent = "ROZPRUCIE";
         }
       }
 
-      // 1. Stan Przeskoku Bojowego (SPACJA)
-      if (hero.state === "leap") {
+      if (hero.wActiveTimer > 0) {
+        hero.wActiveTimer -= dt;
+        if (hero.wActiveTimer <= 0) {
+          detonateBloodDebt();
+        }
+      }
+
+      for (let i = activeFissures.length - 1; i >= 0; i--) {
+        activeFissures[i].timer -= dt;
+        if (activeFissures[i].timer <= 0) activeFissures.splice(i, 1);
+      }
+
+      if (activeChainArena) {
+        activeChainArena.timer -= dt;
+        if (activeChainArena.timer <= 0) activeChainArena = null;
+      }
+
+      // Widmowe Młoty Przodków w Arenie Łańcuchów [R] (uderzają 0.4s po ataku Wikinga)
+      for (let i = pendingHammers.length - 1; i >= 0; i--) {
+        const hm = pendingHammers[i];
+        hm.delay -= dt;
+        if (hm.delay <= 0) {
+          camera.shake = 7;
+          SoundFX.playEarthCrack();
+          const hammerDmg = Math.round(hero.baseDamage * 0.85 + 14);
+          if (hm.targetEntity && hm.targetEntity.alive) {
+            dealDamageToEntity(hm.targetEntity, hammerDmg, 25, "[MŁOT PRZODKÓW]");
+          }
+          pendingHammers.splice(i, 1);
+        }
+      }
+
+      // 2. Stany Ruchu, Szarży [E], Skoku [SPACJA] i Chodzenia Wikinga
+      if (hero.state === "charge") {
+        hero.chargeTimer -= dt;
+        const chargeSpeed = 720;
+        const moveRes = moveEntityWithSlide(
+          hero.x,
+          hero.y,
+          hero.chargeDirX * chargeSpeed,
+          hero.chargeDirY * chargeSpeed,
+          dt
+        );
+        hero.x = moveRes.x;
+        hero.y = moveRes.y;
+
+        // Spychanie wrogów przed Taranem i sprawdzanie zderzenia z murem (WALL SLAM!)
+        for (const ent of COMBAT_ENTITIES) {
+          if (!ent.alive) continue;
+          const d = Math.hypot(ent.x - hero.x, ent.y - hero.y);
+          if (d <= 95) {
+            const pushRes = moveEntityWithSlide(
+              ent.x,
+              ent.y,
+              hero.chargeDirX * (chargeSpeed * 1.08),
+              hero.chargeDirY * (chargeSpeed * 1.08),
+              dt,
+              true
+            );
+            ent.x = pushRes.x;
+            ent.y = pushRes.y;
+
+            if (!ent.slammedThisCharge) {
+              ent.slammedThisCharge = true;
+              const baseChargeDmg = Math.round(hero.baseDamage * 1.30 + 20);
+              if (pushRes.hitWall || moveRes.hitWall) {
+                // WALL SLAM! (+50% obrażeń i ogłuszenie na 2s)
+                ent.stunTimer = 2.0;
+                camera.shake = 15;
+                SoundFX.playEarthCrack();
+                dealDamageToEntity(ent, Math.round(baseChargeDmg * 1.5), 60, "[WALL SLAM! +50%]");
+              } else {
+                dealDamageToEntity(ent, baseChargeDmg, 30, "[TARAN]");
+              }
+            }
+          }
+        }
+
+        if (hero.chargeTimer <= 0 || !moveRes.moved) {
+          hero.state = "idle";
+          COMBAT_ENTITIES.forEach((e) => { e.slammedThisCharge = false; });
+        }
+      } else if (hero.state === "leap") {
         hero.leapTimer -= dt;
         const t = 1 - Math.max(0, hero.leapTimer) / hero.leapDuration;
         hero.x = hero.leapStartX + (hero.leapEndX - hero.leapStartX) * t;
@@ -1915,14 +2907,21 @@
 
         if (hero.leapTimer <= 0) {
           hero.state = "idle";
-          camera.shake = 10;
+          camera.shake = 11;
           hero.shockwaveRadius = 18;
           hero.shockwaveAlpha = 1.0;
-          SoundFX.playLeapImpact();
+          hero.shockwaveColor = "124, 232, 255";
+          SoundFX.playEarthCrack();
+
+          const leapDmg = Math.round(hero.baseDamage * 1.20 + 16);
+          for (const ent of COMBAT_ENTITIES) {
+            if (!ent.alive) continue;
+            if (Math.hypot(ent.x - hero.x, ent.y - hero.y) <= 165) {
+              dealDamageToEntity(ent, leapDmg, 32, "[WSTRZĄS]");
+            }
+          }
         }
-      }
-      // 2. Stan Ataku (jednokrotne szybkie odtworzenie 12 klatek ataku)
-      else if (hero.state === "attack") {
+      } else if (hero.state === "attack") {
         const frames = GAME_ASSETS.anims[hero.animKey] || [];
         hero.frameTimer += dt;
         if (hero.frameTimer >= 1 / hero.attackFps) {
@@ -1931,15 +2930,13 @@
           if (hero.frameIndex >= frames.length) {
             hero.frameIndex = 0;
             if (isRightDown || (isLeftDown && isShiftPressed)) {
-              triggerHeroAttack(mouseWorldX, mouseWorldY);
+              triggerBasicAttack(mouseWorldX, mouseWorldY);
             } else {
               hero.state = hero.isMoving ? "walk" : "idle";
             }
           }
         }
-      }
-      // 3. Stan Ruchu i Chodzenia w 8 kierunkach
-      else if (hero.isMoving) {
+      } else if (hero.isMoving) {
         const dx = hero.targetX - hero.x;
         const dy = hero.targetY - hero.y;
         const dist = Math.hypot(dx, dy);
@@ -1950,29 +2947,45 @@
         ) {
           hero.isMoving = false;
           hero.state = "idle";
-          openObjectDialogue(pendingInteractionObj);
+          openObjectInteraction(pendingInteractionObj);
           pendingInteractionObj = null;
         } else if (dist > 6) {
           const dirX = dx / dist;
           const dirY = dy / dist;
-          const dirTag = selectWalkAnimationFromVector(dirX, dirY);
-          document.getElementById("current-anim-tag").textContent = dirTag;
 
-          const res = moveHeroWithSlide(hero.x, hero.y, dirX * hero.speed, dirY * hero.speed, dt);
+          // 8-kierunkowy wybór sektora z 15-stopniowym buforem histerezy
+          hero.sector = resolveSectorWithHysteresis(dirX, dirY, hero.sector, hero.state !== "walk");
+          const cfg = SECTOR_CONFIG[hero.sector];
+          hero.animKey = cfg.walkKey;
+          hero.idleKey = cfg.idleKey;
+          hero.flipX = cfg.flipX;
+          hero.leanDeg = cfg.leanDeg;
+          document.getElementById("current-anim-tag").textContent = `CHÓD: ${cfg.name}`;
+
+          const res = moveEntityWithSlide(hero.x, hero.y, dirX * hero.speed, dirY * hero.speed, dt);
           hero.x = res.x;
           hero.y = res.y;
 
           if (res.moved) {
             hero.state = "walk";
+            hero.walkTimer += dt * 11.5;
+
+            // Płynny cykl Ping-Pong po 16 wygładzonych środkowych klatkach wideo (zero szarpnięcia na pętli!)
             const frames = GAME_ASSETS.anims[hero.animKey] || [];
-            hero.frameTimer += dt;
-            if (hero.frameTimer >= 1 / hero.walkFps) {
-              hero.frameTimer = 0;
-              hero.frameIndex = frames.length ? (hero.frameIndex + 1) % frames.length : 0;
+            const maxIdx = Math.max(1, frames.length - 1);
+            hero.walkCyclePos += dt * hero.walkFps * hero.walkDirSign;
+            if (hero.walkCyclePos >= maxIdx) {
+              hero.walkCyclePos = maxIdx;
+              hero.walkDirSign = -1;
+            } else if (hero.walkCyclePos <= 0) {
+              hero.walkCyclePos = 0;
+              hero.walkDirSign = 1;
             }
+            hero.frameIndex = Math.round(hero.walkCyclePos);
+
             hero.stepSoundCooldown -= dt;
             if (hero.stepSoundCooldown <= 0) {
-              hero.stepSoundCooldown = 0.31;
+              hero.stepSoundCooldown = 0.30;
               SoundFX.playStep();
             }
           } else {
@@ -1982,41 +2995,88 @@
         } else {
           hero.isMoving = false;
           hero.state = "idle";
-          document.getElementById("current-anim-tag").textContent = "IDLE (STOJĄCY)";
+          document.getElementById("current-anim-tag").textContent = `IDLE: ${SECTOR_CONFIG[hero.sector].name}`;
         }
       } else {
         hero.state = "idle";
       }
 
-      // Zaliczanie zadania wejścia po północnych schodach na most
-      if (hero.y < 360) {
-        document.getElementById("q-stairs").classList.add("done");
+      // 3. AI Wrogów oraz fizyka Kukły Bojowej
+      for (const ent of COMBAT_ENTITIES) {
+        if (!ent.alive) continue;
+        if (ent.hitFlash > 0) ent.hitFlash = Math.max(0, ent.hitFlash - dt);
+        if (ent.stunTimer > 0) ent.stunTimer = Math.max(0, ent.stunTimer - dt);
+        if (ent.slowTimer > 0) ent.slowTimer = Math.max(0, ent.slowTimer - dt);
+        ent.tiltAngle *= Math.pow(0.05, dt);
+
+        if (ent.isDummy) continue;
+        if (ent.stunTimer > 0) continue;
+
+        const dx = hero.x - ent.x;
+        const dy = hero.y - ent.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist <= 390) {
+          if (dist > 68) {
+            const moveSpd = ent.speed * (ent.slowTimer > 0 ? 0.6 : 1.0);
+            const mRes = moveEntityWithSlide(ent.x, ent.y, (dx / dist) * moveSpd, (dy / dist) * moveSpd, dt, true);
+            ent.x = mRes.x;
+            ent.y = mRes.y;
+            ent.walkPhase += dt * 9.0;
+          } else {
+            ent.attackCd -= dt;
+            if (ent.attackCd <= 0) {
+              ent.attackCd = 1.45;
+              let incoming = ent.damage;
+              if (hero.wActiveTimer > 0) {
+                hero.wStoredDamage += incoming * 0.55;
+                incoming = Math.round(incoming * 0.45);
+              }
+              hero.hp = Math.max(0, hero.hp - incoming);
+              spawnFloatingText(hero.x, hero.y - 140, `-${incoming}`, "#ff4444", 16, false);
+              if (hero.hp <= 0) {
+                hero.hp = hero.maxHp;
+                hero.x = Math.round(0.485 * WORLD_W);
+                hero.y = Math.round(0.60 * WORLD_H);
+                hero.isMoving = false;
+              }
+              updateHudOrbs();
+            }
+          }
+        }
       }
 
-      // Aktualizacja nazwy strefy w prawym górnym rogu
+      // Aktualizacja latających tekstów obrażeń
+      for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ft.y += ft.vy * dt;
+        ft.vy *= 0.94;
+        ft.alpha -= dt * 0.95;
+        if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+      }
+
+      // Nazwa strefy w prawym górnym rogu
       const banner = document.getElementById("zone-name-banner");
-      if (hero.y < 430) banner.textContent = "PÓŁNOCNE SCHODY I MOST BASTIONU";
-      else if (hero.x > 1720) banner.textContent = "KUŹNIA BORGARA";
-      else if (hero.x < 850) banner.textContent = "ZACHODNIE POMOSTY PRZYSTANI";
+      if (hero.y < 0.22 * WORLD_H) banner.textContent = "GÓRNY DZIEDZINIEC BASTIONU";
+      else if (hero.y < 0.36 * WORLD_H) banner.textContent = "PÓŁNOCNE SCHODY TWIERDZY";
+      else if (hero.x > 0.68 * WORLD_W) banner.textContent = "WNĘKA KUŹNI BORGARA";
+      else if (hero.x < 0.33 * WORLD_W) banner.textContent = "ZACHODNIE POMOSTY PRZYSTANI";
       else banner.textContent = "KRĄG RUNICZNY — POPIELNA PRZYSTAŃ";
 
-      // Przezroczystość 42% X-Ray, gdy Wiking wejdzie za Kamień Filozofów
+      // Przezroczystość 42% X-Ray, gdy Wiking stanie za Kamieniem Filozofów
       for (const obj of WORLD_OBJECTS) {
         if (!obj.xrayWhenBehind) continue;
         const sprite = GAME_ASSETS.npc[obj.id];
         const w = (sprite ? sprite.width : 140) * obj.scale;
         const h = (sprite ? sprite.height : 280) * obj.scale;
-
         const isBehind =
           hero.y < obj.y - 4 &&
           hero.y > obj.y - h * 0.92 &&
           Math.abs(hero.x - obj.x) < w * 0.48;
-
         const targetAlpha = isBehind ? 0.42 : 1.0;
         obj.currentAlpha += (targetAlpha - obj.currentAlpha) * Math.min(1, dt * 10);
       }
 
-      // Zanikanie efektów cięcia, znacznika kliknięcia i fali uderzeniowej
       if (hero.slashAlpha > 0) hero.slashAlpha = Math.max(0, hero.slashAlpha - dt * 3.4);
       if (hero.clickMarkerAlpha > 0) hero.clickMarkerAlpha = Math.max(0, hero.clickMarkerAlpha - dt * 2.2);
       if (hero.shockwaveAlpha > 0) {
@@ -2024,7 +3084,7 @@
         hero.shockwaveAlpha = Math.max(0, hero.shockwaveAlpha - dt * 2.4);
       }
 
-      // Kamera płynnie podążająca za Wikingiem i zablokowana na krawędziach mapy (zero czarnych pasów!)
+      // Kamera przyspawana do Wikinga i zablokowana na granicach mapy
       const minZoomX = window.innerWidth / WORLD_W;
       const minZoomY = window.innerHeight / WORLD_H;
       camera.zoom = Math.max(1.0, minZoomX, minZoomY);
@@ -2032,36 +3092,27 @@
       const viewW = window.innerWidth / camera.zoom;
       const viewH = window.innerHeight / camera.zoom;
 
-      const desiredCamX = hero.x - viewW * 0.5;
-      const desiredCamY = hero.y - viewH * 0.54;
-
-      const clampedCamX = Math.max(0, Math.min(WORLD_W - viewW, desiredCamX));
-      const clampedCamY = Math.max(0, Math.min(WORLD_H - viewH, desiredCamY));
+      const clampedCamX = Math.max(0, Math.min(WORLD_W - viewW, hero.x - viewW * 0.5));
+      const clampedCamY = Math.max(0, Math.min(WORLD_H - viewH, hero.y - viewH * 0.54));
 
       camera.x += (clampedCamX - camera.x) * Math.min(1, dt * 12);
       camera.y += (clampedCamY - camera.y) * Math.min(1, dt * 12);
 
-      if (camera.shake > 0) {
-        camera.shake = Math.max(0, camera.shake - dt * 28);
-      }
+      if (camera.shake > 0) camera.shake = Math.max(0, camera.shake - dt * 28);
 
-      // Aktualizacja deszczu, iskier z kuźni i błękitnych ogników
       for (const r of rainDrops) {
         r.x -= dt * 190;
         r.y += dt * r.speed;
-        if (r.y > WORLD_H) {
-          r.y = -20;
-          r.x = Math.random() * WORLD_W;
-        }
+        if (r.y > WORLD_H) { r.y = -20; r.x = Math.random() * WORLD_W; }
         if (r.x < 0) r.x = WORLD_W;
       }
 
       for (const sp of forgeSparks) {
         sp.x += sp.vx * dt;
         sp.y += sp.vy * dt;
-        if (sp.y < 560) {
-          sp.x = 2130 + (Math.random() - 0.5) * 140;
-          sp.y = 740 + Math.random() * 30;
+        if (sp.y < 0.42 * WORLD_H) {
+          sp.x = 0.83 * WORLD_W + (Math.random() - 0.5) * 120;
+          sp.y = 0.56 * WORLD_H + Math.random() * 25;
         }
       }
 
@@ -2072,15 +3123,16 @@
     }
 
     // ============================================================================
-    // RENDEROWANIE ŚWIATA 2.5D (Y-SORTING, CIENIE KONTAKTOWE, SMUGA CIĘCIA, NAVMESH)
+    // 3. RENDEROWANIE ŚWIATA 2.5D, CIENI AO, EFEKTÓW QWER I SIATKI NAVMESH
     // ============================================================================
-    function drawContactShadow(ctx, x, y, rx, ry, alpha = 0.72) {
+    function drawGroundedAOShadow(ctx, x, y, rx, ry, intensity = 0.88) {
       ctx.save();
       ctx.translate(x, y);
       ctx.scale(1, ry / rx);
-      const grad = ctx.createRadialGradient(0, 0, rx * 0.1, 0, 0, rx);
-      grad.addColorStop(0, `rgba(0, 0, 0, ${alpha})`);
-      grad.addColorStop(0.55, `rgba(0, 0, 0, ${alpha * 0.45})`);
+      const grad = ctx.createRadialGradient(0, 0, rx * 0.08, 0, 0, rx);
+      grad.addColorStop(0, `rgba(0, 0, 0, ${intensity})`);
+      grad.addColorStop(0.45, `rgba(0, 0, 0, ${intensity * 0.65})`);
+      grad.addColorStop(0.78, `rgba(0, 0, 0, ${intensity * 0.25})`);
       grad.addColorStop(1, "rgba(0, 0, 0, 0)");
       ctx.fillStyle = grad;
       ctx.beginPath();
@@ -2089,36 +3141,60 @@
       ctx.restore();
     }
 
-    function drawNavMeshOverlay(ctx) {
+    function drawNavMeshAndEditor(ctx) {
       ctx.save();
-      // Zielone wielokąty dozwolonego ruchu
-      for (const poly of WALKABLE_POLYGONS) {
+      for (let p = 0; p < WALKABLE_POLYGONS.length; p++) {
+        const poly = WALKABLE_POLYGONS[p];
         ctx.beginPath();
         poly.forEach((pt, idx) => {
           if (idx === 0) ctx.moveTo(pt.x, pt.y);
           else ctx.lineTo(pt.x, pt.y);
         });
         ctx.closePath();
-        ctx.fillStyle = "rgba(32, 210, 105, 0.24)";
+        ctx.fillStyle = "rgba(32, 215, 105, 0.24)";
         ctx.fill();
         ctx.lineWidth = 2.5;
-        ctx.strokeStyle = "rgba(85, 255, 150, 0.85)";
+        ctx.strokeStyle = "rgba(85, 255, 150, 0.88)";
         ctx.stroke();
+
+        if (editorMode) {
+          for (const pt of poly) {
+            ctx.fillStyle = "#ffd866";
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 9, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
+        }
       }
 
-      // Czerwone elipsy przeszkód (obelisk, piec, NPC)
-      for (const ob of SOLID_OBSTACLES) {
+      const obstacles = getSolidObstacles();
+      for (const ob of obstacles) {
         ctx.save();
         ctx.translate(ob.x, ob.y);
         ctx.scale(1, ob.ry / ob.rx);
         ctx.beginPath();
         ctx.arc(0, 0, ob.rx, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(225, 40, 55, 0.38)";
+        ctx.fillStyle = "rgba(230, 40, 55, 0.42)";
         ctx.fill();
         ctx.lineWidth = 2.5;
-        ctx.strokeStyle = "rgba(255, 95, 95, 0.92)";
+        ctx.strokeStyle = "rgba(255, 95, 95, 0.95)";
         ctx.stroke();
         ctx.restore();
+      }
+
+      if (editorMode) {
+        for (const obj of WORLD_OBJECTS) {
+          ctx.fillStyle = "#48b8ff";
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(obj.x, obj.y, 12, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
       }
       ctx.restore();
     }
@@ -2138,7 +3214,7 @@
       ctx.scale(camera.zoom, camera.zoom);
       ctx.translate(-camera.x + shakeX, -camera.y + shakeY);
 
-      // 1. Tło mapy: mapa_przystan.jpg w ostrej rozdzielczości 2560x1440
+      // 1. Tło mapy mapa_przystan.jpg (2560x1440)
       if (GAME_ASSETS.mapImg) {
         ctx.drawImage(GAME_ASSETS.mapImg, 0, 0, WORLD_W, WORLD_H);
       } else {
@@ -2146,33 +3222,82 @@
         ctx.fillRect(0, 0, WORLD_W, WORLD_H);
       }
 
-      // Pulsująca zimno-błękitna poświata kręgu runicznego pod Kamieniem Filozofów
-      const runePulse = 0.24 + Math.sin(elapsed * 2.6) * 0.08;
-      const runeGlow = ctx.createRadialGradient(1280, 825, 18, 1280, 825, 185);
+      // Błękitna poświata runiczna wtapiająca podstawę Kamienia Filozofów w krąg
+      const monolith = WORLD_OBJECTS[0];
+      const runePulse = 0.28 + Math.sin(elapsed * 2.6) * 0.08;
+      const runeGlow = ctx.createRadialGradient(monolith.x, monolith.y - 8, 12, monolith.x, monolith.y - 8, 175);
       runeGlow.addColorStop(0, `rgba(72, 195, 255, ${runePulse})`);
-      runeGlow.addColorStop(0.6, `rgba(40, 130, 220, ${runePulse * 0.45})`);
+      runeGlow.addColorStop(0.55, `rgba(40, 130, 220, ${runePulse * 0.48})`);
       runeGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
       ctx.fillStyle = runeGlow;
       ctx.beginPath();
-      ctx.ellipse(1280, 825, 185, 115, 0, 0, Math.PI * 2);
+      ctx.ellipse(monolith.x, monolith.y - 8, 175, 108, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Ciepła poświata ognia przed piecem Kuźni Borgara
-      const forgePulse = 0.22 + Math.sin(elapsed * 11.0) * 0.05;
-      const forgeGlow = ctx.createRadialGradient(2080, 775, 15, 2080, 775, 210);
+      // Poświata ognia przed piecem Kuźni Borgara
+      const forgePulse = 0.24 + Math.sin(elapsed * 11.0) * 0.05;
+      const forgeGlow = ctx.createRadialGradient(0.82 * WORLD_W, 0.55 * WORLD_H, 15, 0.82 * WORLD_W, 0.55 * WORLD_H, 200);
       forgeGlow.addColorStop(0, `rgba(255, 120, 30, ${forgePulse})`);
       forgeGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
       ctx.fillStyle = forgeGlow;
       ctx.beginPath();
-      ctx.ellipse(2080, 775, 210, 130, 0, 0, Math.PI * 2);
+      ctx.ellipse(0.82 * WORLD_W, 0.55 * WORLD_H, 200, 125, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 2. Opcjonalny podgląd siatki NavMesh pod klawiszem [F2]
+      // 2. Opcjonalny podgląd siatki NavMesh [F2] / Edytora [F4]
       if (showNavMesh) {
-        drawNavMeshOverlay(ctx);
+        drawNavMeshAndEditor(ctx);
       }
 
-      // 3. Znacznik kliknięcia LPM na ziemi
+      // 3. Szczeliny z umiejętności [Q] (Rozprucie Bruku)
+      for (const fis of activeFissures) {
+        ctx.save();
+        const alpha = Math.min(1, fis.timer * 0.8);
+        ctx.strokeStyle = fis.erupted ? `rgba(255, 145, 50, ${alpha})` : `rgba(80, 210, 255, ${alpha})`;
+        ctx.shadowColor = fis.erupted ? "#ff6611" : "#48b8ff";
+        ctx.shadowBlur = 16;
+        ctx.lineWidth = fis.erupted ? 12 : 8;
+        ctx.beginPath();
+        ctx.moveTo(fis.startX, fis.startY);
+        ctx.lineTo(fis.midX + Math.sin( fis.angle * 3 ) * 14, fis.midY - Math.cos( fis.angle * 3 ) * 10);
+        ctx.lineTo(fis.endX, fis.endY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 4. Arena Łańcuchów z umiejętności [R] (Krąg Pojedynku)
+      if (activeChainArena && activeChainArena.timer > 0) {
+        ctx.save();
+        const aAlpha = Math.min(1, activeChainArena.timer);
+        ctx.strokeStyle = `rgba(240, 195, 95, ${0.85 * aAlpha})`;
+        ctx.shadowColor = "#ff7722";
+        ctx.shadowBlur = 18;
+        ctx.lineWidth = 5;
+        ctx.setLineDash([14, 8]);
+        ctx.beginPath();
+        ctx.ellipse(
+          activeChainArena.x,
+          activeChainArena.y,
+          activeChainArena.radius,
+          activeChainArena.radius * 0.62,
+          0, 0, Math.PI * 2
+        );
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Proporzec wbity w samym środku Areny
+        ctx.fillStyle = "#d8a848";
+        ctx.fillRect(activeChainArena.x - 3, activeChainArena.y - 75, 6, 75);
+        ctx.fillStyle = "#b81d24";
+        ctx.beginPath();
+        ctx.moveTo(activeChainArena.x + 3, activeChainArena.y - 72);
+        ctx.lineTo(activeChainArena.x + 42, activeChainArena.y - 56);
+        ctx.lineTo(activeChainArena.x + 3, activeChainArena.y - 40);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 5. Znacznik kliknięcia LPM i fala uderzeniowa
       if (hero.clickMarkerAlpha > 0) {
         ctx.save();
         ctx.strokeStyle = `rgba(72, 195, 255, ${hero.clickMarkerAlpha})`;
@@ -2184,37 +3309,29 @@
         ctx.restore();
       }
 
-      // 4. Fala uderzeniowa po Przeskoku Bojowym (SPACJA)
       if (hero.shockwaveAlpha > 0) {
         ctx.save();
-        ctx.strokeStyle = `rgba(124, 232, 255, ${hero.shockwaveAlpha})`;
-        ctx.lineWidth = 4;
+        ctx.strokeStyle = `rgba(${hero.shockwaveColor}, ${hero.shockwaveAlpha})`;
+        ctx.lineWidth = 4.5;
         ctx.beginPath();
         ctx.ellipse(hero.x, hero.y, hero.shockwaveRadius, hero.shockwaveRadius * 0.58, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
 
-      // 5. Kolejka głębokości Y-Sorting (Obiekty z npc_zestaw.jpg + Wiking)
+      // 6. Kolejka głębokości Y-Sorting (NPC, Kamień Filozofów, Kukła Bojowa, Wrogowie, Wiking)
       const renderQueue = [];
-
       for (const obj of WORLD_OBJECTS) {
-        renderQueue.push({
-          type: "npc_object",
-          sortY: obj.y,
-          obj
-        });
+        renderQueue.push({ kind: "npc_object", sortY: obj.y, obj });
       }
-
-      renderQueue.push({
-        type: "hero",
-        sortY: hero.y
-      });
-
+      for (const ent of COMBAT_ENTITIES) {
+        if (ent.alive) renderQueue.push({ kind: "combat_ent", sortY: ent.y, ent });
+      }
+      renderQueue.push({ kind: "hero", sortY: hero.y });
       renderQueue.sort((a, b) => a.sortY - b.sortY);
 
       for (const item of renderQueue) {
-        if (item.type === "npc_object") {
+        if (item.kind === "npc_object") {
           const obj = item.obj;
           const sprite = GAME_ASSETS.npc[obj.id];
           if (!sprite) continue;
@@ -2222,64 +3339,153 @@
           const drawW = sprite.width * obj.scale;
           const drawH = sprite.height * obj.scale;
 
-          // Miękki cień kontaktowy u podstawy obiektu
-          drawContactShadow(
+          // Wielowarstwowy, ciemny cień kontaktowy AO wklejający podstawę/buty w bruk
+          drawGroundedAOShadow(
             ctx,
             obj.x,
-            obj.y,
-            obj.id === "monolith" ? 72 : 44,
-            obj.id === "monolith" ? 42 : 26,
-            0.78
+            obj.y - 2,
+            obj.id === "monolith" ? 84 : 48,
+            obj.id === "monolith" ? 48 : 26,
+            0.90
           );
 
-          // Subtelny ruch oddechowy/pracy młota dla Kowala Borgara i Strażnika Vorna
-          const idleBob = obj.id === "borgar"
-            ? Math.sin(elapsed * 4.5) * 2.2
+          // Subtelna animacja oddychania / pracy młotem dla Kowala Borgara i Vorna
+          const breathScaleY = obj.id === "borgar"
+            ? 1 + Math.sin(elapsed * 4.6) * 0.022
             : obj.id === "vorn"
-              ? Math.sin(elapsed * 2.4) * 1.2
-              : 0;
+              ? 1 + Math.sin(elapsed * 2.5) * 0.014
+              : 1.0;
 
           ctx.save();
           ctx.globalAlpha = obj.currentAlpha;
+          ctx.translate(Math.round(obj.x), Math.round(obj.y));
+          ctx.scale(1, breathScaleY);
           ctx.drawImage(
             sprite,
-            Math.round(obj.x - drawW * 0.5),
-            Math.round(obj.y - drawH + idleBob),
+            Math.round(-drawW * 0.5),
+            Math.round(-drawH),
             Math.round(drawW),
             Math.round(drawH)
           );
           ctx.restore();
-        } else if (item.type === "hero") {
-          // Cień kontaktowy pod stopami Wikinga
-          drawContactShadow(ctx, hero.x, hero.y, 44, 25, 0.80);
+        } else if (item.kind === "combat_ent") {
+          const ent = item.ent;
+          drawGroundedAOShadow(ctx, ent.x, ent.y, 44, 24, 0.86);
 
-          let currentFrame = GAME_ASSETS.heroIdle;
-          if (hero.state === "walk" || hero.state === "attack" || hero.state === "leap") {
+          ctx.save();
+          ctx.translate(Math.round(ent.x), Math.round(ent.y));
+          ctx.rotate(ent.tiltAngle);
+
+          if (ent.isDummy) {
+            // Kukła Bojowa Zbrojmistrza
+            ctx.fillStyle = "#3a2818";
+            ctx.fillRect(-6, -110, 12, 110);
+            ctx.fillStyle = ent.hitFlash > 0 ? "#ff8866" : "#8c6d46";
+            ctx.strokeStyle = "#1a120b";
+            ctx.lineWidth = 3;
+            // Belka ramion
+            ctx.fillRect(-44, -85, 88, 14);
+            ctx.strokeRect(-44, -85, 88, 14);
+            // Korpus kukły w pancerzu ćwiczebnym
+            ctx.fillRect(-24, -95, 48, 62);
+            ctx.strokeRect(-24, -95, 48, 62);
+            // Tarcza z symbolem runy
+            ctx.fillStyle = "#2b3848";
+            ctx.beginPath();
+            ctx.arc(22, -62, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            // Głowa kukły
+            ctx.fillStyle = ent.hitFlash > 0 ? "#ffaa88" : "#a88960";
+            ctx.beginPath();
+            ctx.arc(0, -114, 17, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          } else {
+            // Upadły Strażnik na bazie mrocznie zabarwionej sylwetki Strażnika
+            const guardSprite = GAME_ASSETS.npc.vorn || GAME_ASSETS.heroBaseIdle;
+            const stepBob = Math.abs(Math.sin(ent.walkPhase)) * 5;
+            if (guardSprite) {
+              const gw = guardSprite.width * 0.88;
+              const gh = guardSprite.height * 0.88;
+              if (ent.hitFlash > 0) {
+                ctx.filter = "brightness(1.8) sepia(1) hue-rotate(-50deg) saturate(4)";
+              } else {
+                ctx.filter = "brightness(0.78) contrast(1.2) hue-rotate(175deg)";
+              }
+              ctx.drawImage(guardSprite, -gw * 0.5, -gh - stepBob, gw, gh);
+              ctx.filter = "none";
+            }
+          }
+          ctx.restore();
+
+          // Pasek HP oraz pasek Złomności (Stagger) nad wrogiem / kukłą
+          const barW = 86;
+          const barX = ent.x - barW * 0.5;
+          const barY = ent.y - 156;
+          ctx.fillStyle = "rgba(8, 10, 14, 0.9)";
+          ctx.fillRect(barX - 1, barY - 1, barW + 2, 13);
+          ctx.fillStyle = "#b81d24";
+          ctx.fillRect(barX, barY, barW * (ent.hp / ent.maxHp), 6);
+          ctx.fillStyle = "#e8c97a";
+          ctx.fillRect(barX, barY + 7, barW * (ent.stagger / ent.maxStagger), 4);
+
+          if (ent.stunTimer > 0) {
+            ctx.font = "700 11px 'Cinzel', serif";
+            ctx.fillStyle = "#7ce8ff";
+            ctx.textAlign = "center";
+            ctx.fillText(`OGŁUSZONY (${ent.stunTimer.toFixed(1)}s)`, ent.x, barY - 5);
+          }
+        } else if (item.kind === "hero") {
+          drawGroundedAOShadow(ctx, hero.x, hero.y - 2, 48, 26, 0.88);
+
+          // Krwawa aura umiejętności [W] (Dług Krwi)
+          if (hero.wActiveTimer > 0) {
+            ctx.save();
+            const pulseR = 62 + Math.sin(elapsed * 9) * 6;
+            ctx.strokeStyle = "rgba(235, 40, 55, 0.82)";
+            ctx.fillStyle = "rgba(180, 15, 25, 0.22)";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(hero.x, hero.y - 10, pulseR, pulseR * 0.58, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // Wybór klatki: Kierunkowy Idle vs płynny cykl Chodu / Ataku
+          let currentFrame = GAME_ASSETS.idleDirectional[hero.idleKey] || GAME_ASSETS.heroBaseIdle;
+          if (hero.state === "walk" || hero.state === "attack" || hero.state === "leap" || hero.state === "charge") {
             const list = GAME_ASSETS.anims[hero.animKey];
             if (list && list.length > 0) {
               currentFrame = list[hero.frameIndex % list.length];
             }
           }
 
-          // Wysokość skoku podczas SPACJI
           let jumpOffsetY = 0;
           if (hero.state === "leap") {
             const t = 1 - Math.max(0, hero.leapTimer) / hero.leapDuration;
             jumpOffsetY = -Math.sin(t * Math.PI) * 95;
+          } else if (hero.state === "walk") {
+            // Subtelne ugięcie kroku (2px) maskujące przejścia klatek
+            jumpOffsetY = Math.sin(hero.walkTimer * 2) * 2.0;
           }
+
+          // Delikatny oddech w Kierunkowym Idle
+          const idleScaleY = hero.state === "idle" ? (1 + Math.sin(elapsed * 2.8) * 0.014) : 1.0;
 
           if (currentFrame) {
             ctx.save();
             ctx.translate(Math.round(hero.x), Math.round(hero.y + jumpOffsetY));
-            if (hero.flipX) {
-              ctx.scale(-1, 1);
+            if (hero.leanDeg !== 0 && hero.state === "walk") {
+              ctx.rotate((hero.leanDeg * Math.PI) / 180);
             }
-            // Rysowanie tak, aby punkt kotwiczenia stóp (ANCHOR_X, ANCHOR_Y) leżał dokładnie na (0, 0) pozycji Wikinga
+            ctx.scale(hero.flipX ? -1 : 1, idleScaleY);
             ctx.drawImage(currentFrame, -ANCHOR_X, -ANCHOR_Y);
             ctx.restore();
           }
 
-          // Widmowo-błękitna smuga cięcia (Styl C) podczas ataku
+          // Widmowo-błękitna smuga cięcia podczas ataku
           if (hero.slashAlpha > 0) {
             ctx.save();
             ctx.translate(hero.x, hero.y - 72);
@@ -2289,20 +3495,29 @@
             ctx.shadowBlur = 16;
             ctx.lineWidth = 10 * hero.slashAlpha;
             ctx.beginPath();
-            ctx.arc(0, 0, 86, -0.85, 0.85);
-            ctx.stroke();
-
-            ctx.strokeStyle = `rgba(230, 250, 255, ${hero.slashAlpha})`;
-            ctx.lineWidth = 4 * hero.slashAlpha;
-            ctx.beginPath();
-            ctx.arc(0, 0, 92, -0.72, 0.72);
+            ctx.arc(0, 0, 88, -0.85, 0.85);
             ctx.stroke();
             ctx.restore();
           }
         }
       }
 
-      // 6. Błękitne ogniki dusz i iskry z kuźni
+      // 7. Spadające Widmowe Młoty Przodków w Arenie Łańcuchów [R]
+      for (const hm of pendingHammers) {
+        const progress = 1 - hm.delay / hm.maxDelay;
+        const dropY = hm.y - 260 * (1 - progress);
+        ctx.save();
+        ctx.strokeStyle = "rgba(124, 232, 255, 0.9)";
+        ctx.fillStyle = "rgba(72, 184, 255, 0.45)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(hm.x, dropY - 40, 28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 8. Błękitne ogniki dusz, iskry z kuźni i deszcz
       ctx.save();
       for (const w of soulWisps) {
         const alpha = 0.45 + Math.sin(elapsed * 3.5 + w.phase) * 0.35;
@@ -2311,18 +3526,13 @@
         ctx.arc(w.x, w.y, w.radius, 0, Math.PI * 2);
         ctx.fill();
       }
-
       for (const sp of forgeSparks) {
         ctx.fillStyle = `rgba(255, 175, 65, ${sp.alpha})`;
         ctx.beginPath();
         ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.restore();
-
-      // 7. Dynamiczny ukośny deszcz
-      ctx.save();
-      ctx.strokeStyle = "rgba(155, 195, 230, 0.28)";
+      ctx.strokeStyle = "rgba(155, 195, 230, 0.26)";
       ctx.lineWidth = 1.3;
       ctx.beginPath();
       for (const r of rainDrops) {
@@ -2332,7 +3542,21 @@
       ctx.stroke();
       ctx.restore();
 
-      // 8. Etykiety nad obiektami (tylko po najechaniu myszką lub wciśnięciu [ALT])
+      // 9. Latające cyfry obrażeń i złote krytyki 200%!
+      for (const ft of floatingTexts) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, ft.alpha);
+        ctx.font = `900 ${ft.size}px 'Cinzel', serif`;
+        ctx.fillStyle = ft.color;
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 3.5;
+        ctx.textAlign = "center";
+        ctx.strokeText(ft.text, ft.x, ft.y);
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+      }
+
+      // 10. Etykiety nad obiektami (tylko po najechaniu myszką lub wciśnięciu [ALT])
       for (const obj of WORLD_OBJECTS) {
         if (!isAltPressed && hoveredObject !== obj) continue;
         const sprite = GAME_ASSETS.npc[obj.id];
@@ -2342,9 +3566,8 @@
 
         ctx.save();
         ctx.font = "700 13px 'Cinzel', serif";
-        const textW = Math.max(ctx.measureText(obj.name).width, ctx.measureText(obj.sub).width * 0.85) + 24;
+        const textW = Math.max(ctx.measureText(obj.name).width, ctx.measureText(obj.sub).width * 0.85) + 26;
         const boxH = 38;
-
         ctx.fillStyle = "rgba(7, 10, 15, 0.92)";
         ctx.strokeStyle = "#48b8ff";
         ctx.lineWidth = 1.4;
@@ -2354,10 +3577,27 @@
         ctx.fillStyle = "#eaf4ff";
         ctx.textAlign = "center";
         ctx.fillText(obj.name, labelX, labelY - 21);
-
         ctx.font = "600 12px 'Cormorant Garamond', serif";
         ctx.fillStyle = "#7ce8ff";
         ctx.fillText(obj.sub, labelX, labelY - 6);
+        ctx.restore();
+      }
+
+      for (const ent of COMBAT_ENTITIES) {
+        if (!ent.alive || (!isAltPressed && hoveredEnemy !== ent)) continue;
+        const labelX = ent.x;
+        const labelY = ent.y - 168;
+        ctx.save();
+        ctx.font = "700 12px 'Cinzel', serif";
+        const textW = ctx.measureText(ent.name).width + 22;
+        ctx.fillStyle = "rgba(18, 8, 10, 0.92)";
+        ctx.strokeStyle = "#d93838";
+        ctx.lineWidth = 1.3;
+        ctx.fillRect(labelX - textW * 0.5, labelY - 24, textW, 24);
+        ctx.strokeRect(labelX - textW * 0.5, labelY - 24, textW, 24);
+        ctx.fillStyle = "#ffd6d6";
+        ctx.textAlign = "center";
+        ctx.fillText(ent.name, labelX, labelY - 8);
         ctx.restore();
       }
 
@@ -2365,7 +3605,7 @@
     }
 
     // ============================================================================
-    // OKRĄGŁA MINIMAPA W PRAWYM GÓRNYM ROGU
+    // MINIMAPA
     // ============================================================================
     const minimapCanvas = document.getElementById("minimap-canvas");
     const mCtx = minimapCanvas.getContext("2d");
@@ -2374,7 +3614,6 @@
       const W = minimapCanvas.width;
       const H = minimapCanvas.height;
       mCtx.clearRect(0, 0, W, H);
-
       mCtx.fillStyle = "#05080d";
       mCtx.fillRect(0, 0, W, H);
 
@@ -2391,7 +3630,6 @@
         mCtx.globalAlpha = 1.0;
       }
 
-      // Obrys stref NavMesh na minimapie
       mCtx.strokeStyle = "rgba(72, 184, 255, 0.45)";
       mCtx.lineWidth = 1;
       for (const poly of WALKABLE_POLYGONS) {
@@ -2404,7 +3642,6 @@
         mCtx.stroke();
       }
 
-      // Znaczniki NPC i Kamienia Filozofów
       for (const obj of WORLD_OBJECTS) {
         mCtx.fillStyle = obj.id === "monolith" ? "#48b8ff" : "#48e89a";
         mCtx.beginPath();
@@ -2412,9 +3649,16 @@
         mCtx.fill();
       }
 
+      for (const ent of COMBAT_ENTITIES) {
+        if (!ent.alive) continue;
+        mCtx.fillStyle = ent.isDummy ? "#f0c869" : "#ff3b3b";
+        mCtx.beginPath();
+        mCtx.arc(ent.x * scale, ent.y * scale, 3.5, 0, Math.PI * 2);
+        mCtx.fill();
+      }
+
       mCtx.restore();
 
-      // Pozycja Wikinga w środku minimapy
       mCtx.fillStyle = "#ffffff";
       mCtx.beginPath();
       mCtx.arc(cx, cy, 4, 0, Math.PI * 2);
@@ -2425,7 +3669,7 @@
     }
 
     // ============================================================================
-    // PĘTLA GŁÓWNA I INICJALIZACJA
+    // PĘTLA GŁÓWNA I START GRY
     // ============================================================================
     let lastTime = performance.now();
     let elapsedTime = 0;
